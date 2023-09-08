@@ -1,0 +1,10 @@
+int foo()
+{
+    int i = 4 + 17;
+    return i;
+}
+
+int main()
+{
+    foo();
+}

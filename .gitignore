@@ -1,0 +1,7 @@
+cmake-build-debug
+build
+CMakeFiles
+
+.idea
+/docs/*
+!/docs/*.pdf
