@@ -6,11 +6,6 @@
 // Created by aelliixx on 2023-09-07.
 //
 
-// 1. Set up .data section
-// 2. Find 'int main()' and create a _start
-// 3. Find a return statement in 'int main()' and replace the default one
-
-
 #pragma once
 #include <vector>
 #include <string>
@@ -74,7 +69,8 @@ private:
 	
 	void init();
 	void generate_block(const ScopeNode&);
-	void generate_variables();
+	void generate_variables(const std::unique_ptr<ASTNode>&);
+	void generate_return_statement(const std::unique_ptr<ASTNode>&);
 
 };
 

@@ -99,9 +99,30 @@ void Generator::init()
 	if (return_it == main->Body().Children().end())
 		m_implicit_return = true;
 }
-void Generator::generate_variables()
+void Generator::generate_variables(const std::unique_ptr<ASTNode>& node)
 {
-
+	auto var = reinterpret_cast<VariableDeclaration*>(node.get());
+	if (var->Value()->class_name() == "NumberLiteral")
+	{
+		auto value = dynamic_cast<NumberLiteral*>(var->Value());
+		switch (value->Type())
+		{
+		case TokenType::T_INT_L:
+		{
+			m_asm << "mov QWORD [rbp-4], " << std::get<int>(value->Value()) << "\n";
+			m_stack[var->Ident().Name()] = 4;
+			break;
+		}
+		case TokenType::T_FLOAT_L:
+		case TokenType::T_DOUBLE_L:
+		case TokenType::T_STR_L:
+		case TokenType::T_CHAR_L:
+		case TokenType::T_TRUE:
+		case TokenType::T_FALSE:
+		default:
+			assert(false && "Not reachable");
+		}
+	}
 }
 
 void Generator::generate_block(const ScopeNode& block)
@@ -110,69 +131,46 @@ void Generator::generate_block(const ScopeNode& block)
 	{
 		auto node_name = node->class_name();
 		if (node_name == "VariableDeclaration")
-		{
-			auto var = reinterpret_cast<VariableDeclaration*>(node.get());
-			if (var->Value()->class_name() == "NumberLiteral")
-			{
-				auto value = dynamic_cast<NumberLiteral*>(var->Value());
-				switch (value->Type())
-				{
-				case TokenType::T_INT_L:
-				{
-					m_asm << "mov QWORD [rbp-4], " << std::get<int>(value->Value()) << "\n";
-					m_stack[var->Ident().Name()] = 4;
-					break;
-				}
-				case TokenType::T_FLOAT_L:
-				case TokenType::T_DOUBLE_L:
-				case TokenType::T_STR_L:
-				case TokenType::T_CHAR_L:
-				case TokenType::T_TRUE:
-				case TokenType::T_FALSE:
-				default:
-					assert(false && "Not reachable");
-				}
-			}
-		}
+			generate_variables(node);
 		if (node_name == "ReturnStatement")
-		{
-			auto ret = dynamic_cast<ReturnStatement*>(node.get());
-			auto arg = ret->Argument();
-			// FIXME get the actual class
-			if (arg->class_name() == "Identifier")
-			{
-				const auto identifier = dynamic_cast<Identifier*>(arg);
-				m_asm << "mov rax, QWORD [rbp-" << m_stack.at(identifier->Name()) << "]\n";
-			}
-			else if (arg->class_name() == "NumberLiteral")
-			{
-				const auto literal = dynamic_cast<NumberLiteral*>(arg);
-				m_asm << "mov rax, ";
-				switch (literal->Type())
-				{
-				case TokenType::T_INT_L:
-					m_asm << std::get<int>(literal->Value()) << "\n";
-					break;
-				case TokenType::T_FLOAT_L:
-				case TokenType::T_DOUBLE_L:
-				case TokenType::T_CHAR_L:
-				case TokenType::T_STR_L:
-				case TokenType::T_TRUE:
-				case TokenType::T_FALSE:
-				default:
-					assert(false && "Not reached");
-				}
-			}
-			else {
-				assert(false && "Not reached");
-			}
-
-			m_asm << "pop rbp\n";
-			m_asm << "ret\n";
-		}
+			generate_return_statement(node);
 	}
 }
-void Generator::format_asm()
+
+void Generator::generate_return_statement(const std::unique_ptr<ASTNode>& node)
 {
+	auto ret = dynamic_cast<ReturnStatement*>(node.get());
+	auto arg = ret->Argument();
+	// FIXME get the actual class
+	if (arg->class_name() == "Identifier")
+	{
+		const auto identifier = dynamic_cast<Identifier*>(arg);
+		m_asm << "mov rax, QWORD [rbp-" << m_stack.at(identifier->Name()) << "]\n";
+	}
+	else if (arg->class_name() == "NumberLiteral")
+	{
+		const auto literal = dynamic_cast<NumberLiteral*>(arg);
+		m_asm << "mov rax, ";
+		switch (literal->Type())
+		{
+		case TokenType::T_INT_L:
+			m_asm << std::get<int>(literal->Value()) << "\n";
+			break;
+		case TokenType::T_FLOAT_L:
+		case TokenType::T_DOUBLE_L:
+		case TokenType::T_CHAR_L:
+		case TokenType::T_STR_L:
+		case TokenType::T_TRUE:
+		case TokenType::T_FALSE:
+		default:
+			assert(false && "Not reached");
+		}
+	}
+	else {
+		assert(false && "Not reached");
+	}
+
+	m_asm << "pop rbp\n";
+	m_asm << "ret\n";
 }
 } // alx
