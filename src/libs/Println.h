@@ -24,7 +24,7 @@ namespace __alx {
 template<typename T>
 concept Stringable = std::convertible_to<T, std::string>;
 
-template <typename T>
+template<typename T>
 concept Char = std::is_same_v<T, char>;
 
 template<typename T>
@@ -229,9 +229,10 @@ template<typename... Param>
 void error(const std::string& format, const Param& ... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
-	auto colour = Colour::Red;
+	auto colour = Colour::LightRed;
 	println("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
-	exit(EXIT_FAILURE);
+//	exit(EXIT_FAILURE);
+	throw std::runtime_error(text);
 }
 template<typename... Param>
 void warning(const std::string& format, const Param& ... arguments)
@@ -241,7 +242,8 @@ void warning(const std::string& format, const Param& ... arguments)
 	println("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
 }
 
-static std::string token_to_string(TokenType token) {
+static std::string token_to_string(TokenType token)
+{
 	switch (token)
 	{
 	case TokenType::T_INT_L:
@@ -342,8 +344,11 @@ static std::string token_to_string(TokenType token) {
 		return "true";
 	case TokenType::T_FALSE:
 		return "false";
-	default:
-		assert(false && "Not reachable");
+	case TokenType::T_LONG:
+		return "long";
+	case TokenType::T_SHORT:
+		return "short";
 	}
+	assert(false && "Not reachable");
 }
 }

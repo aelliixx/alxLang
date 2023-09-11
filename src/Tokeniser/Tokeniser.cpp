@@ -15,6 +15,8 @@ Tokeniser::Tokeniser(std::string source) : m_source(std::move(source))
 {
 	// Types
 	m_keywords["int"] = TokenType::T_INT;
+	m_keywords["long"] = TokenType::T_LONG;
+	m_keywords["short"] = TokenType::T_SHORT;
 	m_keywords["float"] = TokenType::T_FLOAT;
 	m_keywords["double"] = TokenType::T_DOUBLE;
 	m_keywords["void"] = TokenType::T_VOID;
@@ -59,7 +61,9 @@ std::vector<Token> Tokeniser::Tokenise()
 		if (is_digit(peek().value()) || peek().value() == '.')
 		{
 			buffer += consume();
-			while (peek().has_value() && peek().value() != ' ' && peek().value() != ';' && peek().value() != '\n')
+			while (peek().has_value() && (is_digit(peek().value()) || peek().value() == '.'
+				|| ((peek().value() == '+' || peek().value() == '-') && is_digit(peek(1).value()))
+				))
 				buffer += consume();
 
 			if (!is_number(buffer))
@@ -119,6 +123,30 @@ std::vector<Token> Tokeniser::Tokenise()
 			m_tokens.emplace_back(TokenType::T_SEMI);
 			continue;
 		}
+		if (peek().value() == '+')
+		{
+			consume();
+			m_tokens.emplace_back(TokenType::T_PLUS);
+			continue;
+		}
+		if (peek().value() == '-')
+		{
+			consume();
+			m_tokens.emplace_back(TokenType::T_MINUS);
+			continue;
+		}
+		if (peek().value() == '*')
+		{
+			consume();
+			m_tokens.emplace_back(TokenType::T_STAR);
+			continue;
+		}
+		if (peek().value() == '^')
+		{
+			consume();
+			m_tokens.emplace_back(TokenType::T_POW);
+			continue;
+		}
 		if (peek().value() == '/')
 		{
 			if (peek(1).value() == '/') // Comment
@@ -127,10 +155,10 @@ std::vector<Token> Tokeniser::Tokenise()
 				continue;
 			}
 			consume();
-			m_tokens.emplace_back(TokenType::T_SEMI);
+			m_tokens.emplace_back(TokenType::T_FWD_SLASH);
 			continue;
 		}
-
+		error("Undefined token {} at ", buffer);
 	}
 	return m_tokens;
 }

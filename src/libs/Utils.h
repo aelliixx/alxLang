@@ -7,4 +7,7 @@
 //
 
 #pragma once
-#define ASSERT_NOT_REACHABLE() assert(false && "Not reachable"); do{}while()
+#include <string>
+#define ASSERT_NOT_REACHABLE() assert(false && "Not reachable"); do{}while(false)
+#define ASSERT_NOT_IMPLEMENTED() assert(false && "Not implemented"); do{}while(false)
+

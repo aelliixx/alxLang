@@ -21,7 +21,7 @@ class Parser
 	std::unique_ptr<Program> m_program;
 	size_t m_index{};
 
-	int m_get_binary_op_precedence(const Token& token);
+	int get_binary_op_precedence(const Token& token);
 
 	std::optional<Token> peek(int ahead = 0);
 	Token consume();
@@ -39,7 +39,7 @@ private:
 	std::unique_ptr<ASTNode> parse_statement();
 	std::unique_ptr<NumberLiteral> parse_number_literal();
 	std::unique_ptr<StringLiteral> parse_string_literal();
-	std::unique_ptr<BinaryExpression> parse_binary_operation();
+	std::unique_ptr<Expression> parse_binary_operation(std::unique_ptr<Expression> lhs, int precedence);
 	std::unique_ptr<Expression> parse_expression();
 	std::unique_ptr<Expression> parse_term();
 	std::unique_ptr<ReturnStatement> parse_return_statement();

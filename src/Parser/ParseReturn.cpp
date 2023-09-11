@@ -12,7 +12,7 @@ std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
 {
 	consume(); // Eat 'return'
 	auto expr = parse_expression();
-	consume(); // Eat ';'
+	must_consume(TokenType::T_SEMI);
 	return std::make_unique<ReturnStatement>(std::move(expr));
 }
 };

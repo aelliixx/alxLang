@@ -17,6 +17,8 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	switch (token.value().Type)
 	{
 	case TokenType::T_INT:
+	case TokenType::T_LONG:
+	case TokenType::T_SHORT:
 	case TokenType::T_FLOAT:
 	case TokenType::T_DOUBLE:
 	case TokenType::T_STRING:

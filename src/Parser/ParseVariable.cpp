@@ -12,32 +12,36 @@ namespace alx {
 std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 {
 	auto type = consume().Type;
-	if (type == TokenType::T_INT || type == TokenType::T_FLOAT || type == TokenType::T_DOUBLE
-		|| type == TokenType::T_STRING || type == TokenType::T_CHAR || type == TokenType::T_BOOL)
+	if (is_number_type(type) || type == TokenType::T_STRING)
 	{
 		auto name = std::make_unique<Identifier>(consume().Value.value());
 		// Direct assignment
 		if (peek().has_value() && peek().value().Type == TokenType::T_EQ)
 		{
-			consume(); // Eat '='
-			// NumberLiteral assigment
-			if (auto value = parse_number_literal())
+			must_consume(TokenType::T_EQ); // Eat '='
+			if (peek().has_value() && is_number_type(peek().value().Type) &&
+				peek(1).has_value() && peek(1).value().Type == TokenType::T_SEMI)
 			{
-				if (!is_literal_assignable(type, value->Type()))
-					error("Cannot assign {} to {}", token_to_string(value->Type()), token_to_string(type));
-				consume(); // Eat ';'
+				auto value = parse_number_literal();
+				must_consume(TokenType::T_SEMI); // Eat ';'
 				return std::make_unique<VariableDeclaration>(type, std::move(name), std::move(value));
 			}
-			// String literal assignment
-			else if (auto string = parse_string_literal())
+			if (peek().has_value() && peek().value().Type == TokenType::T_STR_L &&
+				peek(1).has_value() && peek(1).value().Type == TokenType::T_SEMI)
 			{
-				if (!is_literal_assignable(type, value->Type()))
-					error("Cannot assign {} to {}", token_to_string(value->Type()), token_to_string(type));
-				consume(); // Eat ';'
+				auto string = parse_string_literal();
+				must_consume(TokenType::T_SEMI); // Eat ';'
 				return std::make_unique<VariableDeclaration>(type, std::move(name), std::move(string));
 			}
+			auto expression = parse_expression();
+			must_consume(TokenType::T_SEMI);
+			return std::make_unique<VariableDeclaration>(type, std::move(name), std::move(expression));
 		} // Declaration
-		else {}
+		else if (peek().has_value() && peek().value().Type == TokenType::T_SEMI)
+		{
+			must_consume(TokenType::T_SEMI);
+			return std::make_unique<VariableDeclaration>(type, std::move(name));
+		}
 	}
 	assert(false && "Not reachable");
 }

@@ -27,6 +27,7 @@ struct Colour {
     std::string to_string() const { return std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b); }
 
     static Colour Red;
+    static Colour LightRed;
     static Colour Green;
     static Colour Blue;
     static Colour Yellow;

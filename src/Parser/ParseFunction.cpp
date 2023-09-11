@@ -29,7 +29,7 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 			if (peek().value().Type == TokenType::T_COMMA)
 				consume();
 		}
-		consume(); // Eat ')'
+		must_consume(TokenType::T_CLOSE_PAREN); // Eat ')'
 		auto body = std::make_unique<BlockStatement>();
 		if (consume().Type == TokenType::T_CURLY_OPEN)
 		{
@@ -38,9 +38,9 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 			{
 				body->Append(parse_statement());
 			}
-			consume(); // Eat '}'
+			must_consume(TokenType::T_CURLY_CLOSE); // Eat '}'
 		}
-		return std::make_unique<FunctionDeclaration>(std::make_unique<Identifier>(name.value()), std::move(body));
+		return std::make_unique<FunctionDeclaration>(returnType, std::make_unique<Identifier>(name.value()), std::move(body));
 	}
 	assert(false && "Not reachable");
 }

@@ -6,8 +6,10 @@
 // Created by aelliixx on 2023-09-06.
 //
 
+#include <cmath>
 #include "Ast.h"
 #include "../libs/Println.h"
+#include "../libs/Utils.h"
 
 namespace alx {
 
@@ -42,24 +44,24 @@ void NumberLiteral::PrintNode(int indent) const
 	{
 	case TokenType::T_INT_L:
 		println("{>}type: {}", indent + 2, "int");
-		println("{>}value: {}", indent + 2, std::get<int>(m_value));
+		println("{>}value: {}", indent + 2, m_value);
 		break;
 	case TokenType::T_FLOAT_L:
 		println("{>}type: {}", indent + 2, "float");
-		println("{>}value: {}", indent + 2, std::get<float>(m_value));
+		println("{>}value: {}", indent + 2, m_value);
 		break;
 	case TokenType::T_DOUBLE_L:
 		println("{>}type: {}", indent + 2, "double");
-		println("{>}value: {}", indent + 2, std::get<double>(m_value));
+		println("{>}value: {}", indent + 2, m_value);
 		break;
 	case TokenType::T_CHAR_L:
 		println("{>}type: {}", indent + 2, "char");
-		println("{>}value: {}", indent + 2, std::get<char>(m_value));
+		println("{>}value: {}", indent + 2, m_value);
 		break;
 	case TokenType::T_FALSE:
 	case TokenType::T_TRUE:
 		println("{>}type: {}", indent + 2, "bool");
-		println("{>}value: {}", indent + 2, std::get<bool>(m_value));
+		println("{>}value: {}", indent + 2, m_value);
 		break;
 	default:
 		assert(false && "Invalid literal type");
@@ -88,12 +90,21 @@ void VariableDeclaration::PrintNode(int indent) const
 	case TokenType::T_STRING:
 		println("{>}type: {}", indent + 2, "string");
 		break;
+	case TokenType::T_LONG:
+		println("{>}type: {}", indent + 2, "long");
+		break;
+	case TokenType::T_SHORT:
+		println("{>}type: {}", indent + 2, "short");
+		break;
 	default:
 		assert(false && "Invalid literal type");
 	}
 	m_identifier->PrintNode(indent + 2);
 	println("{>}value:", indent + 2);
-	m_value->PrintNode(indent + 4);
+	if (m_value)
+		m_value->PrintNode(indent + 4);
+	else
+		println("{>}null", indent + 4);
 	println("{>}}", indent);
 }
 void BlockStatement::PrintNode(int indent) const
@@ -105,61 +116,53 @@ void BlockStatement::PrintNode(int indent) const
 
 void FunctionDeclaration::PrintNode(int indent) const
 {
-	println("{>}FunctionDeclaration: {\n{>}name: {}\n{>}body:", indent, indent + 2, m_identifier->Name(), indent + 2);
+	println("{>}FunctionDeclaration: {", indent);
+	println("{>}name: {}", indent + 2, Name());
+	switch (m_return_type)
+	{
+	case TokenType::T_INT:
+		println("{>}return_type: {}", indent + 2, "int");
+		break;
+	case TokenType::T_FLOAT:
+		println("{>}return_type: {}", indent + 2, "float");
+		break;
+	case TokenType::T_DOUBLE:
+		println("{>}return_type: {}", indent + 2, "double");
+		break;
+	case TokenType::T_CHAR:
+		println("{>}return_type: {}", indent + 2, "char");
+		break;
+	case TokenType::T_BOOL:
+		println("{>}return_type: {}", indent + 2, "bool");
+		break;
+	case TokenType::T_STRING:
+		println("{>}return_type: {}", indent + 2, "string");
+		break;
+	case TokenType::T_LONG:
+		println("{>}type: {}", indent + 2, "long");
+		break;
+	case TokenType::T_SHORT:
+		println("{>}type: {}", indent + 2, "short");
+		break;
+	default:
+		assert(false && "Invalid literal type");
+	}
+	println("{>}body:", indent + 2);
 	m_body->PrintNode(indent + 4);
 	println("{>}}", indent);
 }
 void BinaryExpression::PrintNode(int indent) const
 {
-	println("{>}BinaryExpression:", indent);
+	println("{>}BinaryExpression: {", indent);
+	println("{>}constexpr: {}", indent + 2, m_constexpr);
 	println("{>}lhs:", indent + 2);
-	m_lhs->PrintNode(indent + 2);
-	print("{>}operator: ", indent);
-	switch (m_binaryOp)
-	{
-
-	case TokenType::T_PLUS:
-		println("+");
-		break;
-	case TokenType::T_MINUS:
-		println("-");
-		break;
-	case TokenType::T_STAR:
-		println("*");
-		break;
-	case TokenType::T_FWD_SLASH:
-		println("/");
-		break;
-	case TokenType::T_POW:
-		println("^");
-		break;
-	case TokenType::T_INT_DIV:
-		println("\\");
-		break;
-	case TokenType::T_MOD:
-		println("%");
-		break;
-	case TokenType::T_GT:
-		println(">");
-		break;
-	case TokenType::T_LT:
-		println("<");
-		break;
-	case TokenType::T_GTE:
-		println(">=");
-		break;
-	case TokenType::T_LTE:
-		println("<=");
-		break;
-	case TokenType::T_EQ:
-		println("==");
-		break;
-	default:
-		assert(false && "Invalid binary operator");
-	}
+	m_lhs->PrintNode(indent + 4);
+	println("{>}operator: {}", indent + 2, token_to_string(m_binaryOp));
 	println("{>}rhs:", indent + 2);
-	m_rhs->PrintNode(indent + 2);
+	m_rhs->PrintNode(indent + 4);
+	println("{>}}", indent);
 }
+
 void StringLiteral::PrintNode(int indent) const
 {
 	println("{>}ReturnStatement: {\n{>}value: {}\n{>}length: ", indent, indent + 2, m_value, indent + 2, Lenght());
@@ -174,5 +177,104 @@ void ReturnStatement::PrintNode(int indent) const
 void Expression::PrintNode(int indent) const
 {
 
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
+std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
+{
+	assert(m_constexpr && "Cannot evaluate non constant binary expressions");
+	auto add = [this](TokenType lhs, const std::string& lhs_val, const std::string& rhs_val)
+	{
+		// FIXME: Add evaluation for doubles and floats
+		std::string res;
+		switch (m_binaryOp)
+		{
+		case TokenType::T_PLUS:
+			res = std::to_string(std::stol(lhs_val) + std::stol(rhs_val));
+			break;
+		case TokenType::T_MINUS:
+			res = std::to_string(std::stol(lhs_val) - std::stol(rhs_val));
+			break;
+		case TokenType::T_STAR:
+			res = std::to_string(std::stol(lhs_val) * std::stol(rhs_val));
+			break;
+		case TokenType::T_FWD_SLASH:
+			res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
+			break;
+		case TokenType::T_POW:
+			res = std::to_string((long)(std::pow(std::stol(lhs_val), std::stol(rhs_val))));
+			break;
+		case TokenType::T_LT:
+			res = std::to_string(std::stol(lhs_val) < std::stol(rhs_val));
+			break;
+		case TokenType::T_GT:
+			res = std::to_string(std::stol(lhs_val) > std::stol(rhs_val));
+			break;
+		case TokenType::T_LTE:
+			res = std::to_string(std::stol(lhs_val) <= std::stol(rhs_val));
+			break;
+		case TokenType::T_GTE:
+			res = std::to_string(std::stol(lhs_val) >= std::stol(rhs_val));
+			break;
+		case TokenType::T_MOD:
+			res = std::to_string(std::stol(lhs_val) % std::stol(rhs_val));
+			break;
+		case TokenType::T_INT_DIV:
+			res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
+		case TokenType::T_EQEQ:
+		case TokenType::T_SUB:
+		case TokenType::T_ADD:
+		case TokenType::T_ADD_EQ:
+		case TokenType::T_SUB_EQ:
+		case TokenType::T_MULT_EQ:
+		case TokenType::T_DIV_EQ:
+		case TokenType::T_MOD_EQ:
+		case TokenType::T_POW_EQ:
+		ASSERT_NOT_IMPLEMENTED();
+		default:
+		ASSERT_NOT_REACHABLE();
+		}
+	  return res;
+	};
+	
+	BinaryExpression* binaryExpression;
+
+	if (m_lhs->class_name() == "BinaryExpression")
+	{
+		auto lhs = dynamic_cast<BinaryExpression*>(m_lhs.get())->Evaluate();
+		auto rhs = dynamic_cast<NumberLiteral*>(m_rhs.get());
+		auto lhs_val = lhs->Value();
+		auto rhs_val = rhs->Value();
+		return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhs_val, rhs_val));
+	}
+
+	assert(m_rhs->class_name() == "NumberLiteral");
+	assert(m_lhs->class_name() == "NumberLiteral");
+	auto* lhs = dynamic_cast<NumberLiteral*>(m_lhs.get());
+	auto* rhs = dynamic_cast<NumberLiteral*>(m_rhs.get());
+
+	auto lhs_val = lhs->Value();
+	auto rhs_val = rhs->Value();
+
+	return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhs_val, rhs_val));
+}
+#pragma clang diagnostic pop
+
+BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs, TokenType binaryOp)
+	: m_lhs(std::move(lhs)),
+	  m_rhs(std::move(rhs)),
+	  m_binaryOp(binaryOp)
+{
+	assert(is_binary_op(m_binaryOp) && "Invalid binary operator");
+
+	// Check if both sides are numbers or binary expressions and if they are constant
+	if (m_lhs->class_name() == "NumberLiteral" && m_rhs->class_name() == "NumberLiteral")
+		m_constexpr = true;
+	else if (m_lhs->class_name() == "BinaryExpression" && m_rhs->class_name() == "NumberLiteral")
+		m_constexpr = dynamic_cast<BinaryExpression*>(m_lhs.get())->m_constexpr;
+	
+	m_operands_match = m_lhs->class_name() == m_rhs->class_name() && m_rhs->class_name() == "Identifier";
+		
 }
 }

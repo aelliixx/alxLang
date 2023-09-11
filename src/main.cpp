@@ -7,7 +7,16 @@
 #include <chrono>
 #include <libs/Println.h>
 #include <Tokeniser/Tokeniser.h>
-#include "Codegen/Generator.h"
+#include "Codegen/x86_64_linux/Generator.h"
+
+// TODO:
+// 	- Implement a call expression
+//  - Have a new m_stack for each stack frame
+//    -> Have a new class for generating each block statement which contains the m_stack 
+// 	- Match function return type and actual return type
+// 	- Properly initialise the stack frame (look into it)
+// 	- Implement an exponent operator
+// 	- Profile the parsing stage
 
 using sys_clock = std::chrono::system_clock;
 using seconds = std::chrono::duration<double>;
@@ -21,7 +30,6 @@ int main(int argc, const char** argv)
 	}
 
 	alx::println("Parsing {}", argv[1]);
-	const auto start = sys_clock::now();
 
 	std::string sourceBuffer;
 	{
@@ -42,6 +50,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
+	const auto start = sys_clock::now();
 	alx::Tokeniser tokeniser(sourceBuffer);
 	auto tokens = tokeniser.Tokenise();
 
@@ -61,8 +70,15 @@ int main(int argc, const char** argv)
 
 	const auto generateStart = sys_clock::now();
 
-	alx::Generator generator(ast->Children());
+	alx::Generator generator(ast->Children()); 
+	
+	try {
 	auto nasm = generator.Generate();
+	} catch (std::runtime_error&) {
+		alx::println(alx::Colour::LightRed, "Something went wrong when generating assembly. AST:");
+		ast->PrintNode(0);
+		return 1;
+	} 
 
 	{
 		const seconds duration = sys_clock::now() - generateStart;

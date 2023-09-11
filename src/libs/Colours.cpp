@@ -3,6 +3,7 @@
 namespace alx {
 
 Colour Colour::Red = Colour(255, 0, 0);
+Colour Colour::LightRed = Colour(255, 116, 116);
 Colour Colour::Green = Colour(0, 255, 0);
 Colour Colour::Blue = Colour(0, 0, 255);
 Colour Colour::Yellow = Colour(255, 255, 0);
