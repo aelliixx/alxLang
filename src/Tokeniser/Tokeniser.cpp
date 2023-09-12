@@ -33,6 +33,12 @@ Tokeniser::Tokeniser(std::string source) : m_source(std::move(source))
 	// Values
 	m_keywords["true"] = TokenType::T_TRUE;
 	m_keywords["false"] = TokenType::T_FALSE;
+	// Branching
+	m_keywords["if"] = TokenType::T_IF;
+	m_keywords["else"] = TokenType::T_ELSE;
+	m_keywords["while"] = TokenType::T_WHILE;
+	m_keywords["for"] = TokenType::T_FOR;
+	
 }
 std::vector<Token> Tokeniser::Tokenise()
 {
@@ -41,7 +47,13 @@ std::vector<Token> Tokeniser::Tokenise()
 		std::string buffer{};
 		// Is whitespace
 		while (is_space(peek().value()) || peek().value() == '\n')
+		{
+			if (peek().value() == '\n') {
+				++m_line_index;
+				m_column_index = 0;
+			}
 			consume();
+		}
 		// Is a keyword or an identifier
 		if (is_alpha(peek().value()))
 		{
@@ -51,10 +63,15 @@ std::vector<Token> Tokeniser::Tokenise()
 
 			if (m_keywords.contains(buffer))
 			{
-				m_tokens.emplace_back(m_keywords.find(buffer)->second);
+				std::string value = buffer;
+				if (buffer == "true")
+					value = "1";
+				else if (buffer == "false")
+					value = "0";
+				m_tokens.emplace_back(m_keywords.find(buffer)->second, value, m_line_index, m_column_index);
 				continue;
 			}
-			m_tokens.emplace_back(TokenType::T_IDENTIFIER, buffer);
+			m_tokens.emplace_back(TokenType::T_IDENTIFIER, buffer, m_line_index, m_column_index);
 			continue;
 		}
 		// Is a number
@@ -68,83 +85,89 @@ std::vector<Token> Tokeniser::Tokenise()
 
 			if (!is_number(buffer))
 			{
-				println(Colour::Red, "Unexpected token in '{}'", buffer);
+				println(Colour::Red, "Unexpected token in '{}', at line: {}, position: {}", buffer, m_line_index, m_column_index);
 				exit(EXIT_FAILURE);
 			}
 			if (is_integer(buffer))
 			{
-				m_tokens.emplace_back(TokenType::T_INT_L, buffer);
+				m_tokens.emplace_back(TokenType::T_INT_L, buffer, m_line_index, m_column_index);
 				continue;
 			}
 			else if (is_float(buffer))
 			{
-				m_tokens.emplace_back(TokenType::T_FLOAT_L, buffer);
+				m_tokens.emplace_back(TokenType::T_FLOAT_L, buffer, m_line_index, m_column_index);
 				continue;
 			}
 			else if (is_double(buffer))
 			{
-				m_tokens.emplace_back(TokenType::T_DOUBLE_L, buffer);
+				m_tokens.emplace_back(TokenType::T_DOUBLE_L, buffer, m_line_index, m_column_index);
 				continue;
 			}
+		}
+		if (peek().value() == ',')
+		{
+			consume();
+			m_tokens.emplace_back(TokenType::T_COMMA, m_line_index, m_column_index);
+			continue;
 		}
 		if (peek().value() == '(')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_OPEN_PAREN);
+			m_tokens.emplace_back(TokenType::T_OPEN_PAREN, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == ')')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_CLOSE_PAREN);
+			m_tokens.emplace_back(TokenType::T_CLOSE_PAREN, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '{')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_CURLY_OPEN);
+			m_tokens.emplace_back(TokenType::T_CURLY_OPEN, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '}')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_CURLY_CLOSE);
+			m_tokens.emplace_back(TokenType::T_CURLY_CLOSE, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '=')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_EQ);
+			m_tokens.emplace_back(TokenType::T_EQ, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == ';')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_SEMI);
+			m_tokens.emplace_back(TokenType::T_SEMI, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '+')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_PLUS);
+			m_tokens.emplace_back(TokenType::T_PLUS, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '-')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_MINUS);
+			m_tokens.emplace_back(TokenType::T_MINUS, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '*')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_STAR);
+			m_tokens.emplace_back(TokenType::T_STAR, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '^')
 		{
 			consume();
-			m_tokens.emplace_back(TokenType::T_POW);
+			m_tokens.emplace_back(TokenType::T_POW, m_line_index, m_column_index);
 			continue;
 		}
 		if (peek().value() == '/')
@@ -155,7 +178,7 @@ std::vector<Token> Tokeniser::Tokenise()
 				continue;
 			}
 			consume();
-			m_tokens.emplace_back(TokenType::T_FWD_SLASH);
+			m_tokens.emplace_back(TokenType::T_FWD_SLASH, m_line_index, m_column_index);
 			continue;
 		}
 		error("Undefined token {} at ", buffer);
@@ -220,6 +243,7 @@ std::optional<char> Tokeniser::peek(int ahead) const
 char Tokeniser::consume()
 {
 	auto c = m_source.at(m_index);
+	++m_column_index;
 	++m_index;
 	return c;
 }

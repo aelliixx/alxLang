@@ -15,6 +15,7 @@
 #include <variant>
 #include "../Tokeniser/Tokeniser.h"
 #include "Types.h"
+#include "../libs/Println.h"
 
 namespace alx {
 
@@ -34,13 +35,12 @@ class Expression : public ASTNode
 public:
 	[[nodiscard]] std::string class_name() const override { return "Expression"; }
 	[[maybe_unused]] void PrintNode(int indent) const override;
-
 };
 
 class ScopeNode : public ASTNode
 {
-	std::vector<std::unique_ptr<ASTNode>> m_children;
 protected:
+	std::vector<std::unique_ptr<ASTNode>> m_children;
 	[[maybe_unused]] static void dump_nodes(const std::vector<std::unique_ptr<ASTNode>>&, int indent);
 	ScopeNode() = default;
 public:
@@ -72,9 +72,9 @@ public:
 class BlockStatement : public ScopeNode
 {
 	[[nodiscard]] std::string class_name() const override { return "BlockStatement"; }
-	[[maybe_unused]] void PrintNode(int indent) const override;
 
 public:
+	[[maybe_unused]] void PrintNode(int indent) const override;
 	BlockStatement() = default;
 };
 
@@ -105,12 +105,18 @@ class NumberLiteral : public Expression
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	NumberLiteral(TokenType type, std::string  value)
+	NumberLiteral(TokenType type, std::string value)
 		: m_type(type),
 		  m_value(std::move(value)) {}
 
 	[[nodiscard]] TokenType Type() const { return m_type; }
 	[[nodiscard]] const std::string& Value() const { return m_value; }
+	[[nodiscard]] int AsInt() const { return std::stoi(m_value); }
+	[[nodiscard]] std::string AsBool() const
+	{
+		if (AsInt()) return "true";
+		return "false";
+	}
 };
 
 class StringLiteral : public Expression
@@ -184,6 +190,40 @@ public:
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] Expression* Value() const { return m_value.get(); }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
+	[[nodiscard]] std::string TypeName() const { return token_to_string(m_type); }
+};
+
+class IfStatement : public ScopeNode
+{
+	[[nodiscard]] std::string class_name() const override { return "IfStatement"; }
+	std::unique_ptr<Expression> m_condition;
+	std::unique_ptr<BlockStatement> m_body;
+	std::optional<std::unique_ptr<ScopeNode>> m_alternate; // This can be a block statement or another if statement
+public:
+	[[maybe_unused]] void PrintNode(int indent) const override;
+
+	IfStatement(std::unique_ptr<Expression> expression,
+				std::unique_ptr<BlockStatement> body)
+		: m_condition(std::move(expression)),
+		  m_body(std::move(body)) {}
+
+//	explicit IfStatement(std::unique_ptr<Expression> expression)
+//		: m_condition(std::move(expression)) {}
+
+	void SetCondition(const Expression& expression)
+	{
+		m_condition = std::make_unique<Expression>(expression);
+	}
+	void SetAlternate(std::unique_ptr<ScopeNode> alternate)
+	{
+		m_alternate = std::move(alternate);
+	}
+
+	[[nodiscard]] Expression* Condition() const { return m_condition.get(); }
+	[[nodiscard]] const std::optional<std::unique_ptr<ScopeNode>>& Alternate() const { return m_alternate; }
+	[[nodiscard]] bool HasAlternate() const { return m_alternate.has_value(); }
+	[[nodiscard]] ScopeNode* GetAlternate() const { return m_alternate.value().get(); }
+	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
 };
 
 class FunctionDeclaration : public ASTNode
@@ -192,21 +232,25 @@ class FunctionDeclaration : public ASTNode
 
 	TokenType m_return_type;
 	std::unique_ptr<Identifier> m_identifier;
-	std::vector<VariableDeclaration> m_arguments;
-	std::unique_ptr<ScopeNode> m_body;
+	std::vector<std::unique_ptr<VariableDeclaration>> m_arguments;
+	std::unique_ptr<BlockStatement> m_body;
 
 public:
-	explicit FunctionDeclaration(TokenType return_type,
-								 std::unique_ptr<Identifier> name,
-								 std::unique_ptr<ScopeNode> body)
+	FunctionDeclaration(TokenType return_type,
+						std::unique_ptr<Identifier> name,
+						std::unique_ptr<BlockStatement> body,
+						std::vector<std::unique_ptr<VariableDeclaration>> args)
 		: m_return_type(return_type),
 		  m_identifier(std::move(name)),
-		  m_body(std::move(body)) {}
+		  m_body(std::move(body)),
+		  m_arguments(std::move(args)) {}
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
-	[[nodiscard]] const ScopeNode& Body() const { return *m_body; }
+	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
+	[[nodiscard]] const std::vector<std::unique_ptr<VariableDeclaration>>& Arguments() const { return m_arguments; }
+	[[nodiscard]] size_t Argc() const { return m_arguments.size(); }
 };
 
 class ReturnStatement : public ASTNode

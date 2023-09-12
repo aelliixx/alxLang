@@ -9,98 +9,30 @@
 #include <algorithm>
 #include <regex>
 #include "../../libs/Println.h"
-#include "Generator.h"
+#include "BlockGenerator.h"
 #include "../../libs/Utils.h"
 
 namespace alx {
 
-std::string Generator::Generate()
+void BlockGenerator::GenerateBlock()
 {
-	init();
-	for (const auto& node : m_ast)
-	{
-		if (node->class_name() == "FunctionDeclaration")
-		{
-			const auto& func = reinterpret_cast<FunctionDeclaration*>(node.get());
-			m_asm << "\n";
-			m_asm << func->Name() << ":\n";
-			// Set up the stack frame
-			m_asm << "push rbp\n";
-			m_asm << "mov rbp, rsp\n";
-			generate_block(func->Body());
-			if (func->Name() == "main" && m_implicit_return)
-			{
-				m_asm << "xor eax, eax\n";
-				m_asm << "pop rbp\n";
-				m_asm << "ret\n";
-			}
-		}
-	}
-	return m_asm.str();
-}
-
-void Generator::init()
-{
-
-	m_asm << "global _start\n";
-	// Set up .bss section
-	m_asm << "section .bss\n";
-	// Set up .data section
-	m_asm << "section .data\n";
-	// Set up .text section
-	m_asm << "section .text\n";
-	m_asm << "\n";
-
-	// Find main()
-	auto main_it = std::find_if(m_ast.begin(), m_ast.end(), [&](const std::unique_ptr<ASTNode>& node)
-	{
-	  return node->class_name() == "FunctionDeclaration"
-		  && dynamic_cast<FunctionDeclaration*>(node.get())->Name() == "main";
-	});
-	if (main_it == m_ast.end())
-		error("No entry point 'main'");
-
-	auto main = dynamic_cast<FunctionDeclaration*>(main_it->get());
-
-	// Create _start
-	m_asm << "_start:\n";
-	m_asm << "xor ebp, ebp\n";
-	// Call main
-	m_asm << "call main\n";
-	// Exit with main return
-	m_asm << "mov rdi, rax\n";
-	m_asm << "mov rax, 60\n";
-	m_asm << "syscall\n";
-
-
-
-	// Find return statement in main()
-	auto return_it = std::find_if(main->Body().Children().begin(),
-								  main->Body().Children().end(),
-								  [&](const std::unique_ptr<ASTNode>& node)
-								  {
-									return node->class_name() == "ReturnStatement";
-								  });
-
-	if (return_it == main->Body().Children().end())
-		m_implicit_return = true;
-}
-
-void Generator::generate_block(const ScopeNode& block)
-{
-	for (const auto& node : block.Children())
+	for (const auto& node : m_block_ast.Children())
 	{
 		auto node_name = node->class_name();
 		if (node_name == "VariableDeclaration")
 			generate_variables(node);
-		if (node_name == "ReturnStatement")
+		else if (node_name == "ReturnStatement")
 			generate_return_statement(node);
-		if (node_name == "BinaryExpression")
+		else if (node_name == "BinaryExpression")
 			generate_binary_expression(node.get());
+		else if (node_name == "IfStatement")
+			generate_if_statement(node);
+		else
+			error("Codegen error: Unexpected node '{}'", node_name);
 	}
 }
 
-void Generator::generate_return_statement(const std::unique_ptr<ASTNode>& node)
+void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& node)
 {
 	auto ret = dynamic_cast<ReturnStatement*>(node.get());
 	auto arg = ret->Argument();
@@ -145,21 +77,21 @@ void Generator::generate_return_statement(const std::unique_ptr<ASTNode>& node)
 	m_asm << "ret\n";
 }
 
-void Generator::add_to_stack(VariableDeclaration* var, size_t ptr)
+void BlockGenerator::add_to_stack(VariableDeclaration* var, size_t ptr)
 {
 	// FIXME: Align the stack
-	auto offset = ptr != 0 ? m_type_size[var->Type()] : 0;
+	auto offset = ptr != 0 ? size_of(var->Type()) : 0;
 	align_stack(offset);
 
-	bp += ptr != 0 ? m_type_size[var->Type()] : 0;
+	bp += ptr != 0 ? size_of(var->Type()) : 0;
 	m_stack[var->Ident().Name()] = { var, bp };
 }
 
-void Generator::add_to_stack(const std::string& name, Expression* value)
+void BlockGenerator::add_to_stack(const std::string& name, Expression* value)
 {
 	if (m_stack.find(name) != m_stack.end())
 	{
-		auto size = m_type_size[m_stack[name].first->Type()];
+		auto size = size_of(m_stack[name].first->Type());
 		if (!m_stack[name].first->Value()) // If the value is uninitialised, initialise it
 		{
 			align_stack(size);
@@ -172,26 +104,26 @@ void Generator::add_to_stack(const std::string& name, Expression* value)
 	ASSERT_NOT_REACHABLE();
 }
 
-void Generator::align_stack(size_t offset)
+void BlockGenerator::align_stack(size_t offset)
 {
 	if (offset == 0) return;
 	while ((bp + offset) % offset != 0)
 		++bp;
 }
 
-void Generator::push(const std::string& reg)
+void BlockGenerator::push(const std::string& reg)
 {
 	sp += 8;
 	m_asm << "push " << reg << "\n";
 }
 
-void Generator::pop(const std::string& reg)
+void BlockGenerator::pop(const std::string& reg)
 {
 	sp -= 8;
 	m_asm << "pop " << reg << "\n";
 }
 
-std::string Generator::bytes_to_data_size(size_t bytes)
+std::string BlockGenerator::bytes_to_data_size(size_t bytes)
 {
 	switch (bytes)
 	{
@@ -208,7 +140,7 @@ std::string Generator::bytes_to_data_size(size_t bytes)
 	}
 }
 
-void Generator::throw_not_assignable(const Expression* lhs, const Expression* rhs, TokenType op)
+void BlockGenerator::throw_not_assignable(const Expression* lhs, const Expression* rhs, TokenType op)
 {
 	if (rhs->class_name() == "NumberLiteral")
 		error("Expression '{} {} {}' is not assignable",
@@ -222,11 +154,11 @@ void Generator::throw_not_assignable(const Expression* lhs, const Expression* rh
 			  dynamic_cast<const Identifier*>(rhs)->Name());
 }
 
-std::string Generator::mov(Generator::Reg dest,
-						   size_t src_size,
-						   const std::string& src,
-						   size_t dest_size,
-						   bool is_unsigned)
+std::string BlockGenerator::mov(BlockGenerator::Reg dest,
+								size_t src_size,
+								const std::string& src,
+								size_t dest_size,
+								bool is_unsigned)
 {
 	std::stringstream code;
 	if (dest_size == 0)
@@ -242,18 +174,18 @@ std::string Generator::mov(Generator::Reg dest,
 	return code.str();
 }
 
-std::string Generator::mov(Generator::Reg dest, Generator::Reg src, size_t src_size, bool sign)
+std::string BlockGenerator::mov(BlockGenerator::Reg dest, BlockGenerator::Reg src, size_t src_size, bool sign)
 {
 	std::stringstream code;
 	code << "mov " << reg(dest, src_size) << ", " << reg(src, src_size) << "\n";
 	return code.str();
 }
 
-std::string Generator::mov(const std::string& dest,
-						   size_t src_size,
-						   Generator::Reg src,
-						   size_t dest_size,
-						   bool is_unsigned)
+std::string BlockGenerator::mov(const std::string& dest,
+								size_t src_size,
+								BlockGenerator::Reg src,
+								size_t dest_size,
+								bool is_unsigned)
 {
 	std::stringstream code;
 	if (dest_size == 0)
@@ -265,11 +197,11 @@ std::string Generator::mov(const std::string& dest,
 	return code.str();
 }
 
-std::string Generator::mov(const std::string& dest,
-						   size_t src_size,
-						   const std::string& src,
-						   size_t dest_size,
-						   bool is_unsigned)
+std::string BlockGenerator::mov(const std::string& dest,
+								size_t src_size,
+								const std::string& src,
+								size_t dest_size,
+								bool is_unsigned)
 {
 	std::stringstream code;
 	if (dest_size == 0)
@@ -278,7 +210,7 @@ std::string Generator::mov(const std::string& dest,
 	return code.str();
 }
 
-std::string Generator::offset(size_t offset, Generator::Reg base, size_t reg_size, bool positive)
+std::string BlockGenerator::offset(size_t offset, BlockGenerator::Reg base, size_t reg_size, bool positive)
 {
 
 	std::stringstream code;
@@ -286,7 +218,7 @@ std::string Generator::offset(size_t offset, Generator::Reg base, size_t reg_siz
 	return code.str();
 }
 
-std::string Generator::reg(Generator::Reg reg, size_t bytes)
+std::string BlockGenerator::reg(BlockGenerator::Reg reg, size_t bytes)
 {
 	switch (reg)
 	{
@@ -328,10 +260,20 @@ std::string Generator::reg(Generator::Reg reg, size_t bytes)
 
 }
 
-void Generator::assert_ident_declared(const Identifier* lhs_id)
+void BlockGenerator::assert_ident_declared(const Identifier* lhs_id)
 {
 	if (m_stack.find(lhs_id->Name()) == m_stack.end())
 		error("Use of undeclared identifier '{}'", lhs_id->Name());
+}
+std::string BlockGenerator::generate_local_label(IfStatement* statement)
+{
+	if (!m_local_labels.contains(statement))
+	{
+		std::stringstream label;
+		label << ".L" << m_label_index;
+		m_local_labels[statement] = label.str();
+	}
+	return m_local_labels[statement];
 }
 
 } // alx

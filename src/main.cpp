@@ -7,16 +7,22 @@
 #include <chrono>
 #include <libs/Println.h>
 #include <Tokeniser/Tokeniser.h>
-#include "Codegen/x86_64_linux/Generator.h"
+#include "Codegen/x86_64_linux/ProgramGenerator.h"
 
 // TODO:
 // 	- Implement a call expression
-//  - Have a new m_stack for each stack frame
-//    -> Have a new class for generating each block statement which contains the m_stack 
+// 	- Implement else and else if; proper label generator
+// 	- Fix an early return still generating a main return
 // 	- Match function return type and actual return type
 // 	- Properly initialise the stack frame (look into it)
 // 	- Implement an exponent operator
 // 	- Profile the parsing stage
+
+// TODO: Turing completeness
+//  - [x] Maths ops
+//  - [ ] Conditional logic (if, else if, else)
+//  - [ ] Looping
+//  - [ ] Dynamic memory allocation
 
 using sys_clock = std::chrono::system_clock;
 using seconds = std::chrono::duration<double>;
@@ -70,7 +76,7 @@ int main(int argc, const char** argv)
 
 	const auto generateStart = sys_clock::now();
 
-	alx::Generator generator(ast->Children()); 
+	alx::ProgramGenerator generator(ast->Children()); 
 	
 	try {
 	auto nasm = generator.Generate();

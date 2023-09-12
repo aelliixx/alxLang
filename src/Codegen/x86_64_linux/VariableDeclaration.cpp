@@ -7,14 +7,14 @@
 //
 
 #include "../../libs/Utils.h"
-#include "Generator.h"
+#include "BlockGenerator.h"
 #include "../../libs/Println.h"
 
 namespace alx {
 
-void Generator::generate_variables(const std::unique_ptr<ASTNode>& node)
+void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 {
-	auto lhs = reinterpret_cast<VariableDeclaration*>(node.get());
+	auto lhs = dynamic_cast<VariableDeclaration*>(node.get());
 	auto lhs_type = lhs->Type();
 	if (!lhs->Value())
 	{
@@ -27,7 +27,7 @@ void Generator::generate_variables(const std::unique_ptr<ASTNode>& node)
 	{
 		auto rhs = dynamic_cast<NumberLiteral*>(lhs->Value());
 		add_to_stack(lhs); // Increment bp
-		m_asm << mov(offset(bp), m_type_size[lhs_type], rhs->Value());
+		m_asm << mov(offset(bp), size_of(lhs_type), rhs->Value());
 		return;
 	}
 	else if (lhs->Value()->class_name() == "Identifier")
@@ -45,12 +45,12 @@ void Generator::generate_variables(const std::unique_ptr<ASTNode>& node)
 		auto rhs = dynamic_cast<BinaryExpression*>(lhs->Value());
 		if (rhs->Constexpr())
 		{
-			m_asm << mov(offset(bp), m_type_size[lhs_type], rhs->Evaluate()->Value());
+			m_asm << mov(offset(bp), size_of(lhs_type), rhs->Evaluate()->Value());
 			return;
 		}
-		Context context = { .lhs_size = m_type_size[lhs_type] };
+		Context context = { .lhs_size = size_of(lhs_type) };
 		generate_binary_expression(lhs->Value(), context);
-		m_asm << mov(offset(lhs_ptr), m_type_size[lhs_type], reg(Reg::rax, m_type_size[lhs_type]));
+		m_asm << mov(offset(lhs_ptr), size_of(lhs_type), reg(Reg::rax, size_of(lhs_type)));
 		return;
 	}
 

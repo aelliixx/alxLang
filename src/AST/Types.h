@@ -8,6 +8,8 @@
 
 #pragma once
 #include <cassert>
+#include "../libs/Utils.h"
+
 namespace alx {
 
 enum class TokenType
@@ -24,9 +26,40 @@ enum class TokenType
 	T_PLUS, T_MINUS, T_STAR, T_FWD_SLASH, T_POW, T_LT, T_GT, T_LTE, T_GTE, T_EQ,
 	T_MOD, T_INT_DIV, T_EQEQ,
 	// Maths ops
-	T_SUB, T_ADD, T_ADD_EQ, T_SUB_EQ, T_MULT_EQ, T_DIV_EQ, T_MOD_EQ, T_POW_EQ
+	T_SUB, T_ADD, T_ADD_EQ, T_SUB_EQ, T_MULT_EQ, T_DIV_EQ, T_MOD_EQ, T_POW_EQ,
+	// Branching
+	T_IF, T_ELSE, T_FOR, T_WHILE
 
 };
+
+static size_t size_of(TokenType token) {
+	switch (token) {
+
+	case TokenType::T_BOOL:
+	case TokenType::T_CHAR:
+	case TokenType::T_CHAR_L:
+	case TokenType::T_TRUE:
+	case TokenType::T_FALSE:
+		return 1;
+	case TokenType::T_SHORT:
+		return 2;
+	case TokenType::T_INT:
+	case TokenType::T_FLOAT:
+	case TokenType::T_INT_L:
+	case TokenType::T_FLOAT_L:
+		return 4;
+	case TokenType::T_LONG:
+	case TokenType::T_DOUBLE:
+	case TokenType::T_DOUBLE_L:
+		return 8;		
+	case TokenType::T_VOID:
+	case TokenType::T_STRING:
+	case TokenType::T_STR_L:
+		ASSERT_NOT_IMPLEMENTED();
+	default:
+		ASSERT_NOT_REACHABLE();
+	}
+}
 
 static TokenType literal_to_type(TokenType literal)
 {
@@ -63,15 +96,12 @@ static bool is_binary_op(TokenType type)
 		type == TokenType::T_EQ || type == TokenType::T_MOD || type == TokenType::T_INT_DIV ||
 		type == TokenType::T_EQEQ;
 }
-
 static bool is_literal_assignable(TokenType lhs, TokenType rhs)
 {
 	switch (lhs)
 	{
 	case TokenType::T_SHORT:
-		return rhs == TokenType::T_INT_L;
 	case TokenType::T_LONG:
-		return rhs == TokenType::T_INT_L;
 	case TokenType::T_INT:
 		return rhs == TokenType::T_INT_L;
 	case TokenType::T_FLOAT:
@@ -94,5 +124,11 @@ static bool is_number_type(TokenType type)
 	return type == TokenType::T_INT || type == TokenType::T_FLOAT || type == TokenType::T_DOUBLE ||
 		type == TokenType::T_CHAR || type == TokenType::T_BOOL || type == TokenType::T_LONG ||
 		type == TokenType::T_SHORT;
+}
+
+static bool is_number_literal(TokenType type)
+{
+	return type == TokenType::T_INT_L || type == TokenType::T_FLOAT_L || type == TokenType::T_DOUBLE_L ||
+		type == TokenType::T_CHAR_L || type == TokenType::T_TRUE || type == TokenType::T_FALSE;
 }
 }

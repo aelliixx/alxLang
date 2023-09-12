@@ -61,7 +61,7 @@ void NumberLiteral::PrintNode(int indent) const
 	case TokenType::T_FALSE:
 	case TokenType::T_TRUE:
 		println("{>}type: {}", indent + 2, "bool");
-		println("{>}value: {}", indent + 2, m_value);
+		println("{>}value: {}", indent + 2, AsBool());
 		break;
 	default:
 		assert(false && "Invalid literal type");
@@ -99,7 +99,7 @@ void VariableDeclaration::PrintNode(int indent) const
 	default:
 		assert(false && "Invalid literal type");
 	}
-	m_identifier->PrintNode(indent + 2);
+	println("{>}identifier: {}", indent + 2, m_identifier->Name());
 	println("{>}value:", indent + 2);
 	if (m_value)
 		m_value->PrintNode(indent + 4);
@@ -179,6 +179,23 @@ void Expression::PrintNode(int indent) const
 
 }
 
+void IfStatement::PrintNode(int indent) const
+{
+	println("{>}IfStatement: {", indent);
+	println("{>}condition:", indent + 2);
+	m_condition->PrintNode(indent + 4);
+	println("{>}body:", indent + 2);
+	println("{>}BlockStatement: {", indent + 4);
+	ScopeNode::PrintNode(indent + 6);
+	if (HasAlternate())
+	{
+		println("{>}alternate:", indent + 2);
+		m_alternate.value()->PrintNode(indent + 4);
+	}
+	println("{>}}", indent);
+
+}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
 std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
@@ -186,58 +203,58 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 	assert(m_constexpr && "Cannot evaluate non constant binary expressions");
 	auto add = [this](TokenType lhs, const std::string& lhs_val, const std::string& rhs_val)
 	{
-		// FIXME: Add evaluation for doubles and floats
-		std::string res;
-		switch (m_binaryOp)
-		{
-		case TokenType::T_PLUS:
-			res = std::to_string(std::stol(lhs_val) + std::stol(rhs_val));
-			break;
-		case TokenType::T_MINUS:
-			res = std::to_string(std::stol(lhs_val) - std::stol(rhs_val));
-			break;
-		case TokenType::T_STAR:
-			res = std::to_string(std::stol(lhs_val) * std::stol(rhs_val));
-			break;
-		case TokenType::T_FWD_SLASH:
-			res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
-			break;
-		case TokenType::T_POW:
-			res = std::to_string((long)(std::pow(std::stol(lhs_val), std::stol(rhs_val))));
-			break;
-		case TokenType::T_LT:
-			res = std::to_string(std::stol(lhs_val) < std::stol(rhs_val));
-			break;
-		case TokenType::T_GT:
-			res = std::to_string(std::stol(lhs_val) > std::stol(rhs_val));
-			break;
-		case TokenType::T_LTE:
-			res = std::to_string(std::stol(lhs_val) <= std::stol(rhs_val));
-			break;
-		case TokenType::T_GTE:
-			res = std::to_string(std::stol(lhs_val) >= std::stol(rhs_val));
-			break;
-		case TokenType::T_MOD:
-			res = std::to_string(std::stol(lhs_val) % std::stol(rhs_val));
-			break;
-		case TokenType::T_INT_DIV:
-			res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
-		case TokenType::T_EQEQ:
-		case TokenType::T_SUB:
-		case TokenType::T_ADD:
-		case TokenType::T_ADD_EQ:
-		case TokenType::T_SUB_EQ:
-		case TokenType::T_MULT_EQ:
-		case TokenType::T_DIV_EQ:
-		case TokenType::T_MOD_EQ:
-		case TokenType::T_POW_EQ:
-		ASSERT_NOT_IMPLEMENTED();
-		default:
-		ASSERT_NOT_REACHABLE();
-		}
+	  // FIXME: Add evaluation for doubles and floats
+	  std::string res;
+	  switch (m_binaryOp)
+	  {
+	  case TokenType::T_PLUS:
+		  res = std::to_string(std::stol(lhs_val) + std::stol(rhs_val));
+		  break;
+	  case TokenType::T_MINUS:
+		  res = std::to_string(std::stol(lhs_val) - std::stol(rhs_val));
+		  break;
+	  case TokenType::T_STAR:
+		  res = std::to_string(std::stol(lhs_val) * std::stol(rhs_val));
+		  break;
+	  case TokenType::T_FWD_SLASH:
+		  res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
+		  break;
+	  case TokenType::T_POW:
+		  res = std::to_string((long)(std::pow(std::stol(lhs_val), std::stol(rhs_val))));
+		  break;
+	  case TokenType::T_LT:
+		  res = std::to_string(std::stol(lhs_val) < std::stol(rhs_val));
+		  break;
+	  case TokenType::T_GT:
+		  res = std::to_string(std::stol(lhs_val) > std::stol(rhs_val));
+		  break;
+	  case TokenType::T_LTE:
+		  res = std::to_string(std::stol(lhs_val) <= std::stol(rhs_val));
+		  break;
+	  case TokenType::T_GTE:
+		  res = std::to_string(std::stol(lhs_val) >= std::stol(rhs_val));
+		  break;
+	  case TokenType::T_MOD:
+		  res = std::to_string(std::stol(lhs_val) % std::stol(rhs_val));
+		  break;
+	  case TokenType::T_INT_DIV:
+		  res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
+	  case TokenType::T_EQEQ:
+	  case TokenType::T_SUB:
+	  case TokenType::T_ADD:
+	  case TokenType::T_ADD_EQ:
+	  case TokenType::T_SUB_EQ:
+	  case TokenType::T_MULT_EQ:
+	  case TokenType::T_DIV_EQ:
+	  case TokenType::T_MOD_EQ:
+	  case TokenType::T_POW_EQ:
+	  ASSERT_NOT_IMPLEMENTED();
+	  default:
+	  ASSERT_NOT_REACHABLE();
+	  }
 	  return res;
 	};
-	
+
 	BinaryExpression* binaryExpression;
 
 	if (m_lhs->class_name() == "BinaryExpression")
@@ -273,8 +290,9 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_
 		m_constexpr = true;
 	else if (m_lhs->class_name() == "BinaryExpression" && m_rhs->class_name() == "NumberLiteral")
 		m_constexpr = dynamic_cast<BinaryExpression*>(m_lhs.get())->m_constexpr;
-	
+
 	m_operands_match = m_lhs->class_name() == m_rhs->class_name() && m_rhs->class_name() == "Identifier";
-		
+
 }
+
 }

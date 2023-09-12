@@ -37,12 +37,18 @@ int Parser::get_binary_op_precedence(const Token& token)
 
 std::unique_ptr<Program> Parser::Parse()
 {
+	try {
 	while (peek().has_value())
 	{
 		auto type = peek().value().Type;
 		m_program->Append(parse_statement());
+		return std::move(m_program);
 	}
-	return std::move(m_program);
+	} catch (std::runtime_error& err) {
+		println(Colour::LightRed, "Something went wrong when building AST. Current AST:");
+		m_program->PrintNode(0);
+		exit(1);
+	}
 }
 
 std::unique_ptr<Expression> Parser::parse_expression()
@@ -82,9 +88,12 @@ std::unique_ptr<Expression> Parser::parse_term()
 		return expr;
 	}
 	default:
-		error("Unexpected token '{}'", token_to_string(token->Type));
+		error("Unexpected token '{}' at line: {}, position: {}",
+			  token_to_string(token->Type),
+			  token->LineNumber,
+			  token->ColumnNumber);
 	}
-	exit(EXIT_FAILURE);
+	ASSERT_NOT_REACHABLE();
 }
 
 std::optional<Token> Parser::peek(int ahead)
@@ -114,8 +123,17 @@ Token Parser::must_consume(TokenType token)
 	{
 		return tok.value();
 	}
-	error("Expected token '{}'", token_to_string(token)); // TODO: Add line context
+	error("Expected token '{}' after '{}' at line: {}, position: {}",
+		  token_to_string(token),
+		  token_to_string(peek(-1).value().Type),
+		  peek(-1).value().LineNumber,
+		  peek(-1).value().ColumnNumber);
 	exit(EXIT_FAILURE);
+}
+void Parser::consume_semicolon(const std::unique_ptr<ASTNode>& statement)
+{
+	if (statement->class_name() != "IfStatement")
+		must_consume(TokenType::T_SEMI);
 }
 
 }

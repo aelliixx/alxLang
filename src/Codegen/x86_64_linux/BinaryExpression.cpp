@@ -8,13 +8,13 @@
 // Created by aelliixx on 2023-09-09.
 //
 
-#include "Generator.h"
+#include "BlockGenerator.h"
 #include "../../libs/Println.h"
 #include "../../libs/Utils.h"
 
 namespace alx {
 
-void Generator::generate_binary_expression(const ASTNode* node, std::optional<Context> context)
+void BlockGenerator::generate_binary_expression(const ASTNode* node, std::optional<Context> context)
 {
 	auto expr = dynamic_cast<const BinaryExpression*>(node);
 	auto lhs = expr->LHS();
@@ -32,7 +32,7 @@ void Generator::generate_binary_expression(const ASTNode* node, std::optional<Co
 		assert_ident_declared(lhs_id);
 
 		auto lhs_type = m_stack.at(lhs_id->Name()).first->Type();
-		auto lhs_size = m_type_size[lhs_type];
+		auto lhs_size = size_of(lhs_type);
 		auto lhs_ptr = m_stack[lhs_id->Name()].second;
 
 		if (rhs->class_name() == "Identifier") // a + b
@@ -90,12 +90,12 @@ void Generator::generate_binary_expression(const ASTNode* node, std::optional<Co
 	if (lhs->class_name() == "NumberLiteral")
 	{
 		auto lhs_num = dynamic_cast<NumberLiteral*>(lhs);
-		auto lhs_size = m_type_size[lhs_num->Type()];
+		auto lhs_size = size_of(lhs_num->Type());
 
 		if (rhs->class_name() == "Identifier") // 5 + a
 		{
 			auto rhs_id = dynamic_cast<Identifier*>(rhs);
-			auto rhs_size = m_type_size[m_stack[rhs_id->Name()].first->Type()];
+			auto rhs_size = size_of(m_stack[rhs_id->Name()].first->Type());
 			assert_ident_declared(rhs_id);
 			auto rhs_ptr = m_stack[rhs_id->Name()].second;
 			m_asm << mov(Reg::rax, rhs_size, lhs_num->Value());
@@ -192,13 +192,13 @@ void Generator::generate_binary_expression(const ASTNode* node, std::optional<Co
 	}
 	ASSERT_NOT_REACHABLE();
 }
-void Generator::generate_assign_num_l(size_t lhs_size, const NumberLiteral* rhs_id)
+void BlockGenerator::generate_assign_num_l(size_t lhs_size, const NumberLiteral* rhs_id)
 {
 	m_asm << "mov " << bytes_to_data_size(lhs_size) << " [rbp-" << bp << "], " << rhs_id->Value() << "\n";
 }
 
-void Generator::generate_assignment_ident(const Identifier* rhs_id,
-										  TokenType lhs_type)
+void BlockGenerator::generate_assignment_ident(const Identifier* rhs_id,
+											   TokenType lhs_type)
 {
 	// - Check if the rhs has been initialised
 	if (!m_stack.at(rhs_id->Name()).first->Value())
@@ -206,19 +206,19 @@ void Generator::generate_assignment_ident(const Identifier* rhs_id,
 	// - Get underlying types, type sizes, whether the value we're trying to assign is unsigned (and therefore
 	//	 we should extend the value)
 	auto rhs_type = m_stack.at(rhs_id->Name()).first->Type();
-	auto rhs_size = m_type_size[rhs_type];
+	auto rhs_size = size_of(rhs_type);
 	auto rhs_unsigned = is_unsigned(rhs_type);
 	auto rhs_ptr_offset = m_stack.at(rhs_id->Name()).second;
-	auto lhs_size = m_type_size[lhs_type];
+	auto lhs_size = size_of(lhs_type);
 
 	m_asm << mov(Reg::rax, rhs_size, offset(rhs_ptr_offset), lhs_size, rhs_unsigned);
 	m_asm << mov(offset(bp), lhs_size, Reg::rax);
 
-	if (m_type_size[lhs_type] < m_type_size[rhs_type])
+	if (size_of(lhs_type) < size_of(rhs_type))
 		warning("Narrowing conversion from {} to {}", token_to_string(rhs_type), token_to_string(lhs_type));
 }
 
-void Generator::generate_bin_eq(const ASTNode* node)
+void BlockGenerator::generate_bin_eq(const ASTNode* node)
 {
 	auto expr = dynamic_cast<const BinaryExpression*>(node);
 	auto lhs = expr->LHS();
@@ -232,7 +232,7 @@ void Generator::generate_bin_eq(const ASTNode* node)
 		assert_ident_declared(lhs_id);
 
 		auto lhs_type = m_stack.at(lhs_id->Name()).first->Type();
-		auto lhs_size = m_type_size[lhs_type];
+		auto lhs_size = size_of(lhs_type);
 		add_to_stack(lhs_id->Name(), rhs);
 
 		if (rhs->class_name() == "NumberLiteral")
@@ -270,7 +270,7 @@ void Generator::generate_bin_eq(const ASTNode* node)
 			throw_not_assignable(lhs_bin_exp->RHS(), rhs, op);
 		auto lhs_id = m_stack[dynamic_cast<Identifier*>(lhs_bin_exp->RHS())->Name()].first;
 		auto lhs_type = lhs_id->Type();
-		auto lhs_size = m_type_size[lhs_type];
+		auto lhs_size = size_of(lhs_type);
 
 		if (rhs->class_name() == "NumberLiteral")
 		{

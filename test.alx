@@ -1,0 +1,11 @@
+int main()
+{
+    bool maybe = false;
+    int a = 10;
+    if (maybe) {
+        a = a + 5;
+    } else {
+        a = a + 10;
+    }
+    return a;
+}

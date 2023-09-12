@@ -348,6 +348,14 @@ static std::string token_to_string(TokenType token)
 		return "long";
 	case TokenType::T_SHORT:
 		return "short";
+	case TokenType::T_IF:
+		return "if";
+	case TokenType::T_ELSE:
+		return "else";
+	case TokenType::T_FOR:
+		return "for";
+	case TokenType::T_WHILE:
+		return "while";
 	}
 	assert(false && "Not reachable");
 }

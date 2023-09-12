@@ -14,26 +14,35 @@
 
 namespace alx {
 
-
-
 struct Token
 {
-	explicit Token(TokenType type) : Type(type) {}
-	Token(TokenType type, std::optional<std::string> value) : Type(type), Value(std::move(value)) {}
+	explicit Token(TokenType type, size_t lineNum, size_t colNum)
+		: Type(type),
+		  LineNumber(lineNum),
+		  ColumnNumber(colNum - 1) {}
+	Token(TokenType type, std::optional<std::string> value, size_t lineNum, size_t colNum)
+		: Type(type),
+		  Value(std::move(value)),
+		  LineNumber(lineNum),
+		  ColumnNumber(colNum - 1) {}
 	TokenType Type;
 	std::optional<std::string> Value;
+	size_t LineNumber;
+	size_t ColumnNumber;
 };
 
 class Tokeniser
-{	
+{
 public:
 	explicit Tokeniser(std::string source);
 	[[nodiscard]] std::vector<Token> Tokenise();
-	
+
 private:
 
 	std::string m_source;
 	size_t m_index{};
+	size_t m_line_index{1};
+	size_t m_column_index{0};
 	std::vector<Token> m_tokens{};
 	std::map<std::string, TokenType> m_keywords;
 

@@ -7,6 +7,7 @@
 //
 
 #include "Parser.h"
+#include "../libs/Utils.h"
 
 namespace alx {
 std::unique_ptr<ASTNode> Parser::parse_statement()
@@ -38,6 +39,14 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 		return parse_function();
 	case TokenType::T_RET:
 		return parse_return_statement();
+	case TokenType::T_IF:
+		return parse_if_statement();
+	case TokenType::T_ELSE:
+		error("An 'else' statement must succeed an 'if' statement");
+	case TokenType::T_FOR:
+	ASSERT_NOT_IMPLEMENTED();
+	case TokenType::T_WHILE:
+	ASSERT_NOT_IMPLEMENTED();
 	default:
 		return parse_expression();
 	}
