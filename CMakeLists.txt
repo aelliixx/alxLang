@@ -16,8 +16,8 @@ add_library(Codegen src/Codegen/x86_64_linux/BlockGenerator.cpp
         src/Codegen/x86_64_linux/BinaryExpression.cpp
         src/Codegen/x86_64_linux/VariableDeclaration.cpp
         src/Codegen/x86_64_linux/ProgramGenerator.cpp
-        src/Codegen/x86_64_linux/ProgramGenerator.h
-        src/Codegen/x86_64_linux/IfStatement.cpp)
+        src/Codegen/x86_64_linux/IfStatement.cpp
+        src/Codegen/x86_64_linux/UnaryExpression.cpp)
 
 add_library(Parser src/Parser/Parser.cpp src/Parser/ParseFunction.cpp
         src/Parser/ParseVariable.cpp
@@ -25,7 +25,8 @@ add_library(Parser src/Parser/Parser.cpp src/Parser/ParseFunction.cpp
         src/Parser/ParseReturn.cpp
         src/Parser/ParseLiteral.cpp
         src/Parser/ParseBinaryExpression.cpp
-        src/Parser/ParseConditionalStatement.cpp)
+        src/Parser/ParseConditionalStatement.cpp
+        src/Parser/ParseUnaryExpression.cpp)
 
 set(SOURCE_FILES src/main.cpp)
 

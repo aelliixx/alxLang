@@ -32,6 +32,7 @@ class ProgramGenerator
 	std::vector<Stack> m_stack;
 	const std::vector<std::unique_ptr<ASTNode>>& m_ast{};
 	std::stringstream m_asm;
+	std::string m_asm_str;
 	bitness m_bitness = bitness::x86_64;
 	bool m_implicit_return = false;
 	
@@ -39,15 +40,18 @@ class ProgramGenerator
 	
 public:
 	explicit ProgramGenerator(const std::vector<std::unique_ptr<ASTNode>>& ast) : m_ast(ast) {}
-	[[nodiscard]] std::string Asm() const { return m_asm.str(); }
+	[[nodiscard]] std::string Asm() const { return m_asm_str; }
 	std::string Generate();
+	static std::string FormatAsm(const std::string& assembly); // TODO
 	
 private:
 	void init();
-	[[nodiscard]] std::string generate_func_label(const FunctionDeclaration& name); 
+	[[nodiscard]] std::string generate_func_label(const FunctionDeclaration& name);
+	
+	// Merges labels which are next to each other into one
+	void consolidate_labels();
 	
 	
-	void format_asm(); // TODO
 	
 };
 

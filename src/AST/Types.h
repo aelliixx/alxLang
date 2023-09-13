@@ -24,9 +24,9 @@ enum class TokenType
 	T_SQUARE_OPEN, T_SQUARE_CLOSE, T_COMMA,
 	// Binary operators
 	T_PLUS, T_MINUS, T_STAR, T_FWD_SLASH, T_POW, T_LT, T_GT, T_LTE, T_GTE, T_EQ,
-	T_MOD, T_INT_DIV, T_EQEQ,
+	T_MOD, T_INT_DIV, T_EQEQ, T_NOT_EQ,
 	// Maths ops
-	T_SUB, T_ADD, T_ADD_EQ, T_SUB_EQ, T_MULT_EQ, T_DIV_EQ, T_MOD_EQ, T_POW_EQ,
+	T_SUB, T_ADD, T_ADD_EQ, T_SUB_EQ, T_MULT_EQ, T_DIV_EQ, T_MOD_EQ, T_POW_EQ, T_NOT,
 	// Branching
 	T_IF, T_ELSE, T_FOR, T_WHILE
 
@@ -85,7 +85,7 @@ static TokenType literal_to_type(TokenType literal)
 
 static bool is_unsigned(TokenType type)
 {
-	return type == TokenType::T_BOOL;
+	return type == TokenType::T_BOOL || type == TokenType::T_TRUE || type == TokenType::T_FALSE;
 }
 
 static bool is_binary_op(TokenType type)
@@ -94,8 +94,14 @@ static bool is_binary_op(TokenType type)
 		type == TokenType::T_FWD_SLASH || type == TokenType::T_POW || type == TokenType::T_LT ||
 		type == TokenType::T_GT || type == TokenType::T_LTE || type == TokenType::T_GTE ||
 		type == TokenType::T_EQ || type == TokenType::T_MOD || type == TokenType::T_INT_DIV ||
-		type == TokenType::T_EQEQ;
+		type == TokenType::T_EQEQ || type == TokenType::T_NOT_EQ;
 }
+
+static bool is_unary_op(TokenType type) {
+	return type == TokenType::T_NOT || type == TokenType::T_MINUS || type == TokenType::T_PLUS ||
+		type == TokenType::T_SUB || type == TokenType::T_ADD;
+}
+
 static bool is_literal_assignable(TokenType lhs, TokenType rhs)
 {
 	switch (lhs)

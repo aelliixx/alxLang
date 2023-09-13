@@ -157,7 +157,7 @@ void BinaryExpression::PrintNode(int indent) const
 	println("{>}constexpr: {}", indent + 2, m_constexpr);
 	println("{>}lhs:", indent + 2);
 	m_lhs->PrintNode(indent + 4);
-	println("{>}operator: {}", indent + 2, token_to_string(m_binaryOp));
+	println("{>}operator: {}", indent + 2, token_to_string(m_binary_op));
 	println("{>}rhs:", indent + 2);
 	m_rhs->PrintNode(indent + 4);
 	println("{>}}", indent);
@@ -185,8 +185,7 @@ void IfStatement::PrintNode(int indent) const
 	println("{>}condition:", indent + 2);
 	m_condition->PrintNode(indent + 4);
 	println("{>}body:", indent + 2);
-	println("{>}BlockStatement: {", indent + 4);
-	ScopeNode::PrintNode(indent + 6);
+	m_body->PrintNode(indent + 4);
 	if (HasAlternate())
 	{
 		println("{>}alternate:", indent + 2);
@@ -205,7 +204,7 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 	{
 	  // FIXME: Add evaluation for doubles and floats
 	  std::string res;
-	  switch (m_binaryOp)
+	  switch (m_binary_op)
 	  {
 	  case TokenType::T_PLUS:
 		  res = std::to_string(std::stol(lhs_val) + std::stol(rhs_val));
@@ -281,9 +280,9 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs, TokenType binaryOp)
 	: m_lhs(std::move(lhs)),
 	  m_rhs(std::move(rhs)),
-	  m_binaryOp(binaryOp)
+	  m_binary_op(binaryOp)
 {
-	assert(is_binary_op(m_binaryOp) && "Invalid binary operator");
+	assert(is_binary_op(m_binary_op) && "Invalid binary operator");
 
 	// Check if both sides are numbers or binary expressions and if they are constant
 	if (m_lhs->class_name() == "NumberLiteral" && m_rhs->class_name() == "NumberLiteral")
@@ -295,4 +294,12 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_
 
 }
 
+void UnaryExpression::PrintNode(int indent) const
+{
+	println("{>}UnaryExpression: {", indent);
+	println("{>}operator: {}", indent + 2, token_to_string(m_unary_op));
+	println("{>}rhs:", indent + 2);
+	m_rhs->PrintNode(indent + 4);
+	println("{>}}", indent);
+}
 }

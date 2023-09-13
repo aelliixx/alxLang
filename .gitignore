@@ -1,7 +1,8 @@
 cmake-build-debug
+cmake-build-release
 build
 CMakeFiles
-/cmake-build-debug-coverage/
+cmake-build-debug-coverage
 
 .idea
 /docs/*

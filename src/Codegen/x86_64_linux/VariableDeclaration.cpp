@@ -16,6 +16,8 @@ void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 {
 	auto lhs = dynamic_cast<VariableDeclaration*>(node.get());
 	auto lhs_type = lhs->Type();
+	if (lhs_type == TokenType::T_VOID)
+		error("Cannot declare variable of type 'void'");
 	if (!lhs->Value())
 	{
 		if (!lhs->Ident().Assignable())
@@ -27,7 +29,7 @@ void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 	{
 		auto rhs = dynamic_cast<NumberLiteral*>(lhs->Value());
 		add_to_stack(lhs); // Increment bp
-		m_asm << mov(offset(bp), size_of(lhs_type), rhs->Value());
+		m_asm << mov(offset(bp), size_of(lhs_type), rhs->Value(), size_of(lhs_type), is_unsigned(rhs->Type()));
 		return;
 	}
 	else if (lhs->Value()->class_name() == "Identifier")
@@ -50,6 +52,13 @@ void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 		}
 		Context context = { .lhs_size = size_of(lhs_type) };
 		generate_binary_expression(lhs->Value(), context);
+		m_asm << mov(offset(lhs_ptr), size_of(lhs_type), reg(Reg::rax, size_of(lhs_type)));
+		return;
+	} else if (lhs->Value()->class_name() == "UnaryExpression")
+	{
+		add_to_stack(lhs);
+		generate_unary_expression(lhs->Value());
+		auto lhs_ptr = m_stack[lhs->Name()].second;
 		m_asm << mov(offset(lhs_ptr), size_of(lhs_type), reg(Reg::rax, size_of(lhs_type)));
 		return;
 	}

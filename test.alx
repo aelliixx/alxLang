@@ -1,11 +1,16 @@
 int main()
 {
-    bool maybe = false;
-    int a = 10;
-    if (maybe) {
-        a = a + 5;
-    } else {
-        a = a + 10;
+    bool a = true;
+    int ret;
+    if (a) {
+        ret = 20;
     }
-    return a;
+    else {
+        ret = 10;
+        if (a) {
+            int dd = 232;
+        }
+    }
+    int b = 40;
+    return ret;
 }

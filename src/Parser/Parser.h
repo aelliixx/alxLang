@@ -45,6 +45,7 @@ private:
 	std::unique_ptr<ReturnStatement> parse_return_statement();
 	std::unique_ptr<IfStatement> parse_if_statement();
 	std::unique_ptr<BlockStatement> parse_else_statement();
+	std::unique_ptr<UnaryExpression> parse_unary_expression();
 	void consume_semicolon(const std::unique_ptr<ASTNode>& statement);
 };
 }

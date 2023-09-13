@@ -7,6 +7,7 @@
 //
 
 #include <algorithm>
+#include <array>
 #include "ProgramGenerator.h"
 #include "BlockGenerator.h"
 #include "../../libs/Println.h"
@@ -21,7 +22,7 @@ std::string ProgramGenerator::Generate()
 	{
 		if (node->class_name() == "FunctionDeclaration")
 		{
-			const auto& func = dynamic_cast<FunctionDeclaration*>(node.get());
+			auto func = dynamic_cast<FunctionDeclaration*>(node.get());
 			m_asm << "\n";
 			if (func->Name() == "main")
 				m_asm << func->Name() << ":\n";
@@ -30,23 +31,20 @@ std::string ProgramGenerator::Generate()
 			// Set up the stack frame
 			m_asm << "push rbp\n";
 			m_asm << "mov rbp, rsp\n";
-			BlockGenerator scope{ func->Body() };
+			BlockGenerator scope{ func->Body(), func };
 			scope.GenerateBlock();
 			m_asm << scope.Asm();
-			if (func->Name() == "main" && m_implicit_return)
+			if (!scope.Returns())
 			{
 				m_asm << "xor eax, eax\n";
 				m_asm << "pop rbp\n";
 				m_asm << "ret\n";
 			}
-			else
-			{
-				m_asm << "pop rbp\n";
-				m_asm << "ret\n";
-			}
 		}
 	}
-	return m_asm.str();
+	m_asm_str = m_asm.str();
+	consolidate_labels();
+	return m_asm_str;
 }
 
 void ProgramGenerator::init()
@@ -87,7 +85,7 @@ void ProgramGenerator::init()
 								  main->Body().Children().end(),
 								  [&](const std::unique_ptr<ASTNode>& node)
 								  {
-		auto name = node->class_name();
+									auto name = node->class_name();
 									return node->class_name() == "ReturnStatement";
 								  });
 
@@ -114,4 +112,82 @@ std::string ProgramGenerator::generate_func_label(const FunctionDeclaration& fun
 	}
 	ASSERT_NOT_REACHABLE(); // This should not be reached because the parser should catch these errors.
 }
+std::string ProgramGenerator::FormatAsm(const std::string& assembly)
+{
+	std::string formatted;
+	std::array<std::string, 2> asm_keywords = {
+		"global", "section"
+	};
+	std::string buffer;
+	size_t index = 0;
+	const size_t min_mnemonic_len = 7;
+	while (assembly[index] != '\0')
+	{
+		buffer += assembly[index];
+
+		// If it's a keyword, ignore the line without formatting it.
+		if (std::find(asm_keywords.begin(), asm_keywords.end(), buffer) != asm_keywords.end() || buffer.ends_with(":"))
+		{
+			++index;
+			for (; assembly[index] != '\n'; ++index)
+				buffer += assembly[index];
+			formatted += buffer;
+			buffer = "";
+			continue;
+		}
+		else if (assembly[index] == '\n')
+		{
+			// Add spaces before and after the mnemonic (e.g. "xor eax, eax" -> "     xor   eax, eax";
+			if (buffer.find(' ') != std::string::npos)
+			{
+				auto spaces_to_add = (min_mnemonic_len - buffer.find(' ')) % min_mnemonic_len;
+				buffer.insert(buffer.find(' '), spaces_to_add, ' ');
+			}
+			buffer.insert(0, "     ");
+			formatted += buffer;
+			buffer = "";
+		}
+		++index;
+	}
+	return formatted;
+}
+
+// Surely we can generate the labels better to avoid this, but this is the best I've got for now.
+void ProgramGenerator::consolidate_labels()
+{
+	std::string buffer;
+	std::string lastBuffer;
+	std::vector<std::pair<std::string, std::string>> labelPairs;
+	size_t index = 0;
+	while (m_asm_str[index] != '\0')
+	{
+		if (m_asm_str[index] == '\n')
+		{
+			lastBuffer = buffer;
+			buffer = "";
+			++index;
+			continue;
+		}
+		buffer += m_asm_str[index];
+		if (buffer.ends_with(':'))
+		{
+			if (lastBuffer.ends_with(":"))
+			{
+				labelPairs.emplace_back(lastBuffer, buffer);
+
+			}
+		}
+		++index;
+	}
+	for (auto& labelPair : labelPairs)
+	{
+		m_asm_str.replace(m_asm_str.find(labelPair.first), labelPair.first.length(), labelPair.second);
+		m_asm_str.replace(m_asm_str.find(labelPair.second), labelPair.second.length() + 1, "");
+		labelPair.first.resize(labelPair.first.size() - 1);
+		labelPair.second.resize(labelPair.second.size() - 1);
+		m_asm_str.replace(m_asm_str.find(labelPair.first), labelPair.first.length(), labelPair.second);
+	}
+	println("Consolidated {} label(s)", labelPairs.size());
+}
+
 }

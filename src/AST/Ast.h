@@ -140,7 +140,7 @@ class BinaryExpression : public Expression
 {
 	[[nodiscard]] std::string class_name() const override { return "BinaryExpression"; }
 	std::unique_ptr<Expression> m_lhs, m_rhs;
-	TokenType m_binaryOp;
+	TokenType m_binary_op;
 	bool m_constexpr{};
 	std::optional<std::variant<NumberLiteral, StringLiteral>> m_value; // Only valid when constexpr
 	bool m_operands_match{};
@@ -148,12 +148,26 @@ public:
 	BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs, TokenType binaryOp);
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
-	[[nodiscard]] TokenType Operator() const { return m_binaryOp; }
+	[[nodiscard]] TokenType Operator() const { return m_binary_op; }
 	[[nodiscard]] Expression* LHS() const { return m_lhs.get(); }
 	[[nodiscard]] Expression* RHS() const { return m_rhs.get(); }
 	[[nodiscard]] bool Constexpr() const { return m_constexpr; }
 	[[nodiscard]] bool OperandsMatch() const { return m_operands_match; }
 	[[nodiscard]] std::unique_ptr<NumberLiteral> Evaluate() const;
+};
+
+class UnaryExpression : public Expression
+{
+	[[nodiscard]] std::string class_name() const override { return "UnaryExpression"; }
+	std::unique_ptr<Expression> m_rhs;
+	TokenType m_unary_op;
+
+public:
+	[[maybe_unused]] void PrintNode(int indent) const override;
+	UnaryExpression(std::unique_ptr<Expression> rhs, TokenType op) : m_rhs(std::move(rhs)), m_unary_op(op) {}
+
+	[[nodiscard]] TokenType Operator() const { return m_unary_op; }
+	[[nodiscard]] Expression* RHS() const { return m_rhs.get(); }
 };
 
 class VariableDeclaration : public ASTNode
@@ -226,7 +240,7 @@ public:
 	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
 };
 
-class FunctionDeclaration : public ASTNode
+class FunctionDeclaration : public ScopeNode
 {
 	[[nodiscard]] std::string class_name() const override { return "FunctionDeclaration"; }
 

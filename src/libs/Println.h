@@ -231,7 +231,6 @@ void error(const std::string& format, const Param& ... arguments)
 	const auto text = getFormatted(format, arguments...);
 	auto colour = Colour::LightRed;
 	println("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
-//	exit(EXIT_FAILURE);
 	throw std::runtime_error(text);
 }
 template<typename... Param>
@@ -356,6 +355,10 @@ static std::string token_to_string(TokenType token)
 		return "for";
 	case TokenType::T_WHILE:
 		return "while";
+	case TokenType::T_NOT_EQ:
+		return "!=";
+	case TokenType::T_NOT:
+		return "!";
 	}
 	assert(false && "Not reachable");
 }

@@ -87,6 +87,8 @@ std::unique_ptr<Expression> Parser::parse_term()
 		must_consume(TokenType::T_CLOSE_PAREN);
 		return expr;
 	}
+	case TokenType::T_NOT:
+		return parse_unary_expression();
 	default:
 		error("Unexpected token '{}' at line: {}, position: {}",
 			  token_to_string(token->Type),
@@ -135,5 +137,6 @@ void Parser::consume_semicolon(const std::unique_ptr<ASTNode>& statement)
 	if (statement->class_name() != "IfStatement")
 		must_consume(TokenType::T_SEMI);
 }
+
 
 }

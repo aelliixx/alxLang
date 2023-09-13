@@ -11,8 +11,7 @@
 
 // TODO:
 // 	- Implement a call expression
-// 	- Implement else and else if; proper label generator
-// 	- Fix an early return still generating a main return
+// 	- Match function return type and actual return type
 // 	- Match function return type and actual return type
 // 	- Properly initialise the stack frame (look into it)
 // 	- Implement an exponent operator
@@ -20,7 +19,7 @@
 
 // TODO: Turing completeness
 //  - [x] Maths ops
-//  - [ ] Conditional logic (if, else if, else)
+//  - [x] Conditional logic (if, else if, else)
 //  - [ ] Looping
 //  - [ ] Dynamic memory allocation
 
@@ -94,9 +93,9 @@ int main(int argc, const char** argv)
 	}
 	
 	alx::println();
-	ast->PrintNode(0);
+//	ast->PrintNode(0);
 	alx::println();
-	alx::println(generator.Asm());
+//	alx::println(alx::ProgramGenerator::FormatAsm(generator.Asm()));
 	
 	// nasm -f elf64 comp.asm -o comp.o && ld comp.o -o comp
 }

@@ -26,17 +26,22 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 //				must_consume(TokenType::T_SEMI); // Eat ';'
 				return std::make_unique<VariableDeclaration>(type, std::move(name), std::move(value));
 			}
-			if (peek().has_value() && peek().value().Type == TokenType::T_STR_L &&
+			else if (peek().has_value() && peek().value().Type == TokenType::T_STR_L &&
 				peek(1).has_value() && peek(1).value().Type == TokenType::T_SEMI)
 			{
 				auto string = parse_string_literal();
 //				must_consume(TokenType::T_SEMI); // Eat ';'
 				return std::make_unique<VariableDeclaration>(type, std::move(name), std::move(string));
 			}
+			else if (peek().has_value() && is_unary_op(peek().value().Type)) {
+				auto unary_expression = parse_unary_expression();
+				return std::make_unique<VariableDeclaration>(type, std::move(name), std::move(unary_expression));
+			}
 			auto expression = parse_expression();
 //			must_consume(TokenType::T_SEMI);
 			return std::make_unique<VariableDeclaration>(type, std::move(name), std::move(expression));
-		} // Declaration
+		}
+		// Declaration
 		else if (peek().has_value() && peek().value().Type == TokenType::T_SEMI)
 		{
 //			must_consume(TokenType::T_SEMI);

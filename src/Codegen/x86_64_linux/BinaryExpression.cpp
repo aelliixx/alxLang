@@ -74,9 +74,21 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 				return;
 			case TokenType::T_MINUS:
 				m_asm << "sub " << reg(Reg::rax, lhs_size) << ", " << rhs_num->Value() << "\n";
+				return;
 			case TokenType::T_STAR:
 				m_asm << "imul " << reg(Reg::rax, lhs_size) << ", " << rhs_num->Value() << "\n";
 				return;
+			case TokenType::T_GT:
+			case TokenType::T_LTE:
+			case TokenType::T_EQEQ:
+			case TokenType::T_NOT_EQ:
+				m_asm << "cmp " << reg(Reg::rax, lhs_size) << ", " << rhs_num->Value() << "\n";
+				return;
+			case TokenType::T_LT:
+			case TokenType::T_GTE:
+				m_asm << "cmp " << reg(Reg::rax, lhs_size) << ", " << rhs_num->AsInt() - 1 << "\n";
+				return;
+				
 			default:
 			ASSERT_NOT_IMPLEMENTED();
 			}
@@ -107,6 +119,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 				return;
 			case TokenType::T_MINUS:
 				m_asm << "sub " << reg(Reg::rax, rhs_size) << ", " << offset(rhs_ptr) << "\n";
+				return;
 			case TokenType::T_STAR:
 				m_asm << "imul " << reg(Reg::rax, rhs_size) << ", " << offset(rhs_ptr) << "\n";
 				return;
@@ -130,6 +143,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 				return;
 			case TokenType::T_MINUS:
 				m_asm << "sub " << reg(Reg::rax, lhs_size) << ", " << lhs_num->Value() << "\n";
+				return;
 			case TokenType::T_STAR:
 				m_asm << "imul " << reg(Reg::rax, lhs_size) << ", " << lhs_num->Value() << "\n";
 				return;

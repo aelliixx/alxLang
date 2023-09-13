@@ -10,6 +10,7 @@
 
 #include <optional>
 #include <map>
+#include <regex>
 #include "../AST/Types.h"
 
 namespace alx {
@@ -33,6 +34,20 @@ struct Token
 
 class Tokeniser
 {
+private:
+	std::regex m_alpha{"[a-zA-Z][a-zA-Z0-9]*"};
+	std::regex m_alpha_numeric{"[a-zA-Z0-9]"};
+	std::regex m_double{R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?\b$)"};
+	std::regex m_integer{R"(^[-]?(\d*|\d{1,3}(,\d{3})*)\b$)"};
+	std::regex m_float{R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?f\b$)"};
+	std::regex m_digit{R"(\d)"};
+
+	std::string m_temp_char;
+	
+	
+	
+
+
 public:
 	explicit Tokeniser(std::string source);
 	[[nodiscard]] std::vector<Token> Tokenise();
@@ -47,13 +62,13 @@ private:
 	std::map<std::string, TokenType> m_keywords;
 
 	static bool is_space(char);
-	static bool is_alpha(char);
-	static bool is_alpha_numeric(char);
-	static bool is_number(const std::string&);
-	static bool is_double(const std::string&);
-	static bool is_float(const std::string&);
-	static bool is_integer(const std::string&);
-	static bool is_digit(char);
+	bool is_alpha(char);
+	bool is_alpha_numeric(char);
+	bool is_number(const std::string&);
+	bool is_double(const std::string&);
+	bool is_float(const std::string&);
+	bool is_integer(const std::string&);
+	bool is_digit(char);
 
 	[[nodiscard]] std::optional<char> peek(int ahead = 0) const;
 	char consume();

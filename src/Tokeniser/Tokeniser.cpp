@@ -38,8 +38,8 @@ Tokeniser::Tokeniser(std::string source) : m_source(std::move(source))
 	m_keywords["else"] = TokenType::T_ELSE;
 	m_keywords["while"] = TokenType::T_WHILE;
 	m_keywords["for"] = TokenType::T_FOR;
-	
 }
+
 std::vector<Token> Tokeniser::Tokenise()
 {
 	while (peek().has_value())
@@ -75,12 +75,11 @@ std::vector<Token> Tokeniser::Tokenise()
 			continue;
 		}
 		// Is a number
-		if (is_digit(peek().value()) || peek().value() == '.')
+		else if (is_digit(peek().value()) || peek().value() == '.' ||
+			(peek(1).has_value() && isdigit(peek(1).value()) && (peek().value() == '+' || peek().value() == '-') ))
 		{
 			buffer += consume();
-			while (peek().has_value() && (is_digit(peek().value()) || peek().value() == '.'
-				|| ((peek().value() == '+' || peek().value() == '-') && is_digit(peek(1).value()))
-				))
+			while (peek().has_value() && (is_digit(peek().value()) || peek().value() == '.'))
 				buffer += consume();
 
 			if (!is_number(buffer))
@@ -104,73 +103,115 @@ std::vector<Token> Tokeniser::Tokenise()
 				continue;
 			}
 		}
-		if (peek().value() == ',')
+		else if (peek().value() == ',')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_COMMA, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '(')
+		else if (peek().value() == '(')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_OPEN_PAREN, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == ')')
+		else if (peek().value() == ')')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_CLOSE_PAREN, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '{')
+		else if (peek().value() == '{')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_CURLY_OPEN, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '}')
+		else if (peek().value() == '}')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_CURLY_CLOSE, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '=')
+		else if (peek().value() == '=')
 		{
 			consume();
+			if (peek().value() == '=')
+			{
+				consume();
+				m_tokens.emplace_back(TokenType::T_EQEQ, m_line_index, m_column_index);
+				continue;
+			}
 			m_tokens.emplace_back(TokenType::T_EQ, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == ';')
+		else if (peek().value() == '<')
+		{
+			consume();
+			if (peek().value() == '=')
+			{
+				consume();
+				m_tokens.emplace_back(TokenType::T_LTE, m_line_index, m_column_index);
+				continue;
+			}
+			m_tokens.emplace_back(TokenType::T_LT, m_line_index, m_column_index);
+			continue;
+		}
+		else if (peek().value() == '>')
+		{
+			consume();
+			if (peek().value() == '=')
+			{
+				consume();
+				m_tokens.emplace_back(TokenType::T_GTE, m_line_index, m_column_index);
+				continue;
+			}
+			m_tokens.emplace_back(TokenType::T_GT, m_line_index, m_column_index);
+			continue;
+		}
+		else if (peek().value() == '!')
+		{
+			consume();
+			if (peek().value() == '=')
+			{
+				consume();
+				m_tokens.emplace_back(TokenType::T_NOT_EQ, m_line_index, m_column_index);
+				continue;
+			}
+			m_tokens.emplace_back(TokenType::T_NOT, m_line_index, m_column_index);
+			continue;
+		}
+		else if (peek().value() == ';')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_SEMI, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '+')
+		else if (peek().value() == '+')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_PLUS, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '-')
+		else if (peek().value() == '-')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_MINUS, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '*')
+		else if (peek().value() == '*')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_STAR, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '^')
+		else if (peek().value() == '^')
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_POW, m_line_index, m_column_index);
 			continue;
 		}
-		if (peek().value() == '/')
+		else if (peek().value() == '/')
 		{
 			if (peek(1).value() == '/') // Comment
 			{
@@ -193,42 +234,33 @@ bool Tokeniser::is_space(char character)
 
 bool Tokeniser::is_alpha(char character)
 {
-	std::regex reg("[a-zA-Z][a-zA-Z0-9]*");
-	std::string c;
-	c = (char)character;
-	return std::regex_match(c, reg);
+	m_temp_char = (char)character;
+	return std::regex_match(m_temp_char, m_alpha);
 }
 
 bool Tokeniser::is_alpha_numeric(char character)
 {
-	std::regex reg("[a-zA-Z0-9]");
-	std::string c;
-	c = (char)character;
-	return std::regex_match(c, reg);
+	m_temp_char = (char)character;
+	return std::regex_match(m_temp_char, m_alpha_numeric);
 }
 
 bool Tokeniser::is_double(const std::string& number)
 {
-	std::regex reg(R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?\b$)");
-	return std::regex_match(number, reg);
+	return std::regex_match(number, m_double);
 }
 
 bool Tokeniser::is_digit(char character)
 {
-	std::regex reg(R"(\d)");
-	std::string c;
-	c = (char)character;
-	return std::regex_match(c, reg);
+	m_temp_char = (char)character;
+	return std::regex_match(m_temp_char, m_digit);
 }
 bool Tokeniser::is_integer(const std::string& number)
 {
-	std::regex reg(R"(^[-]?(\d*|\d{1,3}(,\d{3})*)\b$)");
-	return std::regex_match(number, reg);
+	return std::regex_match(number, m_integer);
 }
 bool Tokeniser::is_float(const std::string& number)
 {
-	std::regex reg(R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?f\b$)");
-	return std::regex_match(number, reg);
+	return std::regex_match(number, m_float);
 }
 bool Tokeniser::is_number(const std::string& number)
 {
