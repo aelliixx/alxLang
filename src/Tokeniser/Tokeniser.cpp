@@ -79,9 +79,9 @@ std::vector<Token> Tokeniser::Tokenise()
 			(peek(1).has_value() && isdigit(peek(1).value()) && (peek().value() == '+' || peek().value() == '-') ))
 		{
 			buffer += consume();
-			while (peek().has_value() && (is_digit(peek().value()) || peek().value() == '.'))
+			while (peek().has_value() && (is_digit(peek().value()) || peek().value() == '.' || peek().value() == ','))
 				buffer += consume();
-
+			
 			if (!is_number(buffer))
 			{
 				println(Colour::Red, "Unexpected token in '{}', at line: {}, position: {}", buffer, m_line_index, m_column_index);
@@ -190,12 +190,24 @@ std::vector<Token> Tokeniser::Tokenise()
 		else if (peek().value() == '+')
 		{
 			consume();
+			if (peek().value() == '=')
+			{
+				consume();
+				m_tokens.emplace_back(TokenType::T_ADD_EQ, m_line_index, m_column_index);
+				continue;
+			}
 			m_tokens.emplace_back(TokenType::T_PLUS, m_line_index, m_column_index);
 			continue;
 		}
 		else if (peek().value() == '-')
 		{
 			consume();
+			if (peek().value() == '=')
+			{
+				consume();
+				m_tokens.emplace_back(TokenType::T_SUB_EQ, m_line_index, m_column_index);
+				continue;
+			}
 			m_tokens.emplace_back(TokenType::T_MINUS, m_line_index, m_column_index);
 			continue;
 		}

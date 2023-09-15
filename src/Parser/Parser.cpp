@@ -20,19 +20,19 @@ namespace alx {
 Parser::Parser(std::vector<Token> tokens)
 	: m_tokens(std::move(tokens))
 {
-	m_binaryOpPrecedence[TokenType::T_LT] = 10;
-	m_binaryOpPrecedence[TokenType::T_GT] = 10;
-	m_binaryOpPrecedence[TokenType::T_PLUS] = 20;
-	m_binaryOpPrecedence[TokenType::T_MINUS] = 20;
-	m_binaryOpPrecedence[TokenType::T_STAR] = 30;
-	m_binaryOpPrecedence[TokenType::T_FWD_SLASH] = 30;
+	m_binary_op_precedence[TokenType::T_LT] = 10;
+	m_binary_op_precedence[TokenType::T_GT] = 10;
+	m_binary_op_precedence[TokenType::T_PLUS] = 20;
+	m_binary_op_precedence[TokenType::T_MINUS] = 20;
+	m_binary_op_precedence[TokenType::T_STAR] = 30;
+	m_binary_op_precedence[TokenType::T_FWD_SLASH] = 30;
 
 	m_program = std::make_unique<Program>();
 }
 
 int Parser::get_binary_op_precedence(const Token& token)
 {
-	return m_binaryOpPrecedence.find(token.Type)->second;
+	return m_binary_op_precedence.find(token.type)->second;
 }
 
 std::unique_ptr<Program> Parser::Parse()
@@ -40,7 +40,7 @@ std::unique_ptr<Program> Parser::Parse()
 	try {
 	while (peek().has_value())
 	{
-		auto type = peek().value().Type;
+		auto type = peek().value().type;
 		m_program->Append(parse_statement());
 		return std::move(m_program);
 	}
@@ -66,7 +66,7 @@ std::unique_ptr<Expression> Parser::parse_term()
 	auto token = peek();
 	if (!token.has_value())
 		return nullptr;
-	switch (token.value().Type)
+	switch (token.value().type)
 	{
 	case TokenType::T_INT_L:
 	case TokenType::T_FLOAT_L:
@@ -79,7 +79,7 @@ std::unique_ptr<Expression> Parser::parse_term()
 		return parse_string_literal();
 	case TokenType::T_IDENTIFIER:
 		if (auto identifier = try_consume(TokenType::T_IDENTIFIER))
-			return std::make_unique<Identifier>(identifier->Value.value());
+			return std::make_unique<Identifier>(identifier->value.value());
 	case TokenType::T_OPEN_PAREN:
 	{
 		consume();
@@ -91,9 +91,9 @@ std::unique_ptr<Expression> Parser::parse_term()
 		return parse_unary_expression();
 	default:
 		error("Unexpected token '{}' at line: {}, position: {}",
-			  token_to_string(token->Type),
-			  token->LineNumber,
-			  token->ColumnNumber);
+			  token_to_string(token->type),
+			  token->lineNumber,
+			  token->columnNumber);
 	}
 	ASSERT_NOT_REACHABLE();
 }
@@ -114,7 +114,7 @@ Token Parser::consume()
 
 std::optional<Token> Parser::try_consume(TokenType type)
 {
-	if (peek().has_value() && peek().value().Type == type)
+	if (peek().has_value() && peek().value().type == type)
 		return consume();
 	return {};
 }
@@ -127,14 +127,14 @@ Token Parser::must_consume(TokenType token)
 	}
 	error("Expected token '{}' after '{}' at line: {}, position: {}",
 		  token_to_string(token),
-		  token_to_string(peek(-1).value().Type),
-		  peek(-1).value().LineNumber,
-		  peek(-1).value().ColumnNumber);
+		  token_to_string(peek(-1).value().type),
+		  peek(-1).value().lineNumber,
+		  peek(-1).value().columnNumber);
 	exit(EXIT_FAILURE);
 }
 void Parser::consume_semicolon(const std::unique_ptr<ASTNode>& statement)
 {
-	if (statement->class_name() != "IfStatement")
+	if (statement->class_name() != "IfStatement" && statement->class_name() != "WhileStatement")
 		must_consume(TokenType::T_SEMI);
 }
 

@@ -14,7 +14,7 @@ void BlockGenerator::generate_unary_expression(const ASTNode* node)
 {
 	auto expression = dynamic_cast<const UnaryExpression*>(node);
 	auto op = expression->Operator();
-	auto rhs = expression->RHS();
+	auto rhs = expression->Rhs();
 
 	if (rhs->class_name() == "NumberLiteral")
 	{
@@ -29,7 +29,7 @@ void BlockGenerator::generate_unary_expression(const ASTNode* node)
 		auto rhs_ptr = m_stack[ident->Name()].second;
 		auto rhs_size = size_of(m_stack[ident->Name()].first->Type());
 
-		m_asm << "cmp " << bytes_to_data_size(rhs_size) << " " << offset(rhs_ptr) << ", 0\n";
+		m_asm << "cmp " << bytes_to_data_size(rhs_size) << " " << offset(rhs_ptr, rhs_size) << ", 0\n";
 		m_asm << "sete " << reg(Reg::rax, 1) << "\n";
 		m_asm << mov(reg(Reg::rax, rhs_size), 1, reg(Reg::rax, 1), rhs_size, true);
 		return;

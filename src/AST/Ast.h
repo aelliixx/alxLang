@@ -100,22 +100,25 @@ class NumberLiteral : public Expression
 
 	TokenType m_type;
 	std::string m_value;
-	bool is_unsigned{}; // FIXME
+	bool m_is_unsigned{}; // FIXME
 
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
 	NumberLiteral(TokenType type, std::string value)
 		: m_type(type),
-		  m_value(std::move(value)) {}
+		  m_value(std::move(value)) {
+		std::string::size_type n;
+		while((n = m_value.find(',')) != std::string::npos)
+			m_value.replace(n, 1, "");
+	}
 
 	[[nodiscard]] TokenType Type() const { return m_type; }
 	[[nodiscard]] const std::string& Value() const { return m_value; }
-	[[nodiscard]] int AsInt() const { return std::stoi(m_value); }
+	[[nodiscard]] long AsInt() const { return std::stoi(m_value); }
 	[[nodiscard]] std::string AsBool() const
 	{
-		if (AsInt()) return "true";
-		return "false";
+		return AsInt()? "true" : "false";
 	}
 };
 
@@ -149,8 +152,8 @@ public:
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	[[nodiscard]] TokenType Operator() const { return m_binary_op; }
-	[[nodiscard]] Expression* LHS() const { return m_lhs.get(); }
-	[[nodiscard]] Expression* RHS() const { return m_rhs.get(); }
+	[[nodiscard]] Expression* Lhs() const { return m_lhs.get(); }
+	[[nodiscard]] Expression* Rhs() const { return m_rhs.get(); }
 	[[nodiscard]] bool Constexpr() const { return m_constexpr; }
 	[[nodiscard]] bool OperandsMatch() const { return m_operands_match; }
 	[[nodiscard]] std::unique_ptr<NumberLiteral> Evaluate() const;
@@ -167,7 +170,7 @@ public:
 	UnaryExpression(std::unique_ptr<Expression> rhs, TokenType op) : m_rhs(std::move(rhs)), m_unary_op(op) {}
 
 	[[nodiscard]] TokenType Operator() const { return m_unary_op; }
-	[[nodiscard]] Expression* RHS() const { return m_rhs.get(); }
+	[[nodiscard]] Expression* Rhs() const { return m_rhs.get(); }
 };
 
 class VariableDeclaration : public ASTNode
@@ -221,9 +224,6 @@ public:
 		: m_condition(std::move(expression)),
 		  m_body(std::move(body)) {}
 
-//	explicit IfStatement(std::unique_ptr<Expression> expression)
-//		: m_condition(std::move(expression)) {}
-
 	void SetCondition(const Expression& expression)
 	{
 		m_condition = std::make_unique<Expression>(expression);
@@ -232,12 +232,36 @@ public:
 	{
 		m_alternate = std::move(alternate);
 	}
-
+	
 	[[nodiscard]] Expression* Condition() const { return m_condition.get(); }
 	[[nodiscard]] const std::optional<std::unique_ptr<ScopeNode>>& Alternate() const { return m_alternate; }
 	[[nodiscard]] bool HasAlternate() const { return m_alternate.has_value(); }
 	[[nodiscard]] ScopeNode* GetAlternate() const { return m_alternate.value().get(); }
 	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
+};
+
+class WhileStatement : public ScopeNode
+{
+	[[nodiscard]] std::string class_name() const override { return "WhileStatement"; }
+	std::unique_ptr<Expression> m_condition;
+	std::unique_ptr<BlockStatement> m_body;
+public:
+	[[maybe_unused]] void PrintNode(int indent) const override;
+
+	WhileStatement(std::unique_ptr<Expression> expression,
+	std::unique_ptr<BlockStatement> body)
+	: m_condition(std::move(expression)),
+	m_body(std::move(body)) {}
+
+
+	void SetCondition(const Expression& expression)
+	{
+		m_condition = std::make_unique<Expression>(expression);
+	}
+
+	[[nodiscard]] Expression* Condition() const { return m_condition.get(); }
+	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
+	[[nodiscard]] BlockStatement* BodyPtr() const { return m_body.get(); }
 };
 
 class FunctionDeclaration : public ScopeNode
@@ -250,11 +274,11 @@ class FunctionDeclaration : public ScopeNode
 	std::unique_ptr<BlockStatement> m_body;
 
 public:
-	FunctionDeclaration(TokenType return_type,
+	FunctionDeclaration(TokenType returnType,
 						std::unique_ptr<Identifier> name,
 						std::unique_ptr<BlockStatement> body,
 						std::vector<std::unique_ptr<VariableDeclaration>> args)
-		: m_return_type(return_type),
+		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
 		  m_body(std::move(body)),
 		  m_arguments(std::move(args)) {}

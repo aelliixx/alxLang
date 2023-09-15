@@ -32,8 +32,10 @@ enum class TokenType
 
 };
 
-static size_t size_of(TokenType token) {
-	switch (token) {
+static size_t size_of(TokenType token)
+{
+	switch (token)
+	{
 
 	case TokenType::T_BOOL:
 	case TokenType::T_CHAR:
@@ -51,13 +53,13 @@ static size_t size_of(TokenType token) {
 	case TokenType::T_LONG:
 	case TokenType::T_DOUBLE:
 	case TokenType::T_DOUBLE_L:
-		return 8;		
+		return 8;
 	case TokenType::T_VOID:
 	case TokenType::T_STRING:
 	case TokenType::T_STR_L:
-		ASSERT_NOT_IMPLEMENTED();
+	ASSERT_NOT_IMPLEMENTED();
 	default:
-		ASSERT_NOT_REACHABLE();
+	ASSERT_NOT_REACHABLE();
 	}
 }
 
@@ -94,10 +96,12 @@ static bool is_binary_op(TokenType type)
 		type == TokenType::T_FWD_SLASH || type == TokenType::T_POW || type == TokenType::T_LT ||
 		type == TokenType::T_GT || type == TokenType::T_LTE || type == TokenType::T_GTE ||
 		type == TokenType::T_EQ || type == TokenType::T_MOD || type == TokenType::T_INT_DIV ||
-		type == TokenType::T_EQEQ || type == TokenType::T_NOT_EQ;
+		type == TokenType::T_EQEQ || type == TokenType::T_NOT_EQ || type == TokenType::T_SUB_EQ
+		|| type == TokenType::T_ADD_EQ;
 }
 
-static bool is_unary_op(TokenType type) {
+static bool is_unary_op(TokenType type)
+{
 	return type == TokenType::T_NOT || type == TokenType::T_MINUS || type == TokenType::T_PLUS ||
 		type == TokenType::T_SUB || type == TokenType::T_ADD;
 }

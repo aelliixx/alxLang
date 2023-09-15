@@ -1,16 +1,4 @@
 int main()
 {
-    bool a = true;
-    int ret;
-    if (a) {
-        ret = 20;
-    }
-    else {
-        ret = 10;
-        if (a) {
-            int dd = 232;
-        }
-    }
-    int b = 40;
-    return ret;
+    
 }

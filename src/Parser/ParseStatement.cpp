@@ -15,7 +15,7 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	auto token = peek();
 	if (!token.has_value())
 		return nullptr;
-	switch (token.value().Type)
+	switch (token.value().type)
 	{
 	case TokenType::T_INT:
 	case TokenType::T_LONG:
@@ -25,12 +25,12 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	case TokenType::T_STRING:
 	case TokenType::T_CHAR:
 	case TokenType::T_BOOL:
-		if (peek(1).has_value() && peek(1).value().Type == TokenType::T_IDENTIFIER)
+		if (peek(1).has_value() && peek(1).value().type == TokenType::T_IDENTIFIER)
 		{
-			if (peek(2).has_value() && peek(2).value().Type == TokenType::T_OPEN_PAREN)
+			if (peek(2).has_value() && peek(2).value().type == TokenType::T_OPEN_PAREN)
 				return parse_function();
-			else if (peek(2).has_value() && peek(2).value().Type == TokenType::T_EQ ||
-				peek(2).value().Type == TokenType::T_SEMI)
+			else if (peek(2).has_value() && peek(2).value().type == TokenType::T_EQ ||
+				peek(2).value().type == TokenType::T_SEMI)
 				return parse_variable();
 		}
 		else
@@ -46,7 +46,7 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	case TokenType::T_FOR:
 	ASSERT_NOT_IMPLEMENTED();
 	case TokenType::T_WHILE:
-	ASSERT_NOT_IMPLEMENTED();
+		return parse_while_statement();
 	default:
 		return parse_expression();
 	}

@@ -21,15 +21,8 @@ enum class bitness
 	x86_32
 };
 
-struct Stack {
-	std::string var_name;
-	VariableDeclaration* var;
-	size_t ptr;
-};
-
 class ProgramGenerator
 {
-	std::vector<Stack> m_stack;
 	const std::vector<std::unique_ptr<ASTNode>>& m_ast{};
 	std::stringstream m_asm;
 	std::string m_asm_str;

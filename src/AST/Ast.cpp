@@ -290,7 +290,13 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_
 	else if (m_lhs->class_name() == "BinaryExpression" && m_rhs->class_name() == "NumberLiteral")
 		m_constexpr = dynamic_cast<BinaryExpression*>(m_lhs.get())->m_constexpr;
 
-	m_operands_match = m_lhs->class_name() == m_rhs->class_name() && m_rhs->class_name() == "Identifier";
+	if (m_lhs->class_name() == "Identifier" && m_rhs->class_name() == "Identifier")
+	{
+		auto lhs_id = dynamic_cast<Identifier*>(m_lhs.get());
+		auto rhs_id = dynamic_cast<Identifier*>(m_rhs.get());
+		
+		m_operands_match = lhs_id->Name() == rhs_id->Name();
+	}
 
 }
 
@@ -300,6 +306,15 @@ void UnaryExpression::PrintNode(int indent) const
 	println("{>}operator: {}", indent + 2, token_to_string(m_unary_op));
 	println("{>}rhs:", indent + 2);
 	m_rhs->PrintNode(indent + 4);
+	println("{>}}", indent);
+}
+void WhileStatement::PrintNode(int indent) const
+{
+	println("{>}WhileStatement: {", indent);
+	println("{>}condition:", indent + 2);
+	m_condition->PrintNode(indent + 4);
+	println("{>}body:", indent + 2);
+	m_body->PrintNode(indent + 4);
 	println("{>}}", indent);
 }
 }

@@ -10,17 +10,24 @@
 #include "Codegen/x86_64_linux/ProgramGenerator.h"
 
 // TODO:
+// 	- Add arrays
+// 	- Add classes
+// 	- Add strings
 // 	- Implement a call expression
-// 	- Match function return type and actual return type
+// 	- Implement puts()
 // 	- Match function return type and actual return type
 // 	- Properly initialise the stack frame (look into it)
 // 	- Implement an exponent operator
-// 	- Profile the parsing stage
+// 	- Implement a modulo operator
+// 	- Implement a division operator
+// 	- Implement own regex library to further optimise the parser
 
 // TODO: Turing completeness
 //  - [x] Maths ops
 //  - [x] Conditional logic (if, else if, else)
 //  - [ ] Looping
+//  - [x]  - While
+//  - [ ]  - For
 //  - [ ] Dynamic memory allocation
 
 using sys_clock = std::chrono::system_clock;
@@ -93,9 +100,9 @@ int main(int argc, const char** argv)
 	}
 	
 	alx::println();
-//	ast->PrintNode(0);
+	ast->PrintNode(0);
 	alx::println();
-//	alx::println(alx::ProgramGenerator::FormatAsm(generator.Asm()));
+	alx::println(alx::ProgramGenerator::FormatAsm(generator.Asm()));
 	
 	// nasm -f elf64 comp.asm -o comp.o && ld comp.o -o comp
 }

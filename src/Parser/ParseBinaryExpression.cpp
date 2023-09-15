@@ -16,11 +16,11 @@ std::unique_ptr<Expression> Parser::parse_binary_operation(std::unique_ptr<Expre
 {
 	while (peek().has_value())
 	{
-		if (peek().value().Type == TokenType::T_SEMI || !is_binary_op(peek().value().Type)) {
+		if (peek().value().type == TokenType::T_SEMI || !is_binary_op(peek().value().type)) {
 			return lhs;
 		}
 		auto op = consume();
-		if (!is_binary_op(op.Type))
+		if (!is_binary_op(op.type))
 			return lhs;
 		int token_precedence = get_binary_op_precedence(op);
 		if (token_precedence < precedence)
@@ -37,7 +37,7 @@ std::unique_ptr<Expression> Parser::parse_binary_operation(std::unique_ptr<Expre
 				return nullptr;
 		}
 		
-		lhs = std::make_unique<BinaryExpression>(std::move(lhs), std::move(rhs), op.Type);
+		lhs = std::make_unique<BinaryExpression>(std::move(lhs), std::move(rhs), op.type);
 	}
 	ASSERT_NOT_REACHABLE();
 }

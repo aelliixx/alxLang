@@ -27,9 +27,12 @@ void BlockGenerator::GenerateBlock()
 			generate_binary_expression(node.get());
 		else if (node_name == "IfStatement")
 			generate_if_statement(node.get(), {});
+		else if (node_name == "WhileStatement")
+			generate_while_statement(node.get());
 		else
 			error("Codegen error: Unexpected node '{}'", node_name);
 	}
+
 }
 
 void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& node)
@@ -40,9 +43,9 @@ void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& n
 	if (arg->class_name() == "Identifier")
 	{
 		const auto identifier = dynamic_cast<Identifier*>(arg);
-		assert_ident_declared(identifier);
+		assert_ident_initialised(identifier);
 		auto rhs_ptr = m_stack.at(identifier->Name()).second;
-		m_asm << mov(reg(Reg::rax, 8), 8, offset(rhs_ptr));
+		m_asm << mov(reg(Reg::rax, 8), 8, offset(rhs_ptr, 8));
 	}
 	else if (arg->class_name() == "NumberLiteral")
 	{
@@ -87,7 +90,7 @@ void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& n
 	}
 	m_asm << "pop rbp\n";
 	m_asm << "ret\n";
-	m_returns = true;
+	m_early_returns = true;
 }
 
 void BlockGenerator::add_to_stack(VariableDeclaration* var, size_t ptr)
@@ -182,8 +185,7 @@ std::string BlockGenerator::mov(BlockGenerator::Reg dest,
 	else
 		code << "mov ";
 	// If rhs is a byte or a word, use the data size of lhs (because movzx/movsx already extended it)
-	code << reg(dest, (src_size <= 2 ? dest_size : src_size)) << ", " << bytes_to_data_size(src_size)
-		 << " " << src << "\n";
+	code << reg(dest, (src_size <= 2 ? dest_size : src_size)) << ", " << src << "\n";
 	return code.str();
 }
 
@@ -209,7 +211,7 @@ std::string BlockGenerator::mov(const std::string& dest,
 		code << (is_unsigned ? "movzx " : "movsx ");
 	else
 		code << "mov ";
-	code << bytes_to_data_size(dest_size) << " " << dest << ", " << reg(src, src_size) << "\n";
+	code << dest << ", " << reg(src, src_size) << "\n";
 	return code.str();
 }
 
@@ -231,15 +233,29 @@ std::string BlockGenerator::mov(const std::string& dest,
 	else
 		code << "mov ";
 
-	code << bytes_to_data_size(dest_size) << " " << dest << ", " << src << "\n";
+	code << dest << ", " << src << "\n";
 	return code.str();
 }
 
-std::string BlockGenerator::offset(size_t offset, BlockGenerator::Reg base, size_t reg_size, bool positive)
+std::string BlockGenerator::mov(BlockGenerator::Reg dest, size_t src_size, long src, size_t dest_size, bool is_unsigned)
+{
+	return mov(dest, src_size, std::to_string(src), dest_size, is_unsigned);
+}
+std::string BlockGenerator::mov(const std::string& dest, size_t src_size, long src, size_t dest_size, bool is_unsigned)
+{
+	return mov(dest, src_size, std::to_string(src), dest_size, is_unsigned);
+}
+
+std::string BlockGenerator::offset(size_t offset,
+								   size_t data_size,
+								   BlockGenerator::Reg base,
+								   size_t reg_size,
+								   bool positive)
 {
 
 	std::stringstream code;
-	code << "[" << reg(base, reg_size) << (positive ? "+" : "-") << offset << "]";
+	code << bytes_to_data_size(data_size);
+	code << " [" << reg(base, reg_size) << (positive ? "+" : "-") << offset << "]";
 	return code.str();
 }
 
@@ -285,25 +301,20 @@ std::string BlockGenerator::reg(BlockGenerator::Reg reg, size_t bytes)
 
 }
 
-void BlockGenerator::assert_ident_declared(const Identifier* lhs_id)
-{
-	if (m_stack.find(lhs_id->Name()) == m_stack.end())
-		error("Use of undeclared identifier '{}'", lhs_id->Name());
-}
-std::string BlockGenerator::generate_local_label(ScopeNode* statement)
+std::string BlockGenerator::generate_local_label(ASTNode* statement)
 {
 	auto it = std::find_if(m_local_labels.begin(),
 						   m_local_labels.end(),
-						   [&statement](const std::pair<ScopeNode*, std::string>& label)
+						   [&statement](const std::pair<ASTNode*, std::string>& label)
 						   {
 							 return label.first == statement;
 						   });
-	
+
 	if (it == m_local_labels.end())
 	{
 		std::stringstream label;
 		label << ".L" << m_label_index;
-		std::pair<ScopeNode*, std::string> new_label = {statement, label.str()};
+		std::pair<ASTNode*, std::string> new_label = { statement, label.str() };
 		m_local_labels.push_back(new_label);
 		++m_label_index;
 		return label.str();
@@ -315,11 +326,30 @@ void BlockGenerator::generate_body(const BlockStatement& block)
 {
 	BlockGenerator body{ block, m_stack, bp, m_label_index, m_local_labels, m_parent_body.value() };
 	body.GenerateBlock();
-	m_returns = body.Returns();
+	m_early_returns = body.Returns();
 	m_label_index = body.LabelIndex();
 	m_local_labels = body.Labels();
 	bp = body.BasePointer();
 	m_asm << body.Asm();
 }
 
+void BlockGenerator::assert_ident_initialised(const Identifier* lhs_id)
+{
+	auto it = m_stack.find(lhs_id->Name());
+	if (it == m_stack.end())
+		error("Codegen error: Use of undeclared identifier '{}'. This is a codegen "
+			  "error and must be fixed in the parser.", lhs_id->Name());
+	else if (it->second.second == 0)
+		error("Codegen error: Use of uninitialised identifier '{}'. This is a codegen"
+			  "error and must be fixed in the parser", lhs_id->Name());
+}
+
+void BlockGenerator::assert_ident_declared(const Identifier* lhs_id)
+{
+	auto it = m_stack.find(lhs_id->Name());
+	if (it == m_stack.end())
+		error("Codegen error: Use of undeclared identifier '{}'. This is a codegen "
+			  "error and must be fixed in the parser.", lhs_id->Name());
+
+}
 } // alx

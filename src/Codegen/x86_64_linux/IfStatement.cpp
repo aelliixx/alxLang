@@ -12,16 +12,68 @@ namespace alx {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
-void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<std::string>& exit_label)
+void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<std::string>& exitLabel)
 {
 	auto statement = dynamic_cast<IfStatement*>(node);
 	auto condition = statement->Condition();
-	auto exit_label_actual = exit_label.has_value() ? exit_label.value() : generate_local_label(statement);
-	TokenType jump_type = TokenType::T_EQEQ;
+	auto exitLabelActual = exitLabel.has_value() ? exitLabel.value() : generate_local_label(statement);
 
-	auto jump = [this](TokenType jump_type)
+	if (condition->class_name() == "NumberLiteral")
 	{
-	  switch (jump_type)
+		auto condNum = dynamic_cast<NumberLiteral*>(condition);
+		if (condNum->AsInt())
+		{
+			generate_body(statement->Body());
+			return;
+		}
+	}
+	else if (condition->class_name() == "BinaryExpression")
+	{
+		auto condBinExp = dynamic_cast<BinaryExpression*>(condition);
+		if (condBinExp->Constexpr() && condBinExp->Evaluate()->AsInt())
+		{
+			generate_body(statement->Body());
+			return;
+		}
+	}
+
+	generate_branch(condition, statement, exitLabelActual, true);
+	generate_body(statement->Body());
+
+	if (statement->HasAlternate())
+	{
+		m_asm << "jmp " << exitLabelActual << "\n";
+		m_asm << generate_local_label(statement->GetAlternate()) << ":\n";
+	}
+	else
+	{
+		m_asm << exitLabelActual << ":\n";
+		return;
+	}
+
+	auto alternate = statement->GetAlternate();
+	if (alternate->class_name() == "IfStatement")
+		generate_if_statement(alternate, exitLabelActual);
+	else if (alternate->class_name() == "BlockStatement")
+	{
+		auto alternateBlock = dynamic_cast<BlockStatement*>(alternate);
+		generate_body(*alternateBlock);
+		m_asm << exitLabelActual << ":\n";
+	}
+}
+
+void BlockGenerator::generate_branch(Expression* condition,
+									 const std::optional<IfStatement*>& statement,
+									 const std::optional<std::string>& exitLabel,
+									 bool invertComparisons)
+{
+	TokenType jumpType = TokenType::T_EQEQ;
+	auto exitLabelActual =
+		exitLabel.has_value() || !statement.has_value() ? exitLabel.value() : generate_local_label(statement.value());
+
+	auto jump = [this](TokenType jumpType)
+	{
+	  switch (jumpType)
 	  {
 
 	  case TokenType::T_LT:
@@ -43,37 +95,29 @@ void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<st
 
 	if (condition->class_name() == "NumberLiteral")
 	{
-		auto cond_num = dynamic_cast<NumberLiteral*>(condition);
-		if (cond_num->AsInt())
-		{
-			generate_body(statement->Body());
-			return;
-		}
+		auto condNum = dynamic_cast<NumberLiteral*>(condition);
+		ASSERT_NOT_IMPLEMENTED();
 	}
 	else if (condition->class_name() == "BinaryExpression")
 	{
-		auto cond_bin_exp = dynamic_cast<BinaryExpression*>(condition);
-		if (cond_bin_exp->Constexpr() && cond_bin_exp->Evaluate()->AsInt())
-		{
-			generate_body(statement->Body());
-			return;
-		}
-		switch (cond_bin_exp->Operator())
+		auto condBinExp = dynamic_cast<BinaryExpression*>(condition);
+
+		generate_binary_expression(condBinExp);
+		switch (condBinExp->Operator())
 		{
 		case TokenType::T_EQEQ:
-			jump_type = TokenType::T_NOT_EQ; // The '==' token produces a jne instruction
+			jumpType = invertComparisons ? TokenType::T_NOT_EQ : TokenType::T_EQEQ;
+			break;
 		case TokenType::T_NOT_EQ:
-			generate_binary_expression(cond_bin_exp);
+			jumpType = invertComparisons ? TokenType::T_EQEQ : TokenType::T_NOT_EQ;
 			break;
 		case TokenType::T_LT:
 		case TokenType::T_LTE:
-			generate_binary_expression(cond_bin_exp);
-			jump_type = TokenType::T_GT;
+			jumpType = invertComparisons ? TokenType::T_GT : TokenType::T_LTE;
 			break;
 		case TokenType::T_GT:
 		case TokenType::T_GTE:
-			jump_type = TokenType::T_LTE;
-			generate_binary_expression(cond_bin_exp);
+			jumpType = invertComparisons ? TokenType::T_LTE : TokenType::T_GT;
 			break;
 		case TokenType::T_PLUS:
 		case TokenType::T_MINUS:
@@ -91,9 +135,7 @@ void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<st
 		case TokenType::T_DIV_EQ:
 		case TokenType::T_MOD_EQ:
 		case TokenType::T_POW_EQ:
-			generate_binary_expression(cond_bin_exp);
 			m_asm << "cmp eax, 0\n";
-
 			break;
 			ASSERT_NOT_IMPLEMENTED();
 		default:
@@ -104,39 +146,22 @@ void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<st
 	{
 		// TODO: Check if it's nullptr
 		auto ident = dynamic_cast<Identifier*>(condition);
-		m_asm << "cmp BYTE " << offset(m_stack[ident->Name()].second)
+		m_asm << "cmp BYTE " << offset(m_stack[ident->Name()].second, 8)
 			  << ", 0\n"; // FIXME: Get the size of the identifier
 
 	}
 
-	if (statement->HasAlternate())
-		m_asm << jump(jump_type) << generate_local_label(statement->GetAlternate()) << '\n';
-	else
-		m_asm << jump(jump_type) << exit_label_actual << '\n';
-
-	
-	generate_body(statement->Body());
-
-	if (statement->HasAlternate())
+	if (!statement.has_value())
 	{
-		m_asm << "jmp " << exit_label_actual << "\n";
-		m_asm << generate_local_label(statement->GetAlternate()) << ":\n";
-	}
-	else
-	{
-		m_asm << exit_label_actual << ":\n";
+		if (exitLabel.has_value())
+			m_asm << jump(jumpType) << exitLabel.value() << "\n";
 		return;
 	}
 
-	auto alternate = statement->GetAlternate();
-	if (alternate->class_name() == "IfStatement")
-		generate_if_statement(alternate, exit_label_actual);
-	else if (alternate->class_name() == "BlockStatement")
-	{
-		auto alternate_block = dynamic_cast<BlockStatement*>(alternate);
-		generate_body(*alternate_block);
-		m_asm << exit_label_actual << ":\n";
-	}
+	if (statement.value()->HasAlternate())
+		m_asm << jump(jumpType) << generate_local_label(statement.value()->GetAlternate()) << '\n';
+	else
+		m_asm << jump(jumpType) << exitLabelActual << '\n';
 }
 
 #pragma clang diagnostic pop

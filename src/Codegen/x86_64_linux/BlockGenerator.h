@@ -18,7 +18,8 @@ namespace alx {
 
 struct Context
 {
-	size_t lhs_size;
+	size_t lhsSize;
+	bool immediateAssignment;
 };
 
 class BlockGenerator
@@ -31,13 +32,14 @@ class BlockGenerator
 	const ScopeNode& m_block_ast;
 	std::stringstream m_asm;
 
-	std::list<std::pair<ScopeNode*, std::string>> m_local_labels;
+	std::list<std::pair<ASTNode*, std::string>> m_local_labels;
 	size_t m_label_index{ 2 };
 
 	size_t bp{};
 	size_t sp{};
 
-	bool m_returns = false;
+	bool m_early_returns = false;
+	bool m_explicit_return = false;
 	bool m_in_global_scope = false;
 	std::optional<ScopeNode*> m_parent_body;
 	std::map<std::string, std::pair<VariableDeclaration*, size_t>> m_stack;
@@ -47,7 +49,7 @@ public:
 				   const std::map<std::string, std::pair<VariableDeclaration*, size_t>>& stack,
 				   size_t basePointer,
 				   size_t labelIndex,
-				   std::list<std::pair<ScopeNode*, std::string>>& labels,
+				   std::list<std::pair<ASTNode*, std::string>>& labels,
 				   ScopeNode* parent)
 		: m_block_ast(block),
 		  m_stack(stack),
@@ -64,22 +66,21 @@ public:
 
 	void GenerateBlock();
 	[[nodiscard]] std::string Asm() const { return m_asm.str(); }
-	[[nodiscard]] bool Returns() const { return m_returns; }
+	[[nodiscard]] bool Returns() const { return m_early_returns; }
 
 protected:
 	[[nodiscard]] size_t LabelIndex() const { return m_label_index; }
 	[[nodiscard]] size_t BasePointer() const { return bp; }
-	[[nodiscard]] std::list<std::pair<ScopeNode*, std::string>>& Labels() { return m_local_labels; }
+	[[nodiscard]] std::list<std::pair<ASTNode*, std::string>>& Labels() { return m_local_labels; }
 
 private:
 	static std::string reg(Reg reg, size_t bytes = 4);
-	
 
 	void add_to_stack(VariableDeclaration*, size_t ptr = 4);
 	void add_to_stack(const std::string& name, Expression* value);
 	void push(const std::string&);
 	void pop(const std::string&);
-	std::string generate_local_label(ScopeNode*);
+	std::string generate_local_label(ASTNode*);
 
 	static std::string mov(Reg dest,
 						   size_t src_size,
@@ -96,9 +97,20 @@ private:
 						   const std::string& src,
 						   size_t dest_size = 0,
 						   bool is_unsigned = false);
+	static std::string mov(Reg dest,
+						   size_t src_size,
+						   long src,
+						   size_t dest_size = 0,
+						   bool is_unsigned = false);
+	static std::string mov(const std::string& dest,
+						   size_t src_size,
+						   long src,
+						   size_t dest_size = 0,
+						   bool is_unsigned = false);
+
 	static std::string mov(Reg dest, Reg src, size_t src_size = 4, bool sign = true);
 
-	static std::string offset(size_t offset, Reg base = Reg::rbp, size_t reg_size = 8, bool positive = false);
+	static std::string offset(size_t offset, size_t data_size, Reg base = Reg::rbp, size_t reg_size = 8, bool positive = false);
 
 	void generate_variables(const std::unique_ptr<ASTNode>&);
 	void generate_return_statement(const std::unique_ptr<ASTNode>&);
@@ -109,7 +121,12 @@ private:
 	void generate_assign_num_l(size_t lhs_size, const NumberLiteral* rhs_id);
 	void generate_assignment_ident(const Identifier* rhs_id,
 								   TokenType lhs_type);
-	void generate_if_statement(ASTNode*, const std::optional<std::string>& exit_label);
+	void generate_if_statement(ASTNode*, const std::optional<std::string>& exitLabel);
+	void generate_branch(Expression*,
+						 const std::optional<IfStatement*>&,
+						 const std::optional<std::string>&,
+						 bool = false);
+	void generate_while_statement(ASTNode*);
 
 	static void throw_not_assignable(const Expression* lhs, const Expression* rhs, TokenType op);
 
@@ -120,6 +137,7 @@ private:
 	void generate_bin_eq(const ASTNode*);
 
 	void align_stack(size_t offset);
+	void assert_ident_initialised(const Identifier* lhs_id);
 	void assert_ident_declared(const Identifier* lhs_id);
 };
 

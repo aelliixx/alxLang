@@ -16,7 +16,7 @@ namespace alx {
 
 class Parser
 {
-	std::map<TokenType, int> m_binaryOpPrecedence;
+	std::map<TokenType, int> m_binary_op_precedence;
 	std::vector<Token> m_tokens;
 	std::unique_ptr<Program> m_program;
 	size_t m_index{};
@@ -44,6 +44,7 @@ private:
 	std::unique_ptr<Expression> parse_term();
 	std::unique_ptr<ReturnStatement> parse_return_statement();
 	std::unique_ptr<IfStatement> parse_if_statement();
+	std::unique_ptr<WhileStatement> parse_while_statement();
 	std::unique_ptr<BlockStatement> parse_else_statement();
 	std::unique_ptr<UnaryExpression> parse_unary_expression();
 	void consume_semicolon(const std::unique_ptr<ASTNode>& statement);

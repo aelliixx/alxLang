@@ -29,7 +29,7 @@ void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 	{
 		auto rhs = dynamic_cast<NumberLiteral*>(lhs->Value());
 		add_to_stack(lhs); // Increment bp
-		m_asm << mov(offset(bp), size_of(lhs_type), rhs->Value(), size_of(lhs_type), is_unsigned(rhs->Type()));
+		m_asm << mov(offset(bp, size_of(lhs_type)), size_of(lhs_type), rhs->AsInt(), size_of(lhs_type), is_unsigned(rhs->Type()));
 		return;
 	}
 	else if (lhs->Value()->class_name() == "Identifier")
@@ -47,19 +47,19 @@ void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 		auto rhs = dynamic_cast<BinaryExpression*>(lhs->Value());
 		if (rhs->Constexpr())
 		{
-			m_asm << mov(offset(bp), size_of(lhs_type), rhs->Evaluate()->Value());
+			m_asm << mov(offset(bp, size_of(lhs_type)), size_of(lhs_type), rhs->Evaluate()->AsInt());
 			return;
 		}
-		Context context = { .lhs_size = size_of(lhs_type) };
+		Context context = { .lhsSize = size_of(lhs_type) };
 		generate_binary_expression(lhs->Value(), context);
-		m_asm << mov(offset(lhs_ptr), size_of(lhs_type), reg(Reg::rax, size_of(lhs_type)));
+		m_asm << mov(offset(lhs_ptr, size_of(lhs_type)), size_of(lhs_type), reg(Reg::rax, size_of(lhs_type)));
 		return;
 	} else if (lhs->Value()->class_name() == "UnaryExpression")
 	{
 		add_to_stack(lhs);
 		generate_unary_expression(lhs->Value());
 		auto lhs_ptr = m_stack[lhs->Name()].second;
-		m_asm << mov(offset(lhs_ptr), size_of(lhs_type), reg(Reg::rax, size_of(lhs_type)));
+		m_asm << mov(offset(lhs_ptr, size_of(lhs_type)), size_of(lhs_type), reg(Reg::rax, size_of(lhs_type)));
 		return;
 	}
 
