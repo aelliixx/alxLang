@@ -21,8 +21,14 @@ std::unique_ptr<IfStatement> Parser::parse_if_statement()
 	condition = parse_expression();
 	must_consume(TokenType::T_CLOSE_PAREN);
 	auto body = std::make_unique<BlockStatement>();
-	if (must_consume(TokenType::T_CURLY_OPEN).type == TokenType::T_CURLY_OPEN)
+	auto curly_open = peek();
+	if (!curly_open.has_value())
+		error("Expected statement, at line {}, position {}",
+			  peek(-1).value().lineNumber,
+			  peek(-1).value().columnNumber);
+	if (curly_open.value().type == TokenType::T_CURLY_OPEN)
 	{
+		must_consume(TokenType::T_CURLY_OPEN);
 		while (peek().value().type != TokenType::T_CURLY_CLOSE)
 		{
 			auto statement = parse_statement();
@@ -30,6 +36,12 @@ std::unique_ptr<IfStatement> Parser::parse_if_statement()
 			body->Append(std::move(statement));
 		}
 		must_consume(TokenType::T_CURLY_CLOSE);
+	}
+	else
+	{
+		auto statement = parse_statement();
+		consume_semicolon(statement);
+		body->Append(std::move(statement));
 	}
 	auto statement = std::make_unique<IfStatement>(std::move(condition), std::move(body));
 	if (peek().has_value() && peek().value().type == TokenType::T_ELSE)
