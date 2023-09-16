@@ -10,8 +10,8 @@
 #include "Codegen/x86_64_linux/ProgramGenerator.h"
 
 // TODO:
+// 	- Add classes/structs
 // 	- Add arrays
-// 	- Add classes
 // 	- Add strings
 // 	- Implement a call expression
 // 	- Implement puts()

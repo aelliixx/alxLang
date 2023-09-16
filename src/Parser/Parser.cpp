@@ -47,8 +47,8 @@ std::unique_ptr<Program> Parser::Parse()
 	} catch (std::runtime_error& err) {
 		println(Colour::LightRed, "Something went wrong when building AST. Current AST:");
 		m_program->PrintNode(0);
-		exit(1);
 	}
+	exit(1);
 }
 
 std::unique_ptr<Expression> Parser::parse_expression()
