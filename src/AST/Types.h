@@ -18,13 +18,13 @@ enum class TokenType
 	T_INT_L, T_FLOAT_L, T_DOUBLE_L, T_CHAR_L, T_STR_L, T_TRUE, T_FALSE,
 	// Functions and variables
 	T_IDENTIFIER, T_RET, T_EXTERN, T_INT, T_LONG, T_SHORT, T_FLOAT, T_DOUBLE, T_VOID, T_STRING,
-	T_CHAR, T_BOOL, T_CLASS, T_STRUCT, T_ENUM,
+	T_CHAR, T_BOOL, T_CLASS, T_STRUCT, T_ENUM, T_ASM,
 	// Syntax
 	T_SEMI, T_OPEN_PAREN, T_CLOSE_PAREN, T_CURLY_OPEN, T_CURLY_CLOSE,
-	T_SQUARE_OPEN, T_SQUARE_CLOSE, T_COMMA,
+	T_SQUARE_OPEN, T_SQUARE_CLOSE, T_COMMA, T_DOT, T_ARROW, T_COLON_COLON,
 	// Binary operators
 	T_PLUS, T_MINUS, T_STAR, T_FWD_SLASH, T_POW, T_LT, T_GT, T_LTE, T_GTE, T_EQ,
-	T_MOD, T_INT_DIV, T_EQEQ, T_NOT_EQ,
+	T_MOD, T_COLON, T_EQEQ, T_NOT_EQ,
 	// Maths ops
 	T_SUB, T_ADD, T_ADD_EQ, T_SUB_EQ, T_MULT_EQ, T_DIV_EQ, T_MOD_EQ, T_POW_EQ, T_NOT,
 	// Branching
@@ -95,7 +95,7 @@ static bool is_binary_op(TokenType type)
 	return type == TokenType::T_PLUS || type == TokenType::T_MINUS || type == TokenType::T_STAR ||
 		type == TokenType::T_FWD_SLASH || type == TokenType::T_POW || type == TokenType::T_LT ||
 		type == TokenType::T_GT || type == TokenType::T_LTE || type == TokenType::T_GTE ||
-		type == TokenType::T_EQ || type == TokenType::T_MOD || type == TokenType::T_INT_DIV ||
+		type == TokenType::T_EQ || type == TokenType::T_MOD || type == TokenType::T_COLON ||
 		type == TokenType::T_EQEQ || type == TokenType::T_NOT_EQ || type == TokenType::T_SUB_EQ
 		|| type == TokenType::T_ADD_EQ;
 }

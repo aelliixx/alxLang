@@ -236,7 +236,7 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 	  case TokenType::T_MOD:
 		  res = std::to_string(std::stol(lhs_val) % std::stol(rhs_val));
 		  break;
-	  case TokenType::T_INT_DIV:
+	  case TokenType::T_COLON:
 		  res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
 	  case TokenType::T_EQEQ:
 	  case TokenType::T_SUB:

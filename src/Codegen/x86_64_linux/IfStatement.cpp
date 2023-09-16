@@ -126,7 +126,7 @@ void BlockGenerator::generate_branch(Expression* condition,
 		case TokenType::T_POW:
 		case TokenType::T_EQ:
 		case TokenType::T_MOD:
-		case TokenType::T_INT_DIV:
+		case TokenType::T_COLON:
 		case TokenType::T_SUB:
 		case TokenType::T_ADD:
 		case TokenType::T_ADD_EQ:

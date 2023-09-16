@@ -319,8 +319,6 @@ static std::string token_to_string(TokenType token)
 		return "=";
 	case TokenType::T_MOD:
 		return "%";
-	case TokenType::T_INT_DIV:
-		return "\\";
 	case TokenType::T_SUB:
 		return "--";
 	case TokenType::T_ADD:
@@ -359,6 +357,16 @@ static std::string token_to_string(TokenType token)
 		return "!=";
 	case TokenType::T_NOT:
 		return "!";
+	case TokenType::T_ASM:
+		return "asm";
+	case TokenType::T_DOT:
+		return ".";
+	case TokenType::T_ARROW:
+		return "->";
+	case TokenType::T_COLON_COLON:
+		return "::";
+	case TokenType::T_COLON:
+		return ":";
 	}
 	assert(false && "Not reachable");
 }

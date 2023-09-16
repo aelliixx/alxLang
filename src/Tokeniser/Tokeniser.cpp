@@ -84,8 +84,11 @@ std::vector<Token> Tokeniser::Tokenise()
 			
 			if (!is_number(buffer))
 			{
+				if (buffer == ".") {
+					m_tokens.emplace_back(TokenType::T_DOT, buffer, m_line_index, m_column_index);
+					continue;
+				}
 				println(Colour::Red, "Unexpected token in '{}', at line: {}, position: {}", buffer, m_line_index, m_column_index);
-				exit(EXIT_FAILURE);
 			}
 			if (is_integer(buffer))
 			{
@@ -208,6 +211,12 @@ std::vector<Token> Tokeniser::Tokenise()
 				m_tokens.emplace_back(TokenType::T_SUB_EQ, m_line_index, m_column_index);
 				continue;
 			}
+			if (peek().value() == '>')
+			{
+				consume();
+				m_tokens.emplace_back(TokenType::T_ARROW, m_line_index, m_column_index);
+				continue;
+			}
 			m_tokens.emplace_back(TokenType::T_MINUS, m_line_index, m_column_index);
 			continue;
 		}
@@ -221,6 +230,18 @@ std::vector<Token> Tokeniser::Tokenise()
 		{
 			consume();
 			m_tokens.emplace_back(TokenType::T_POW, m_line_index, m_column_index);
+			continue;
+		}
+		else if (peek().value() == ':')
+		{
+			consume();
+			m_tokens.emplace_back(TokenType::T_COLON, m_line_index, m_column_index);
+			continue;
+		}
+		else if (peek().value() == '.')
+		{
+			consume();
+			m_tokens.emplace_back(TokenType::T_DOT, m_line_index, m_column_index);
 			continue;
 		}
 		else if (peek().value() == '/')
