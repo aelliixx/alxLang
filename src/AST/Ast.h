@@ -14,12 +14,18 @@
 #include <vector>
 #include <variant>
 #include "../Tokeniser/Tokeniser.h"
-#include "Types.h"
+#include "../Utils/Types.h"
 #include "../libs/Println.h"
 
 namespace alx {
-
-class ASTNode;
+enum class AccessModeType
+{
+	a_global = 0,        // Global functions, global classes and structs, global enums
+	a_scoped = 1,        // Local variables
+	a_public = 2,
+	a_protected = 3,
+	a_private = 4
+};
 
 class ASTNode
 {
@@ -28,6 +34,7 @@ public:
 	[[maybe_unused]] [[nodiscard]] virtual std::string class_name() const = 0;
 	[[maybe_unused]] virtual void PrintNode(int) const = 0;
 	virtual ~ASTNode() = default;
+	class StructDeclaration;
 };
 
 class Expression : public ASTNode
@@ -67,6 +74,7 @@ class Program : public ScopeNode
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	Program() = default;
+	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& GetChildren() const { return m_children; }
 };
 
 class BlockStatement : public ScopeNode
@@ -107,9 +115,10 @@ public:
 
 	NumberLiteral(TokenType type, std::string value)
 		: m_type(type),
-		  m_value(std::move(value)) {
+		  m_value(std::move(value))
+	{
 		std::string::size_type n;
-		while((n = m_value.find(',')) != std::string::npos)
+		while ((n = m_value.find(',')) != std::string::npos)
 			m_value.replace(n, 1, "");
 	}
 
@@ -118,7 +127,7 @@ public:
 	[[nodiscard]] long AsInt() const { return std::stoi(m_value); }
 	[[nodiscard]] std::string AsBool() const
 	{
-		return AsInt()? "true" : "false";
+		return AsInt() ? "true" : "false";
 	}
 };
 
@@ -135,7 +144,7 @@ public:
 		: m_value(std::move(value)) {}
 
 	[[nodiscard]] std::string Value() const { return m_value; }
-	[[nodiscard]] uint Lenght() const { return m_value.length(); }
+	[[nodiscard]] uint Length() const { return m_value.length(); }
 
 };
 
@@ -177,25 +186,47 @@ class VariableDeclaration : public ASTNode
 {
 	[[nodiscard]] std::string class_name() const override { return "VariableDeclaration"; }
 
-	TokenType m_type;
+	std::variant<TokenType, std::unique_ptr<Identifier>> m_type;
 	std::unique_ptr<Identifier> m_identifier;
 	std::unique_ptr<Expression> m_value;
+	AccessModeType m_access_mode = AccessModeType::a_scoped;
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	VariableDeclaration(TokenType type, std::unique_ptr<Identifier> identifier, std::unique_ptr<Expression> value)
-		: m_type(type),
+	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+						std::unique_ptr<Identifier> identifier,
+						std::unique_ptr<Expression> value)
+		: m_type(std::move(type)),
 		  m_identifier(std::move(identifier)),
 		  m_value(std::move(value))
 	{
-		assert(is_number_type(m_type) && "Invalid variable type");
 	}
 
-	VariableDeclaration(TokenType type, std::unique_ptr<Identifier> identifier)
-		: m_type(type),
+	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+						std::unique_ptr<Identifier> identifier,
+						std::unique_ptr<Expression> value,
+						AccessModeType access_mode)
+		: m_type(std::move(type)),
+		  m_identifier(std::move(identifier)),
+		  m_value(std::move(value)),
+		  m_access_mode(access_mode)
+	{
+	}
+
+	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+						std::unique_ptr<Identifier> identifier)
+		: m_type(std::move(type)),
 		  m_identifier(std::move(identifier))
 	{
-		assert(is_number_type(m_type) && "Invalid variable type");
+	}
+
+	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+						std::unique_ptr<Identifier> identifier,
+						AccessModeType access_mode)
+		: m_type(std::move(type)),
+		  m_identifier(std::move(identifier)),
+		  m_access_mode(access_mode)
+	{
 	}
 
 	void AssignValue(std::unique_ptr<Expression> expression)
@@ -203,11 +234,22 @@ public:
 		m_value = std::move(expression);
 	}
 
-	[[nodiscard]] TokenType Type() const { return m_type; }
+	[[nodiscard]] AccessModeType AccessMode() const { return m_access_mode; }
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] Expression* Value() const { return m_value.get(); }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
-	[[nodiscard]] std::string TypeName() const { return token_to_string(m_type); }
+	[[nodiscard]] auto* Type() const { return &m_type; }
+	[[nodiscard]] size_t TypeIndex() const { return m_type.index(); }
+	[[nodiscard]] TokenType TypeAsPrimitive() const { return std::get<TokenType>(m_type); }
+	[[nodiscard]] Identifier* TypeAsIdentifier() const { return std::get<std::unique_ptr<Identifier>>(m_type).get(); }
+	[[nodiscard]] std::string TypeName() const
+	{
+		if (m_type.index() == 0)
+			return token_to_string(std::get<0>(m_type));
+		if (m_type.index() == 1)
+			return std::get<1>(m_type)->Name();
+		ASSERT_NOT_REACHABLE();
+	}
 };
 
 class IfStatement : public ScopeNode
@@ -232,7 +274,7 @@ public:
 	{
 		m_alternate = std::move(alternate);
 	}
-	
+
 	[[nodiscard]] Expression* Condition() const { return m_condition.get(); }
 	[[nodiscard]] const std::optional<std::unique_ptr<ScopeNode>>& Alternate() const { return m_alternate; }
 	[[nodiscard]] bool HasAlternate() const { return m_alternate.has_value(); }
@@ -249,10 +291,9 @@ public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
 	WhileStatement(std::unique_ptr<Expression> expression,
-	std::unique_ptr<BlockStatement> body)
-	: m_condition(std::move(expression)),
-	m_body(std::move(body)) {}
-
+				   std::unique_ptr<BlockStatement> body)
+		: m_condition(std::move(expression)),
+		  m_body(std::move(body)) {}
 
 	void SetCondition(const Expression& expression)
 	{
@@ -266,12 +307,14 @@ public:
 
 class FunctionDeclaration : public ScopeNode
 {
+
 	[[nodiscard]] std::string class_name() const override { return "FunctionDeclaration"; }
 
 	TokenType m_return_type;
 	std::unique_ptr<Identifier> m_identifier;
 	std::vector<std::unique_ptr<VariableDeclaration>> m_arguments;
 	std::unique_ptr<BlockStatement> m_body;
+	AccessModeType m_access_mode = AccessModeType::a_global;
 
 public:
 	FunctionDeclaration(TokenType returnType,
@@ -283,12 +326,71 @@ public:
 		  m_body(std::move(body)),
 		  m_arguments(std::move(args)) {}
 
+	FunctionDeclaration(TokenType returnType,
+						std::unique_ptr<Identifier> name,
+						std::unique_ptr<BlockStatement> body,
+						std::vector<std::unique_ptr<VariableDeclaration>> args,
+						AccessModeType access_mode)
+		: m_return_type(returnType),
+		  m_identifier(std::move(name)),
+		  m_body(std::move(body)),
+		  m_arguments(std::move(args)),
+		  m_access_mode(access_mode) {}
+
 	[[maybe_unused]] void PrintNode(int indent) const override;
+	[[nodiscard]] TokenType ReturnType() const { return m_return_type; }
+	[[nodiscard]] AccessModeType AccessMode() const { return m_access_mode; }
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
 	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
 	[[nodiscard]] const std::vector<std::unique_ptr<VariableDeclaration>>& Arguments() const { return m_arguments; }
 	[[nodiscard]] size_t Argc() const { return m_arguments.size(); }
+};
+
+class StructDeclaration : public ASTNode
+{
+	[[nodiscard]] std::string class_name() const override { return "StructDeclaration"; }
+	std::string m_name;
+	std::vector<std::unique_ptr<ASTNode>> m_members;
+	std::vector<std::unique_ptr<ASTNode>> m_methods;
+
+public:
+	[[maybe_unused]] void PrintNode(int indent) const override;
+	StructDeclaration(std::string name,
+					  std::vector<std::unique_ptr<ASTNode>> members,
+					  std::vector<std::unique_ptr<ASTNode>> methods)
+		: m_name(std::move(name)),
+		  m_members(std::move(members)),
+		  m_methods(std::move(methods)) {}
+
+	[[nodiscard]] const std::string& Name() const { return m_name; }
+	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& Members() const { return m_members; }
+	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& Methods() const { return m_methods; }
+};
+
+class ClassDeclaration : public StructDeclaration
+{
+	[[nodiscard]] std::string class_name() const override { return "ClassDeclaration"; }
+
+};
+
+class MemberExpression : public Expression
+{
+	[[nodiscard]] std::string class_name() const override { return "MemberExpression"; }
+	std::unique_ptr<Identifier> m_object;
+	std::unique_ptr<Identifier> m_member;
+	TokenType m_accessor;
+public:
+	[[maybe_unused]] void PrintNode(int indent) const override;
+
+	MemberExpression(TokenType accessor, std::unique_ptr<Identifier> object, std::unique_ptr<Identifier> member)
+		: m_accessor(accessor),
+		  m_object(std::move(object)),
+		  m_member(std::move(member)) {}
+
+	[[nodiscard]] const Identifier& Object() const { return *m_object; }
+	[[nodiscard]] const Identifier& Member() const { return *m_member; }
+
 };
 
 class ReturnStatement : public ASTNode

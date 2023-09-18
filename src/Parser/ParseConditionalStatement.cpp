@@ -7,6 +7,7 @@
 //
 
 #include "Parser.h"
+#include "../libs/Error.h"
 
 namespace alx {
 

@@ -10,8 +10,7 @@
 #include <array>
 #include "ProgramGenerator.h"
 #include "BlockGenerator.h"
-#include "../../libs/Println.h"
-#include "../../libs/Utils.h"
+#include "../../libs/Error.h"
 
 namespace alx {
 
@@ -22,7 +21,7 @@ std::string ProgramGenerator::Generate()
 	{
 		if (node->class_name() == "FunctionDeclaration")
 		{
-			auto func = dynamic_cast<FunctionDeclaration*>(node.get());
+			auto func = static_cast<FunctionDeclaration*>(node.get());
 			m_asm << "\n";
 			if (func->Name() == "main")
 				m_asm << func->Name() << ":\n";
@@ -31,13 +30,31 @@ std::string ProgramGenerator::Generate()
 			// Set up the stack frame
 			m_asm << "push rbp\n";
 			m_asm << "mov rbp, rsp\n";
-			BlockGenerator scope{ func->Body(), func };
+
+			BlockGenerator scope{ func->Body(), m_ast };
 			scope.GenerateBlock();
+			
+			auto alignedStack = align_stack(scope.BpOffset());
+			// Use the red zone if:
+			// - the flag doesn't forbid it
+			// - if the stack of the function does not exceed 128 bytes (-8 because we pushed rbp before)
+			// - if it's a leaf function
+			// https://eli.thegreenplace.net/2011/09/06/stack-frame-layout-on-x86-64#id10
+			if (m_flags.mno_red_zone || scope.BpOffset() >= 120)
+			{
+				if (!m_flags.mno_red_zone)
+					m_asm << "sub rsp, " << alignedStack - 120 << "\n";
+				else
+					m_asm << "sub rsp, " << (alignedStack ? alignedStack : 16) << "\n";
+			}
 			m_asm << scope.Asm();
 			if (!scope.Returns())
 			{
 				m_asm << "xor eax, eax\n";
-				m_asm << "pop rbp\n";
+				if (scope.StackPointer() == scope.BasePointer() && scope.BpOffset() < 120)
+					m_asm << "pop rbp\n";
+				else
+					m_asm << "leave\n";
 				m_asm << "ret\n";
 			}
 		}
@@ -63,12 +80,12 @@ void ProgramGenerator::init()
 	auto main_it = std::find_if(m_ast.begin(), m_ast.end(), [&](const std::unique_ptr<ASTNode>& node)
 	{
 	  return node->class_name() == "FunctionDeclaration"
-		  && dynamic_cast<FunctionDeclaration*>(node.get())->Name() == "main";
+		  && static_cast<FunctionDeclaration*>(node.get())->Name() == "main";
 	});
 	if (main_it == m_ast.end())
 		error("No entry point 'main'");
 
-	auto main = dynamic_cast<FunctionDeclaration*>(main_it->get());
+	auto main = static_cast<FunctionDeclaration*>(main_it->get());
 
 	// Create _start
 	m_asm << "_start:\n";
@@ -188,6 +205,12 @@ void ProgramGenerator::consolidate_labels()
 		m_asm_str.replace(m_asm_str.find(labelPair.first), labelPair.first.length(), labelPair.second);
 	}
 	println("Consolidated {} label(s)", labelPairs.size());
+}
+size_t ProgramGenerator::align_stack(size_t stackSize)
+{
+	while ((16 + stackSize) % 16 != 0)
+		++stackSize;
+	return stackSize;
 }
 
 }

@@ -12,7 +12,7 @@ namespace alx {
 
 void BlockGenerator::generate_while_statement(ASTNode* node)
 {
-	auto statement = dynamic_cast<WhileStatement*>(node);
+	auto statement = static_cast<WhileStatement*>(node);
 	m_asm << "jmp " << generate_local_label(statement->Condition()) << "\n";
 	m_asm << generate_local_label(statement->BodyPtr()) << ":\n";
 	generate_body(statement->Body());

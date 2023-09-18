@@ -14,13 +14,13 @@ namespace alx {
 #pragma ide diagnostic ignored "misc-no-recursion"
 void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<std::string>& exitLabel)
 {
-	auto statement = dynamic_cast<IfStatement*>(node);
+	auto statement = static_cast<IfStatement*>(node);
 	auto condition = statement->Condition();
 	auto exitLabelActual = exitLabel.has_value() ? exitLabel.value() : generate_local_label(statement);
 
 	if (condition->class_name() == "NumberLiteral")
 	{
-		auto condNum = dynamic_cast<NumberLiteral*>(condition);
+		auto condNum = static_cast<NumberLiteral*>(condition);
 		if (condNum->AsInt())
 		{
 			generate_body(statement->Body());
@@ -29,7 +29,7 @@ void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<st
 	}
 	else if (condition->class_name() == "BinaryExpression")
 	{
-		auto condBinExp = dynamic_cast<BinaryExpression*>(condition);
+		auto condBinExp = static_cast<BinaryExpression*>(condition);
 		if (condBinExp->Constexpr() && condBinExp->Evaluate()->AsInt())
 		{
 			generate_body(statement->Body());
@@ -56,7 +56,7 @@ void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<st
 		generate_if_statement(alternate, exitLabelActual);
 	else if (alternate->class_name() == "BlockStatement")
 	{
-		auto alternateBlock = dynamic_cast<BlockStatement*>(alternate);
+		auto alternateBlock = static_cast<BlockStatement*>(alternate);
 		generate_body(*alternateBlock);
 		m_asm << exitLabelActual << ":\n";
 	}
@@ -95,12 +95,12 @@ void BlockGenerator::generate_branch(Expression* condition,
 
 	if (condition->class_name() == "NumberLiteral")
 	{
-		auto condNum = dynamic_cast<NumberLiteral*>(condition);
+		auto condNum = static_cast<NumberLiteral*>(condition);
 		ASSERT_NOT_IMPLEMENTED();
 	}
 	else if (condition->class_name() == "BinaryExpression")
 	{
-		auto condBinExp = dynamic_cast<BinaryExpression*>(condition);
+		auto condBinExp = static_cast<BinaryExpression*>(condition);
 
 		generate_binary_expression(condBinExp);
 		switch (condBinExp->Operator())
@@ -145,7 +145,7 @@ void BlockGenerator::generate_branch(Expression* condition,
 	else if (condition->class_name() == "Identifier")
 	{
 		// TODO: Check if it's nullptr
-		auto ident = dynamic_cast<Identifier*>(condition);
+		auto ident = static_cast<Identifier*>(condition);
 		m_asm << "cmp BYTE " << offset(m_stack[ident->Name()].second, 8)
 			  << ", 0\n"; // FIXME: Get the size of the identifier
 

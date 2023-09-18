@@ -7,8 +7,8 @@
 //
 
 #include "Parser.h"
-#include "../AST/Types.h"
-#include "../libs/Utils.h"
+#include "../Utils/Types.h"
+#include "../Utils/Utils.h"
 namespace alx {
 
 std::unique_ptr<NumberLiteral> Parser::parse_number_literal()

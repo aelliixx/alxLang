@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include "Parser.h"
+#include "../libs/Error.h"
 namespace alx {
 
 std::unique_ptr<FunctionDeclaration> Parser::parse_function()
@@ -18,6 +19,8 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 		returnType == TokenType::T_BOOL)
 	{
 		auto name = consume().value;
+		m_variables[name.value()] = {};
+		m_current_scope_name = name.value();
 		if (consume().type != TokenType::T_OPEN_PAREN)
 			error("Expected '(' in function {} declaration", name.value());
 		std::vector<std::unique_ptr<VariableDeclaration>> args{};
@@ -29,9 +32,15 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 			auto argNameToken = consume();
 
 			if (!is_number_type(argType) && argType != TokenType::T_STRING) // FIXME: Allow class identifiers
-				error("Unexpected token '{}' in variable declaration, at line: {}, position: {}", token_to_string(argType), argTypeToken.lineNumber, argTypeToken.columnNumber);
+				error("Unexpected token '{}' in variable declaration, at line: {}, position: {}",
+					  token_to_string(argType),
+					  argTypeToken.lineNumber,
+					  argTypeToken.columnNumber);
 			if (argNameToken.type != TokenType::T_IDENTIFIER)
-				error("Unexpected token '{}' in variable declaration, at line: {}, position: {}", token_to_string(argNameToken.type), argNameToken.lineNumber, argNameToken.columnNumber);
+				error("Unexpected token '{}' in variable declaration, at line: {}, position: {}",
+					  token_to_string(argNameToken.type),
+					  argNameToken.lineNumber,
+					  argNameToken.columnNumber);
 
 			auto argName = argNameToken.value;
 

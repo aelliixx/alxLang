@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include "../AST/Types.h"
+#include "../Utils/Types.h"
 #include "Colours.h"
 
 #define MAX_ARGS 256
@@ -225,21 +225,7 @@ void print(Colour colour, const std::string& format, const Param& ... arguments)
 	print("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
 }
 
-template<typename... Param>
-void error(const std::string& format, const Param& ... arguments)
-{
-	const auto text = getFormatted(format, arguments...);
-	auto colour = Colour::LightRed;
-	println("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
-	throw std::runtime_error(text);
-}
-template<typename... Param>
-void warning(const std::string& format, const Param& ... arguments)
-{
-	const auto text = getFormatted(format, arguments...);
-	auto colour = Colour::Orange;
-	println("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
-}
+
 
 static std::string token_to_string(TokenType token)
 {

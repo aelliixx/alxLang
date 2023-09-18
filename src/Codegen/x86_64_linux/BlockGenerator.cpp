@@ -10,7 +10,8 @@
 #include <regex>
 #include "../../libs/Println.h"
 #include "BlockGenerator.h"
-#include "../../libs/Utils.h"
+#include "../../Utils/Utils.h"
+#include "../../libs/Error.h"
 
 namespace alx {
 
@@ -20,7 +21,13 @@ void BlockGenerator::GenerateBlock()
 	{
 		auto node_name = node->class_name();
 		if (node_name == "VariableDeclaration")
-			generate_variables(node);
+		{
+			const auto& var = static_cast<VariableDeclaration&>(*node);
+			if (var.TypeIndex() == 0)
+				generate_variables(node);
+			else
+				generate_struct_variable(*node);
+		}
 		else if (node_name == "ReturnStatement")
 			generate_return_statement(node);
 		else if (node_name == "BinaryExpression")
@@ -29,6 +36,8 @@ void BlockGenerator::GenerateBlock()
 			generate_if_statement(node.get(), {});
 		else if (node_name == "WhileStatement")
 			generate_while_statement(node.get());
+		else if (node_name == "StructDeclaration")
+			generate_structs(*node);
 		else
 			error("Codegen error: Unexpected node '{}'", node_name);
 	}
@@ -37,19 +46,19 @@ void BlockGenerator::GenerateBlock()
 
 void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& node)
 {
-	auto ret = dynamic_cast<ReturnStatement*>(node.get());
+	auto ret = static_cast<ReturnStatement*>(node.get());
 	auto arg = ret->Argument();
 	// FIXME get the actual class
 	if (arg->class_name() == "Identifier")
 	{
-		const auto identifier = dynamic_cast<Identifier*>(arg);
+		const auto identifier = static_cast<Identifier*>(arg);
 		assert_ident_initialised(identifier);
 		auto rhs_ptr = m_stack.at(identifier->Name()).second;
-		m_asm << mov(reg(Reg::rax, 8), 8, offset(rhs_ptr, 8));
+		m_asm << mov(Reg::rax, 8, offset(rhs_ptr, 8));
 	}
 	else if (arg->class_name() == "NumberLiteral")
 	{
-		const auto literal = dynamic_cast<NumberLiteral*>(arg);
+		const auto literal = static_cast<NumberLiteral*>(arg);
 		switch (literal->Type())
 		{
 		case TokenType::T_INT_L:
@@ -75,6 +84,13 @@ void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& n
 		generate_binary_expression(arg);
 	else if (arg->class_name() == "UnaryExpression")
 		generate_unary_expression(arg);
+	else if (arg->class_name() == "MemberExpression")
+	{
+		// TODO: Test this code
+		const auto member = static_cast<MemberExpression*>(arg);
+		auto rhs_ptr = m_stack.at(member->Member().Name()).second;
+		m_asm << mov(Reg::rax, 8, offset(rhs_ptr, 8));
+	}
 	else
 	{
 		ASSERT_NOT_REACHABLE();
@@ -88,31 +104,34 @@ void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& n
 //		if (m_returns)
 //			m_asm << generate_local_label(m_parent_body.value()) << ":\n";
 	}
-	m_asm << "pop rbp\n";
+	if (sp == bp && bp_offset < 120)
+		m_asm << "pop rbp\n";
+	else
+		m_asm << "leave\n";
 	m_asm << "ret\n";
 	m_early_returns = true;
 }
 
-void BlockGenerator::add_to_stack(VariableDeclaration* var, size_t ptr)
+void BlockGenerator::add_to_stack(VariableDeclaration* const var, size_t ptr)
 {
-	// FIXME: Align the stack
-	auto offset = ptr != 0 ? size_of(var->Type()) : 0;
+	auto offset = ptr != 0 ? size_of(var->TypeAsPrimitive()) : 0;
 	align_stack(offset);
-
-	bp += ptr != 0 ? size_of(var->Type()) : 0;
-	m_stack[var->Ident().Name()] = { var, bp };
+//	if (m_stack.find(var->Name()) != m_stack.end())
+//		assert(false && "Cannot have two vars with the same name on the stack");
+	bp_offset += ptr != 0 ? size_of(var->TypeAsPrimitive()) : 0;
+	m_stack[var->Ident().Name()] = { var, offset };
 }
 
 void BlockGenerator::add_to_stack(const std::string& name, Expression* value)
 {
 	if (m_stack.find(name) != m_stack.end())
 	{
-		auto size = size_of(m_stack[name].first->Type());
+		auto size = size_of(m_stack[name].first->TypeAsPrimitive());
 		if (!m_stack[name].first->Value()) // If the value is uninitialised, initialise it
 		{
 			align_stack(size);
-			bp += size;
-			m_stack[name].second = bp;
+			bp_offset += size;
+			m_stack[name].second = bp_offset;
 		}
 		m_stack[name].first->AssignValue(std::make_unique<Expression>(*value));
 		return;
@@ -123,8 +142,8 @@ void BlockGenerator::add_to_stack(const std::string& name, Expression* value)
 void BlockGenerator::align_stack(size_t offset)
 {
 	if (offset == 0) return;
-	while ((bp + offset) % offset != 0)
-		++bp;
+	while ((offset + bp_offset) % offset != 0)
+		++bp_offset;
 }
 
 void BlockGenerator::push(const std::string& reg)
@@ -160,14 +179,14 @@ void BlockGenerator::throw_not_assignable(const Expression* lhs, const Expressio
 {
 	if (rhs->class_name() == "NumberLiteral")
 		error("Expression '{} {} {}' is not assignable",
-			  dynamic_cast<const NumberLiteral*>(lhs)->Value(),
+			  static_cast<const NumberLiteral*>(lhs)->Value(),
 			  token_to_string(op),
-			  dynamic_cast<const NumberLiteral*>(rhs)->Value());
+			  static_cast<const NumberLiteral*>(rhs)->Value());
 	else if (rhs->class_name() == "Identifier")
 		error("Expression '{} {} {}' is not assignable",
-			  dynamic_cast<const NumberLiteral*>(lhs)->Value(),
+			  static_cast<const NumberLiteral*>(lhs)->Value(),
 			  token_to_string(op),
-			  dynamic_cast<const Identifier*>(rhs)->Name());
+			  static_cast<const Identifier*>(rhs)->Name());
 }
 
 std::string BlockGenerator::mov(BlockGenerator::Reg dest,
@@ -276,7 +295,7 @@ std::string BlockGenerator::reg(BlockGenerator::Reg reg, size_t bytes)
 	case Reg::rdi:
 		return bytes == 8 ? "rdi" : bytes == 4 ? "edi" : bytes == 2 ? "di" : "dil";
 	case Reg::rbp:
-		return bytes == 8 ? "rbp" : bytes == 4 ? "ebp" : bytes == 2 ? "bp" : "bpl";
+		return bytes == 8 ? "rbp" : bytes == 4 ? "ebp" : bytes == 2 ? "offset" : "bpl";
 	case Reg::rsp:
 		return bytes == 8 ? "rsp" : bytes == 4 ? "esp" : bytes == 2 ? "sp" : "spl";
 	case Reg::r8:
@@ -324,11 +343,13 @@ std::string BlockGenerator::generate_local_label(ASTNode* statement)
 
 void BlockGenerator::generate_body(const BlockStatement& block)
 {
-	BlockGenerator body{ block, m_stack, bp, m_label_index, m_local_labels, m_parent_body.value() };
+	BlockGenerator body{ block, m_stack, bp_offset, m_label_index, m_local_labels, m_program_ast };
 	body.GenerateBlock();
 	m_early_returns = body.Returns();
 	m_label_index = body.LabelIndex();
 	m_local_labels = body.Labels();
+	bp_offset = body.BpOffset();
+	sp = body.StackPointer();
 	bp = body.BasePointer();
 	m_asm << body.Asm();
 }
@@ -352,4 +373,5 @@ void BlockGenerator::assert_ident_declared(const Identifier* lhs_id)
 			  "error and must be fixed in the parser.", lhs_id->Name());
 
 }
+
 } // alx

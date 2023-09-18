@@ -13,7 +13,8 @@
 //
 
 #include "Parser.h"
-#include "../libs/Utils.h"
+#include "../Utils/Utils.h"
+#include "../libs/Error.h"
 
 namespace alx {
 
@@ -37,18 +38,21 @@ int Parser::get_binary_op_precedence(const Token& token)
 
 std::unique_ptr<Program> Parser::Parse()
 {
-	try {
-	while (peek().has_value())
+	try
 	{
-		auto type = peek().value().type;
-		m_program->Append(parse_statement());
-		return std::move(m_program);
+		while (peek().has_value())
+		{
+			auto type = peek().value().type;
+			m_program->Append(parse_statement());
+		}
 	}
-	} catch (std::runtime_error& err) {
+	catch (std::runtime_error& err)
+	{
 		println(Colour::LightRed, "Something went wrong when building AST. Current AST:");
 		m_program->PrintNode(0);
+		exit(1);
 	}
-	exit(1);
+	return std::move(m_program);
 }
 
 std::unique_ptr<Expression> Parser::parse_expression()
@@ -78,8 +82,14 @@ std::unique_ptr<Expression> Parser::parse_term()
 	case TokenType::T_STR_L:
 		return parse_string_literal();
 	case TokenType::T_IDENTIFIER:
-		if (auto identifier = try_consume(TokenType::T_IDENTIFIER))
-			return std::make_unique<Identifier>(identifier->value.value());
+		if (peek().has_value() && peek().value().type == TokenType::T_IDENTIFIER)
+		{
+			if (peek(1).has_value()
+				&& (peek(1).value().type == TokenType::T_DOT || peek(1).value().type == TokenType::T_ARROW
+					|| peek(1).value().type == TokenType::T_COLON_COLON))
+				return parse_member_expression();
+			return std::make_unique<Identifier>(must_consume(TokenType::T_IDENTIFIER).value.value());
+		}
 	case TokenType::T_OPEN_PAREN:
 	{
 		consume();
@@ -134,9 +144,13 @@ Token Parser::must_consume(TokenType token)
 }
 void Parser::consume_semicolon(const std::unique_ptr<ASTNode>& statement)
 {
-	if (statement->class_name() != "IfStatement" && statement->class_name() != "WhileStatement")
+	if (statement->class_name() != "IfStatement" && statement->class_name() != "WhileStatement"
+		&& statement->class_name() != "StructDeclaration")
 		must_consume(TokenType::T_SEMI);
 }
-
+void Parser::add_variable(VariableDeclaration* var)
+{
+	m_variables.at(m_current_scope_name).push_back(var);
+}
 
 }

@@ -1,4 +1,10 @@
+struct S {
+    int a = 10;
+}
+
 int main()
 {
-    
+    S s;
+    int a = 12;
+    return a;
 }

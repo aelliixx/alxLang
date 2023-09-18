@@ -35,31 +35,32 @@ class BlockGenerator
 	std::list<std::pair<ASTNode*, std::string>> m_local_labels;
 	size_t m_label_index{ 2 };
 
+	size_t bp_offset{};
 	size_t bp{};
 	size_t sp{};
 
 	bool m_early_returns = false;
 	bool m_explicit_return = false;
 	bool m_in_global_scope = false;
-	std::optional<ScopeNode*> m_parent_body;
+	const std::vector<std::unique_ptr<ASTNode>>& m_program_ast;
 	std::map<std::string, std::pair<VariableDeclaration*, size_t>> m_stack;
 public:
 	BlockGenerator(BlockGenerator&& other) = delete;
 	BlockGenerator(const ScopeNode& block,
 				   const std::map<std::string, std::pair<VariableDeclaration*, size_t>>& stack,
-				   size_t basePointer,
+				   size_t bpOffset,
 				   size_t labelIndex,
 				   std::list<std::pair<ASTNode*, std::string>>& labels,
-				   ScopeNode* parent)
+				   const std::vector<std::unique_ptr<ASTNode>>& parent)
 		: m_block_ast(block),
 		  m_stack(stack),
-		  bp(basePointer),
+		  bp_offset(bpOffset),
 		  m_label_index(labelIndex),
 		  m_local_labels(labels),
-		  m_parent_body(parent) {}
+		  m_program_ast(parent) {}
 
-	BlockGenerator(const ScopeNode& block, ScopeNode* node)
-		: m_block_ast(block), m_parent_body(node)
+	BlockGenerator(const ScopeNode& block, const std::vector<std::unique_ptr<ASTNode>>& node)
+		: m_block_ast(block), m_program_ast(node)
 	{
 		m_in_global_scope = true;
 	}
@@ -67,16 +68,18 @@ public:
 	void GenerateBlock();
 	[[nodiscard]] std::string Asm() const { return m_asm.str(); }
 	[[nodiscard]] bool Returns() const { return m_early_returns; }
+	[[nodiscard]] size_t StackPointer() const { return sp; }
+	[[nodiscard]] size_t BasePointer() const { return bp; }
+	[[nodiscard]] size_t BpOffset() const { return bp_offset; }
 
 protected:
 	[[nodiscard]] size_t LabelIndex() const { return m_label_index; }
-	[[nodiscard]] size_t BasePointer() const { return bp; }
 	[[nodiscard]] std::list<std::pair<ASTNode*, std::string>>& Labels() { return m_local_labels; }
 
 private:
 	static std::string reg(Reg reg, size_t bytes = 4);
 
-	void add_to_stack(VariableDeclaration*, size_t ptr = 4);
+	void add_to_stack(VariableDeclaration* const, size_t ptr = 4);
 	void add_to_stack(const std::string& name, Expression* value);
 	void push(const std::string&);
 	void pop(const std::string&);
@@ -116,6 +119,8 @@ private:
 	void generate_return_statement(const std::unique_ptr<ASTNode>&);
 	void generate_binary_expression(const ASTNode*, std::optional<Context> = {});
 	void generate_unary_expression(const ASTNode*);
+	void generate_structs(const ASTNode&);
+	void generate_struct_variable(const ASTNode&);
 	void generate_body(const BlockStatement& block);
 
 	void generate_assign_num_l(size_t lhs_size, const NumberLiteral* rhs_id);

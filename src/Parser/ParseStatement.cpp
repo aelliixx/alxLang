@@ -7,7 +7,8 @@
 //
 
 #include "Parser.h"
-#include "../libs/Utils.h"
+#include "../Utils/Utils.h"
+#include "../libs/Error.h"
 
 namespace alx {
 std::unique_ptr<ASTNode> Parser::parse_statement()
@@ -47,6 +48,11 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	ASSERT_NOT_IMPLEMENTED();
 	case TokenType::T_WHILE:
 		return parse_while_statement();
+	case TokenType::T_STRUCT:
+		return parse_struct_declaration();
+	case TokenType::T_IDENTIFIER:
+		if (peek(1).value().type == TokenType::T_IDENTIFIER)
+			return parse_variable();
 	default:
 		return parse_expression();
 	}

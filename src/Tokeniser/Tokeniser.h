@@ -11,7 +11,7 @@
 #include <optional>
 #include <map>
 #include <regex>
-#include "../AST/Types.h"
+#include "../Utils/Types.h"
 
 namespace alx {
 

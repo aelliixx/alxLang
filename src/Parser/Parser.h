@@ -8,6 +8,7 @@
 
 #pragma once
 #include <map>
+#include <list>
 #include "../AST/Ast.h"
 #include "../libs/Println.h"
 #include "../Tokeniser/Tokeniser.h"
@@ -20,7 +21,9 @@ class Parser
 	std::vector<Token> m_tokens;
 	std::unique_ptr<Program> m_program;
 	size_t m_index{};
-
+	std::string m_current_scope_name;
+	std::map<std::string, std::vector<VariableDeclaration*>> m_variables;
+	
 	int get_binary_op_precedence(const Token& token);
 
 	std::optional<Token> peek(int ahead = 0);
@@ -47,6 +50,9 @@ private:
 	std::unique_ptr<WhileStatement> parse_while_statement();
 	std::unique_ptr<BlockStatement> parse_else_statement();
 	std::unique_ptr<UnaryExpression> parse_unary_expression();
+	std::unique_ptr<StructDeclaration> parse_struct_declaration();
+	std::unique_ptr<MemberExpression> parse_member_expression();
 	void consume_semicolon(const std::unique_ptr<ASTNode>& statement);
+	void add_variable(VariableDeclaration*);
 };
 }
