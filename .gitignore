@@ -4,6 +4,8 @@ build
 CMakeFiles
 cmake-build-debug-coverage
 
+/tests/codegen/bin
+
 .idea
 /docs/*
 !/docs/*.pdf
