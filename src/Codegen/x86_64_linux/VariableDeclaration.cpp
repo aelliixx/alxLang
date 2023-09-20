@@ -9,7 +9,7 @@
 #include "../../Utils/Utils.h"
 #include "BlockGenerator.h"
 #include "../../libs/Println.h"
-#include "../../libs/Error.h"
+#include "../../libs/ErrorHandler.h"
 
 namespace alx {
 
@@ -19,51 +19,75 @@ void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 	auto type = variable->TypeAsPrimitive();
 	auto size = size_of(type);
 	auto value = variable->Value();
-	
+	add_to_stack(variable->Name(), size, type);
+	auto lhsPtr = m_stack[variable->Name()].first;
+
 	if (type == TokenType::T_VOID)
 		error("Cannot declare variable of variable 'void'");
 	if (!value)
 	{
 		if (!variable->Ident().Assignable())
-			error("Must initialise constant values");
-		add_to_stack(variable, 0);
+			assert("Must initialise constant values");
 		return;
 	}
 	if (value->class_name() == "NumberLiteral")
 	{
 		auto rhs = static_cast<NumberLiteral*>(value);
-		add_to_stack(variable); // Increment offset
-		m_asm << mov(offset(bp_offset, size), size, rhs->AsInt(), size, is_unsigned(rhs->Type()));
+		auto rhsVal = type == TokenType::T_BOOL ? rhs->AsBoolNum() : rhs->AsInt();
+		m_asm << mov(offset(m_bp_offset, size), size, rhsVal, size, isUnsigned(rhs->Type()));
 		return;
 	}
 	else if (value->class_name() == "Identifier")
 	{
 		// - Get the underlying identifier of the rhs
-		auto rhs = static_cast<Identifier*>(value);
-		add_to_stack(variable); // Increment offset
-		generate_assignment_ident(rhs, type);
+		auto rhs = static_cast<Identifier&>(*value);
+		auto rhsStack = m_stack[rhs.Name()];
+			
+		if (m_stack_types[rhs.Name()] != TokenType::T_BOOL && type == TokenType::T_BOOL)
+		{
+			m_asm << "cmp " << offset(rhsStack.first, rhsStack.second) << ", 0\n";
+			m_asm << "setne " << reg(Reg::rax, size) << "\n";
+			m_asm << mov(offset(lhsPtr, size), size, Reg::rax);
+			return;
+		}
+		else if (size_of(m_stack_types[rhs.Name()]) <= 2
+			&& (type == TokenType::T_CHAR || type == TokenType::T_BOOL || type == TokenType::T_SHORT))
+		{
+			if (type == TokenType::T_SHORT && !(m_stack_types[rhs.Name()] == TokenType::T_BOOL || m_stack_types[rhs.Name()] == TokenType::T_SHORT))
+				m_asm << mov(reg(Reg::rax, 2), rhsStack.second, offset(rhsStack.first, rhsStack.second), 4, true);
+			else
+				m_asm << mov(Reg::rax, rhsStack.second, offset(rhsStack.first, rhsStack.second), 4, true);
+			m_asm << mov(offset(lhsPtr, size), size, Reg::rax);
+			return;
+		}
+		generate_assignment_ident(rhs, size, isUnsigned(m_stack_types[rhs.Name()]));
 		return;
 	}
 	else if (value->class_name() == "BinaryExpression")
 	{
-		add_to_stack(variable);
-		auto lhs_ptr = m_stack[variable->Name()].second;
 		auto rhs = static_cast<BinaryExpression*>(value);
 		if (rhs->Constexpr())
 		{
-			m_asm << mov(offset(bp_offset, size), size, rhs->Evaluate()->AsInt());
+			m_asm << mov(offset(m_bp_offset, size), size, rhs->Evaluate()->AsInt());
 			return;
 		}
-		Context context = { .lhsSize = size };
-		generate_binary_expression(value, context);
-		m_asm << mov(offset(lhs_ptr, size), size, reg(Reg::rax, size));
+		Context context = { .LhsSize = size, .AssignmentChain = true };
+		generate_binary_expression(rhs, context);
+		m_asm << mov(offset(lhsPtr, size), size, reg(Reg::rax, size));
 		return;
-	} else if (value->class_name() == "UnaryExpression")
+	}
+	else if (value->class_name() == "UnaryExpression")
 	{
-		add_to_stack(variable);
 		generate_unary_expression(variable->Value());
-		auto lhs_ptr = m_stack[variable->Name()].second;
-		m_asm << mov(offset(lhs_ptr, size), size, reg(Reg::rax, size));
+		m_asm << mov(offset(lhsPtr, size), size, reg(Reg::rax, size));
+		return;
+	}
+	else if (value->class_name() == "MemberExpression")
+	{
+		const auto& rhs = static_cast<MemberExpression&>(*value);
+		auto rhsVar = m_stack.at(rhs.Object().Name() + "::" + rhs.Member().Name());
+		m_asm << mov(Reg::rax, rhsVar.second, offset(rhsVar.first, rhsVar.second));
+		m_asm << mov(offset(lhsPtr, size), size, Reg::rax);
 		return;
 	}
 

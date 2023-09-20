@@ -13,13 +13,16 @@
 //
 
 #include "Parser.h"
+
+#include <utility>
 #include "../Utils/Utils.h"
-#include "../libs/Error.h"
+#include "../libs/ErrorHandler.h"
 
 namespace alx {
 
-Parser::Parser(std::vector<Token> tokens)
-	: m_tokens(std::move(tokens))
+Parser::Parser(std::vector<Token> tokens, const std::shared_ptr<ErrorHandler>& errorHandler)
+	: m_tokens(std::move(tokens)),
+	  m_error(errorHandler)
 {
 	m_binary_op_precedence[TokenType::T_LT] = 10;
 	m_binary_op_precedence[TokenType::T_GT] = 10;
@@ -33,7 +36,7 @@ Parser::Parser(std::vector<Token> tokens)
 
 int Parser::get_binary_op_precedence(const Token& token)
 {
-	return m_binary_op_precedence.find(token.type)->second;
+	return m_binary_op_precedence.find(token.Type)->second;
 }
 
 std::unique_ptr<Program> Parser::Parse()
@@ -42,7 +45,7 @@ std::unique_ptr<Program> Parser::Parse()
 	{
 		while (peek().has_value())
 		{
-			auto type = peek().value().type;
+			auto type = peek().value().Type;
 			m_program->Append(parse_statement());
 		}
 	}
@@ -50,6 +53,7 @@ std::unique_ptr<Program> Parser::Parse()
 	{
 		println(Colour::LightRed, "Something went wrong when building AST. Current AST:");
 		m_program->PrintNode(0);
+		m_error->EmitErrorCount();
 		exit(1);
 	}
 	return std::move(m_program);
@@ -70,7 +74,7 @@ std::unique_ptr<Expression> Parser::parse_term()
 	auto token = peek();
 	if (!token.has_value())
 		return nullptr;
-	switch (token.value().type)
+	switch (token.value().Type)
 	{
 	case TokenType::T_INT_L:
 	case TokenType::T_FLOAT_L:
@@ -82,13 +86,24 @@ std::unique_ptr<Expression> Parser::parse_term()
 	case TokenType::T_STR_L:
 		return parse_string_literal();
 	case TokenType::T_IDENTIFIER:
-		if (peek().has_value() && peek().value().type == TokenType::T_IDENTIFIER)
+		if (peek().has_value() && peek().value().Type == TokenType::T_IDENTIFIER)
 		{
 			if (peek(1).has_value()
-				&& (peek(1).value().type == TokenType::T_DOT || peek(1).value().type == TokenType::T_ARROW
-					|| peek(1).value().type == TokenType::T_COLON_COLON))
+				&& (peek(1).value().Type == TokenType::T_DOT || peek(1).value().Type == TokenType::T_ARROW
+					|| peek(1).value().Type == TokenType::T_COLON_COLON))
 				return parse_member_expression();
-			return std::make_unique<Identifier>(must_consume(TokenType::T_IDENTIFIER).value.value());
+			auto identifier = must_consume(TokenType::T_IDENTIFIER);
+
+			if (std::find_if(m_variables[m_current_scope_name].begin(),
+							 m_variables[m_current_scope_name].end(),
+							 [identifier](VariableDeclaration* var)
+							 {
+							   return var->Name() == identifier.Value.value();
+							 }) == m_variables[m_current_scope_name].end())
+				m_error->Error(identifier.LineNumber, identifier.ColumnNumber, identifier.PosNumber,
+							   "Use of undeclared identifier '{}'", identifier.Value.value());
+			
+			return std::make_unique<Identifier>(identifier.Value.value());
 		}
 	case TokenType::T_OPEN_PAREN:
 	{
@@ -100,10 +115,11 @@ std::unique_ptr<Expression> Parser::parse_term()
 	case TokenType::T_NOT:
 		return parse_unary_expression();
 	default:
-		error("Unexpected token '{}' at line: {}, position: {}",
-			  token_to_string(token->type),
-			  token->lineNumber,
-			  token->columnNumber);
+		m_error->Error(token->LineNumber,
+					   token->ColumnNumber,
+					   token->PosNumber,
+					   "Unexpected token '{}'",
+					   token_to_string(token->Type));
 	}
 	ASSERT_NOT_REACHABLE();
 }
@@ -124,7 +140,7 @@ Token Parser::consume()
 
 std::optional<Token> Parser::try_consume(TokenType type)
 {
-	if (peek().has_value() && peek().value().type == type)
+	if (peek().has_value() && peek().value().Type == type)
 		return consume();
 	return {};
 }
@@ -135,11 +151,12 @@ Token Parser::must_consume(TokenType token)
 	{
 		return tok.value();
 	}
-	error("Expected token '{}' after '{}' at line: {}, position: {}",
-		  token_to_string(token),
-		  token_to_string(peek(-1).value().type),
-		  peek(-1).value().lineNumber,
-		  peek(-1).value().columnNumber);
+	m_error->Error(peek(-1).value().LineNumber,
+				   peek(-1).value().ColumnNumber,
+				   peek(-1).value().PosNumber,
+				   "Expected token '{}' after '{}'",
+				   token_to_string(token),
+				   token_to_string(peek(-1).value().Type));
 	exit(EXIT_FAILURE);
 }
 void Parser::consume_semicolon(const std::unique_ptr<ASTNode>& statement)

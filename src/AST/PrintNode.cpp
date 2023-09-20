@@ -24,7 +24,7 @@ static std::string access_mode_to_string(AccessModeType mode)
 	case AccessModeType::a_private:
 		return "private";
 	default:
-		ASSERT_NOT_REACHABLE();
+	ASSERT_NOT_REACHABLE();
 	}
 }
 
@@ -176,7 +176,7 @@ void StructDeclaration::PrintNode(int indent) const
 {
 	println("{>}StructDeclaration: {", indent);
 	println("{>}member variables:", indent + 2);
-	if (m_members.size() > 0)
+	if (!m_members.empty())
 	{
 		for (const auto& var : m_members)
 		{
@@ -189,7 +189,7 @@ void StructDeclaration::PrintNode(int indent) const
 					member->Value() != nullptr);
 		}
 	}
-	if (m_methods.size() > 0)
+	if (!m_methods.empty())
 	{
 		println("{>}member methods:", indent + 2);
 		for (const auto& var : m_methods)

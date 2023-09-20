@@ -20,44 +20,44 @@ namespace alx {
 std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 {
 	assert(m_constexpr && "Cannot evaluate non constant binary expressions");
-	auto add = [this](TokenType lhs, const std::string& lhs_val, const std::string& rhs_val)
+	auto add = [this](TokenType lhs, const std::string& lhsVal, const std::string& rhsVal)
 	{
 	  // FIXME: Add evaluation for doubles and floats
 	  std::string res;
 	  switch (m_binary_op)
 	  {
 	  case TokenType::T_PLUS:
-		  res = std::to_string(std::stol(lhs_val) + std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) + std::stol(rhsVal));
 		  break;
 	  case TokenType::T_MINUS:
-		  res = std::to_string(std::stol(lhs_val) - std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) - std::stol(rhsVal));
 		  break;
 	  case TokenType::T_STAR:
-		  res = std::to_string(std::stol(lhs_val) * std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) * std::stol(rhsVal));
 		  break;
 	  case TokenType::T_FWD_SLASH:
-		  res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) / std::stol(rhsVal));
 		  break;
 	  case TokenType::T_POW:
-		  res = std::to_string((long)(std::pow(std::stol(lhs_val), std::stol(rhs_val))));
+		  res = std::to_string((long)(std::pow(std::stol(lhsVal), std::stol(rhsVal))));
 		  break;
 	  case TokenType::T_LT:
-		  res = std::to_string(std::stol(lhs_val) < std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) < std::stol(rhsVal));
 		  break;
 	  case TokenType::T_GT:
-		  res = std::to_string(std::stol(lhs_val) > std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) > std::stol(rhsVal));
 		  break;
 	  case TokenType::T_LTE:
-		  res = std::to_string(std::stol(lhs_val) <= std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) <= std::stol(rhsVal));
 		  break;
 	  case TokenType::T_GTE:
-		  res = std::to_string(std::stol(lhs_val) >= std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) >= std::stol(rhsVal));
 		  break;
 	  case TokenType::T_MOD:
-		  res = std::to_string(std::stol(lhs_val) % std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) % std::stol(rhsVal));
 		  break;
 	  case TokenType::T_COLON:
-		  res = std::to_string(std::stol(lhs_val) / std::stol(rhs_val));
+		  res = std::to_string(std::stol(lhsVal) / std::stol(rhsVal));
 	  case TokenType::T_EQEQ:
 	  case TokenType::T_SUB:
 	  case TokenType::T_ADD:
@@ -80,9 +80,9 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 	{
 		auto lhs = static_cast<BinaryExpression*>(m_lhs.get())->Evaluate();
 		auto rhs = static_cast<NumberLiteral*>(m_rhs.get());
-		auto lhs_val = lhs->Value();
-		auto rhs_val = rhs->Value();
-		return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhs_val, rhs_val));
+		auto lhsVal = lhs->Value();
+		auto rhsVal = rhs->Value();
+		return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhsVal, rhsVal));
 	}
 
 	assert(m_rhs->class_name() == "NumberLiteral");
@@ -102,7 +102,7 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_
 	  m_rhs(std::move(rhs)),
 	  m_binary_op(binaryOp)
 {
-	assert(is_binary_op(m_binary_op) && "Invalid binary operator");
+	assert(isBinaryOp(m_binary_op) && "Invalid binary operator");
 
 	// Check if both sides are numbers or binary expressions and if they are constant
 	if (m_lhs->class_name() == "NumberLiteral" && m_rhs->class_name() == "NumberLiteral")
@@ -112,12 +112,27 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_
 
 	if (m_lhs->class_name() == "Identifier" && m_rhs->class_name() == "Identifier")
 	{
-		auto lhs_id = static_cast<Identifier*>(m_lhs.get());
-		auto rhs_id = static_cast<Identifier*>(m_rhs.get());
+		auto lhsId = static_cast<Identifier*>(m_lhs.get());
+		auto rhsId = static_cast<Identifier*>(m_rhs.get());
 		
-		m_operands_match = lhs_id->Name() == rhs_id->Name();
+		m_operands_match = lhsId->Name() == rhsId->Name();
 	}
 
+}
+
+StructDeclaration::StructDeclaration(std::string name,
+									 std::vector<std::unique_ptr<ASTNode>> members,
+									 std::vector<std::unique_ptr<ASTNode>> methods)
+	: m_name(std::move(name)),
+	  m_members(std::move(members)),
+	  m_methods(std::move(methods))
+{
+	for (const auto& member : m_members) {
+		auto& var = static_cast<VariableDeclaration&>(*member);
+		if (var.TypeIndex() == 0) {
+			m_size += size_of(var.TypeAsPrimitive());
+		}
+	}
 }
 
 }

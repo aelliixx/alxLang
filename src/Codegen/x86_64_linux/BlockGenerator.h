@@ -13,13 +13,14 @@
 #include <sstream>
 #include <list>
 #include "../../AST/Ast.h"
+#include "../../Utils/Flags.h"
 
 namespace alx {
 
 struct Context
 {
-	size_t lhsSize;
-	bool immediateAssignment;
+	size_t LhsSize;
+	bool AssignmentChain;
 };
 
 class BlockGenerator
@@ -35,32 +36,41 @@ class BlockGenerator
 	std::list<std::pair<ASTNode*, std::string>> m_local_labels;
 	size_t m_label_index{ 2 };
 
-	size_t bp_offset{};
-	size_t bp{};
-	size_t sp{};
+	size_t m_bp_offset{};
+	size_t m_bp{};
+	size_t m_sp{};
 
 	bool m_early_returns = false;
 	bool m_explicit_return = false;
 	bool m_in_global_scope = false;
 	const std::vector<std::unique_ptr<ASTNode>>& m_program_ast;
-	std::map<std::string, std::pair<VariableDeclaration*, size_t>> m_stack;
+	std::map<std::string, std::pair<size_t, size_t>> m_stack;
+	std::map<std::string, TokenType> m_stack_types;
+	TokenType m_return_type;
+
+	Flags m_flags{};
 public:
 	BlockGenerator(BlockGenerator&& other) = delete;
 	BlockGenerator(const ScopeNode& block,
-				   const std::map<std::string, std::pair<VariableDeclaration*, size_t>>& stack,
+				   const std::map<std::string, std::pair<size_t, size_t>>& stack,
 				   size_t bpOffset,
 				   size_t labelIndex,
 				   std::list<std::pair<ASTNode*, std::string>>& labels,
-				   const std::vector<std::unique_ptr<ASTNode>>& parent)
+				   const std::vector<std::unique_ptr<ASTNode>>& parent,
+				   Flags flags)
 		: m_block_ast(block),
 		  m_stack(stack),
-		  bp_offset(bpOffset),
+		  m_bp_offset(bpOffset),
 		  m_label_index(labelIndex),
 		  m_local_labels(labels),
-		  m_program_ast(parent) {}
+		  m_program_ast(parent),
+		  m_flags(flags) {}
 
-	BlockGenerator(const ScopeNode& block, const std::vector<std::unique_ptr<ASTNode>>& node)
-		: m_block_ast(block), m_program_ast(node)
+	BlockGenerator(const ScopeNode& block,
+				   const std::vector<std::unique_ptr<ASTNode>>& node,
+				   Flags flags,
+				   TokenType returnType)
+		: m_block_ast(block), m_program_ast(node), m_flags(flags), m_return_type(returnType)
 	{
 		m_in_global_scope = true;
 	}
@@ -68,52 +78,55 @@ public:
 	void GenerateBlock();
 	[[nodiscard]] std::string Asm() const { return m_asm.str(); }
 	[[nodiscard]] bool Returns() const { return m_early_returns; }
-	[[nodiscard]] size_t StackPointer() const { return sp; }
-	[[nodiscard]] size_t BasePointer() const { return bp; }
-	[[nodiscard]] size_t BpOffset() const { return bp_offset; }
+	[[nodiscard]] size_t StackPointer() const { return m_sp; }
+	[[nodiscard]] size_t BasePointer() const { return m_bp; }
+	[[nodiscard]] size_t BpOffset() const { return m_bp_offset; }
 
 protected:
-	[[nodiscard]] size_t LabelIndex() const { return m_label_index; }
-	[[nodiscard]] std::list<std::pair<ASTNode*, std::string>>& Labels() { return m_local_labels; }
+	[[nodiscard]] size_t label_index() const { return m_label_index; }
+	[[nodiscard]] std::list<std::pair<ASTNode*, std::string>>& labels() { return m_local_labels; }
 
 private:
 	static std::string reg(Reg reg, size_t bytes = 4);
 
-	void add_to_stack(VariableDeclaration* const, size_t ptr = 4);
-	void add_to_stack(const std::string& name, Expression* value);
+	void add_to_stack(const std::string&, size_t, TokenType);
 	void push(const std::string&);
 	void pop(const std::string&);
 	std::string generate_local_label(ASTNode*);
 
 	static std::string mov(Reg dest,
-						   size_t src_size,
+						   size_t srcSize,
 						   const std::string& src,
-						   size_t dest_size = 0,
-						   bool is_unsigned = false);
+						   size_t destSize = 0,
+						   bool isUnsigned = false);
 	static std::string mov(const std::string& dest,
-						   size_t src_size,
+						   size_t srcSize,
 						   Reg src,
-						   size_t dest_size = 0,
-						   bool is_unsigned = false);
+						   size_t destSize = 0,
+						   bool isUnsigned = false);
 	static std::string mov(const std::string& dest,
-						   size_t src_size,
+						   size_t srcSize,
 						   const std::string& src,
-						   size_t dest_size = 0,
-						   bool is_unsigned = false);
+						   size_t destSize = 0,
+						   bool isUnsigned = false);
 	static std::string mov(Reg dest,
-						   size_t src_size,
+						   size_t srcSize,
 						   long src,
-						   size_t dest_size = 0,
-						   bool is_unsigned = false);
+						   size_t destSize = 0,
+						   bool isUnsigned = false);
 	static std::string mov(const std::string& dest,
-						   size_t src_size,
+						   size_t srcSize,
 						   long src,
-						   size_t dest_size = 0,
-						   bool is_unsigned = false);
+						   size_t destSize = 0,
+						   bool isUnsigned = false);
 
-	static std::string mov(Reg dest, Reg src, size_t src_size = 4, bool sign = true);
+	static std::string mov(Reg dest, Reg src, size_t srcSize = 4, bool sign = true);
 
-	static std::string offset(size_t offset, size_t data_size, Reg base = Reg::rbp, size_t reg_size = 8, bool positive = false);
+	static std::string offset(size_t offset,
+							  size_t dataSize,
+							  Reg base = Reg::rbp,
+							  size_t regSize = 8,
+							  bool positive = false);
 
 	void generate_variables(const std::unique_ptr<ASTNode>&);
 	void generate_return_statement(const std::unique_ptr<ASTNode>&);
@@ -123,9 +136,8 @@ private:
 	void generate_struct_variable(const ASTNode&);
 	void generate_body(const BlockStatement& block);
 
-	void generate_assign_num_l(size_t lhs_size, const NumberLiteral* rhs_id);
-	void generate_assignment_ident(const Identifier* rhs_id,
-								   TokenType lhs_type);
+	void generate_assign_num_l(size_t lhsSize, const NumberLiteral* rhsId);
+	void generate_assignment_ident(const Identifier& rhsId, size_t, bool);
 	void generate_if_statement(ASTNode*, const std::optional<std::string>& exitLabel);
 	void generate_branch(Expression*,
 						 const std::optional<IfStatement*>&,
@@ -139,11 +151,11 @@ private:
 
 	// Binary methods
 
-	void generate_bin_eq(const ASTNode*);
+	void generate_bin_eq(const ASTNode*, std::optional<Context>);
 
 	void align_stack(size_t offset);
-	void assert_ident_initialised(const Identifier* lhs_id);
-	void assert_ident_declared(const Identifier* lhs_id);
+	void assert_ident_initialised(const Identifier* lhsId);
+	void assert_ident_declared(const Identifier* lhsId);
 };
 
 }

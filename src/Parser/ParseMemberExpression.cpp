@@ -7,33 +7,34 @@
 //
 
 #include "Parser.h"
-#include "../libs/Error.h"
 
 namespace alx {
 
 std::unique_ptr<MemberExpression> Parser::parse_member_expression()
 {
 	auto identifier = must_consume(TokenType::T_IDENTIFIER);
-	auto ident_ptr = std::make_unique<Identifier>(identifier.value.value());
-	auto accessor = consume().type; // This is always either a '.', '->' or '::' as checked by Parser::parse_term()
+	auto identPtr = std::make_unique<Identifier>(identifier.Value.value());
+	auto accessor = consume().Type; // This is always either a '.', '->' or '::' as checked by Parser::parse_term()
 	auto property = must_consume(TokenType::T_IDENTIFIER);
-	auto mem_ptr = std::make_unique<Identifier>(property.value.value());
-	auto scope_vars = m_variables.at(m_current_scope_name);
+	auto memPtr = std::make_unique<Identifier>(property.Value.value());
+	auto scopeVars = m_variables.at(m_current_scope_name);
 
 	// Find the identifier in the AST
-	auto object = std::find_if(scope_vars.begin(), scope_vars.end(), [&ident_ptr](VariableDeclaration* var){
-	  return ident_ptr->Name() == var->Name();
+	auto object = std::find_if(scopeVars.begin(), scopeVars.end(), [&identPtr](VariableDeclaration* var)
+	{
+	  return identPtr->Name() == var->Name();
 	});
-	if (object == scope_vars.end())
-		error("Use of undeclared identifier '{}' at line: {}, in position: {}",
-			  ident_ptr.get()->Name(),
-			  identifier.lineNumber,
-			  identifier.columnNumber);
+	if (object == scopeVars.end())
+		m_error->Error(identifier.LineNumber,
+					   identifier.ColumnNumber,
+					   identifier.PosNumber,
+					   "Use of undeclared identifier '{}'",
+					   identPtr.get()->Name());
 
 	// TODO: Need to rethink this when the class or struct definitions get hoisted eventually
 	// TODO: Verify that the access level is not private or protected in this context
 	// Find the initialisation of the struct or class
-	const auto& struct_decl =
+	const auto& structDecl =
 		std::find_if(m_program->GetChildren().begin(), m_program->GetChildren().end(), [&object](const auto& child)
 		{
 		  if (child->class_name() == "StructDeclaration")
@@ -44,27 +45,29 @@ std::unique_ptr<MemberExpression> Parser::parse_member_expression()
 		  return false;
 		});
 	// Find the accessed variable in the struct
-	if (struct_decl != m_program->GetChildren().end())
+	if (structDecl != m_program->GetChildren().end())
 	{
-		const auto& struct_declaration = static_cast<StructDeclaration&>(**struct_decl);
-		const auto& member = std::find_if(struct_declaration.Members().begin(),
-										  struct_declaration.Members().end(),
+		const auto& structDeclaration = static_cast<StructDeclaration&>(**structDecl);
+		const auto& member = std::find_if(structDeclaration.Members().begin(),
+										  structDeclaration.Members().end(),
 										  [&property](const auto& var)
 										  {
 											const auto& mem = static_cast<VariableDeclaration&>(*var);
-											return mem.Name() == property.value.value();
+											return mem.Name() == property.Value.value();
 										  });
-		if (member != struct_declaration.Members().end())
-			return std::make_unique<MemberExpression>(accessor, std::move(ident_ptr), std::move(mem_ptr));
+		if (member != structDeclaration.Members().end())
+			return std::make_unique<MemberExpression>(accessor, std::move(identPtr), std::move(memPtr),
+													  static_cast<VariableDeclaration&>(**member).TypeAsPrimitive());
 
-		error("No member '{}' in '{}' at line: {}, in position: {}",
-			  property.value.value(),
-			  identifier.value.value(),
-			  property.lineNumber,
-			  property.columnNumber);
+		m_error->Error(property.LineNumber,
+					   property.ColumnNumber,
+					   property.PosNumber,
+					   "No member '{}' in '{}'",
+					   property.Value.value(),
+					   identifier.Value.value());
 	}
 	// If not found in struct, try classes
-	const auto& class_decl =
+	const auto& classDecl =
 		std::find_if(m_program->GetChildren().begin(), m_program->GetChildren().end(), [&object](const auto& child)
 		{
 		  if (child->class_name() == "ClassDeclaration")
@@ -75,24 +78,26 @@ std::unique_ptr<MemberExpression> Parser::parse_member_expression()
 		  return false;
 		});
 	// Find the accessed variable in the class
-	if (class_decl != m_program->GetChildren().end())
+	if (classDecl != m_program->GetChildren().end())
 	{
-		const auto& class_declaration = static_cast<ClassDeclaration&>(**class_decl);
-		const auto& member = std::find_if(class_declaration.Members().begin(),
-										  class_declaration.Members().end(),
+		const auto& classDeclaration = static_cast<ClassDeclaration&>(**classDecl);
+		const auto& member = std::find_if(classDeclaration.Members().begin(),
+										  classDeclaration.Members().end(),
 										  [&property](const auto& var)
 										  {
 											const auto& mem = static_cast<VariableDeclaration&>(*var);
-											return mem.Name() == property.value.value();
+											return mem.Name() == property.Value.value();
 										  });
-		if (member != class_declaration.Members().end())
-			return std::make_unique<MemberExpression>(accessor, std::move(ident_ptr), std::move(mem_ptr));
+		if (member != classDeclaration.Members().end())
+			return std::make_unique<MemberExpression>(accessor, std::move(identPtr), std::move(memPtr),
+													  static_cast<VariableDeclaration&>(**member).TypeAsPrimitive());
 
-		error("No member '{}' in '{}' at line: {}, in position: {}",
-			  property.value.value(),
-			  identifier.value.value(),
-			  property.lineNumber,
-			  property.columnNumber);
+		m_error->Error(property.LineNumber,
+					   property.ColumnNumber,
+					   property.PosNumber,
+					   "No member '{}' in '{}'",
+					   property.Value.value(),
+					   identifier.Value.value());
 	}
 	ASSERT_NOT_REACHABLE();
 }

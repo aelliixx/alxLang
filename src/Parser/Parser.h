@@ -22,19 +22,22 @@ class Parser
 	std::unique_ptr<Program> m_program;
 	size_t m_index{};
 	std::string m_current_scope_name;
+	std::variant<TokenType, std::unique_ptr<Identifier>> m_current_return_type;
 	std::map<std::string, std::vector<VariableDeclaration*>> m_variables;
-	
+
 	int get_binary_op_precedence(const Token& token);
 
 	std::optional<Token> peek(int ahead = 0);
 	Token consume();
 	std::optional<Token> try_consume(TokenType);
 	Token must_consume(TokenType token);
+	std::shared_ptr<ErrorHandler> m_error;
 	
 public:
-	explicit Parser(std::vector<Token> tokens);
+	Parser(std::vector<Token> tokens, const std::shared_ptr<ErrorHandler>& errorHandler);
 
 	[[nodiscard]] std::unique_ptr<Program> Parse();
+	[[nodiscard]] const Program& GetAst() { return *m_program;}
 
 private:
 	std::unique_ptr<FunctionDeclaration> parse_function();

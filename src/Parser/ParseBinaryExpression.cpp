@@ -7,37 +7,42 @@
 //
 
 #include "Parser.h"
-#include "../Utils/Utils.h"
+#include "../libs/ErrorHandler.h"
 namespace alx {
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
 std::unique_ptr<Expression> Parser::parse_binary_operation(std::unique_ptr<Expression> lhs, int precedence)
 {
 	while (peek().has_value())
 	{
-		if (peek().value().type == TokenType::T_SEMI || !is_binary_op(peek().value().type)) {
+		if (peek().value().Type == TokenType::T_SEMI || !isBinaryOp(peek().value().Type))
+		{
 			return lhs;
 		}
 		auto op = consume();
-		if (!is_binary_op(op.type))
+		if (!isBinaryOp(op.Type))
 			return lhs;
-		int token_precedence = get_binary_op_precedence(op);
-		if (token_precedence < precedence)
+		int tokenPrecedence = get_binary_op_precedence(op);
+		if (tokenPrecedence < precedence)
 			return lhs;
-		
+
 		auto rhs = parse_term();
 		if (!rhs)
 			return nullptr;
-		
-		int next_precedence = get_binary_op_precedence(peek().value());
-		if (token_precedence < next_precedence) {
-			rhs = parse_binary_operation(std::move(rhs), token_precedence + 1);
+
+		int nextPrecedence = get_binary_op_precedence(peek().value());
+		if (tokenPrecedence < nextPrecedence)
+		{
+			rhs = parse_binary_operation(std::move(rhs), tokenPrecedence + 1);
 			if (!rhs)
 				return nullptr;
 		}
-		
-		lhs = std::make_unique<BinaryExpression>(std::move(lhs), std::move(rhs), op.type);
+		if (lhs->class_name() == "NumberLiteral" && op.Type == TokenType::T_EQ)
+			m_error->Error(op.LineNumber, op.ColumnNumber, op.PosNumber, "Expression is not assignable");
+		if (lhs->class_name() == "BinaryExpression" && op.Type == TokenType::T_EQ)
+			if (static_cast<BinaryExpression&>(*lhs).Rhs()->class_name() == "NumberLiteral")
+				m_error->Error(op.LineNumber, op.ColumnNumber, op.PosNumber, "Expression is not assignable");
+		lhs = std::make_unique<BinaryExpression>(std::move(lhs), std::move(rhs), op.Type);
 	}
 	ASSERT_NOT_REACHABLE();
 }

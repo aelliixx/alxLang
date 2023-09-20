@@ -10,7 +10,7 @@
 #include <array>
 #include "ProgramGenerator.h"
 #include "BlockGenerator.h"
-#include "../../libs/Error.h"
+#include "../../libs/ErrorHandler.h"
 
 namespace alx {
 
@@ -31,14 +31,14 @@ std::string ProgramGenerator::Generate()
 			m_asm << "push rbp\n";
 			m_asm << "mov rbp, rsp\n";
 
-			BlockGenerator scope{ func->Body(), m_ast };
+			BlockGenerator scope{ func->Body(), m_ast, m_flags, func->ReturnType() };
 			scope.GenerateBlock();
 			
 			auto alignedStack = align_stack(scope.BpOffset());
 			// Use the red zone if:
 			// - the flag doesn't forbid it
 			// - if the stack of the function does not exceed 128 bytes (-8 because we pushed rbp before)
-			// - if it's a leaf function
+			// - FIXME: if it's a leaf function
 			// https://eli.thegreenplace.net/2011/09/06/stack-frame-layout-on-x86-64#id10
 			if (m_flags.mno_red_zone || scope.BpOffset() >= 120)
 			{
@@ -132,18 +132,18 @@ std::string ProgramGenerator::generate_func_label(const FunctionDeclaration& fun
 std::string ProgramGenerator::FormatAsm(const std::string& assembly)
 {
 	std::string formatted;
-	std::array<std::string, 2> asm_keywords = {
+	std::array<std::string, 2> asmKeywords = {
 		"global", "section"
 	};
 	std::string buffer;
 	size_t index = 0;
-	const size_t min_mnemonic_len = 7;
+	const size_t minMnemonicLen = 7;
 	while (assembly[index] != '\0')
 	{
 		buffer += assembly[index];
 
 		// If it's a keyword, ignore the line without formatting it.
-		if (std::find(asm_keywords.begin(), asm_keywords.end(), buffer) != asm_keywords.end() || buffer.ends_with(":"))
+		if (std::find(asmKeywords.begin(), asmKeywords.end(), buffer) != asmKeywords.end() || buffer.ends_with(":"))
 		{
 			++index;
 			for (; assembly[index] != '\n'; ++index)
@@ -157,10 +157,10 @@ std::string ProgramGenerator::FormatAsm(const std::string& assembly)
 			// Add spaces before and after the mnemonic (e.g. "xor eax, eax" -> "     xor   eax, eax";
 			if (buffer.find(' ') != std::string::npos)
 			{
-				auto spaces_to_add = (min_mnemonic_len - buffer.find(' ')) % min_mnemonic_len;
-				buffer.insert(buffer.find(' '), spaces_to_add, ' ');
+				auto spacesToAdd = (minMnemonicLen - buffer.find(' ')) % minMnemonicLen;
+				buffer.insert(buffer.find(' '), spacesToAdd, ' ');
 			}
-			buffer.insert(0, "     ");
+			buffer.insert(0, "    ");
 			formatted += buffer;
 			buffer = "";
 		}

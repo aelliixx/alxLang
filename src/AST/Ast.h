@@ -125,6 +125,7 @@ public:
 	[[nodiscard]] TokenType Type() const { return m_type; }
 	[[nodiscard]] const std::string& Value() const { return m_value; }
 	[[nodiscard]] long AsInt() const { return std::stoi(m_value); }
+	[[nodiscard]] long AsBoolNum() const { return !!std::stoi(m_value); }
 	[[nodiscard]] std::string AsBool() const
 	{
 		return AsInt() ? "true" : "false";
@@ -133,7 +134,7 @@ public:
 
 class StringLiteral : public Expression
 {
-	[[nodiscard]] std::string class_name() const override { return "NumberLiteral"; }
+	[[nodiscard]] std::string class_name() const override { return "StringLiteral"; }
 
 	std::string m_value;
 
@@ -205,11 +206,11 @@ public:
 	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
 						std::unique_ptr<Identifier> identifier,
 						std::unique_ptr<Expression> value,
-						AccessModeType access_mode)
+						AccessModeType accessMode)
 		: m_type(std::move(type)),
 		  m_identifier(std::move(identifier)),
 		  m_value(std::move(value)),
-		  m_access_mode(access_mode)
+		  m_access_mode(accessMode)
 	{
 	}
 
@@ -222,10 +223,10 @@ public:
 
 	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
 						std::unique_ptr<Identifier> identifier,
-						AccessModeType access_mode)
+						AccessModeType accessMode)
 		: m_type(std::move(type)),
 		  m_identifier(std::move(identifier)),
-		  m_access_mode(access_mode)
+		  m_access_mode(accessMode)
 	{
 	}
 
@@ -330,12 +331,12 @@ public:
 						std::unique_ptr<Identifier> name,
 						std::unique_ptr<BlockStatement> body,
 						std::vector<std::unique_ptr<VariableDeclaration>> args,
-						AccessModeType access_mode)
+						AccessModeType accessMode)
 		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
 		  m_body(std::move(body)),
 		  m_arguments(std::move(args)),
-		  m_access_mode(access_mode) {}
+		  m_access_mode(accessMode) {}
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	[[nodiscard]] TokenType ReturnType() const { return m_return_type; }
@@ -353,15 +354,13 @@ class StructDeclaration : public ASTNode
 	std::string m_name;
 	std::vector<std::unique_ptr<ASTNode>> m_members;
 	std::vector<std::unique_ptr<ASTNode>> m_methods;
+	size_t m_size{};
 
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	StructDeclaration(std::string name,
 					  std::vector<std::unique_ptr<ASTNode>> members,
-					  std::vector<std::unique_ptr<ASTNode>> methods)
-		: m_name(std::move(name)),
-		  m_members(std::move(members)),
-		  m_methods(std::move(methods)) {}
+					  std::vector<std::unique_ptr<ASTNode>> methods);
 
 	[[nodiscard]] const std::string& Name() const { return m_name; }
 	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& Members() const { return m_members; }
@@ -379,17 +378,27 @@ class MemberExpression : public Expression
 	[[nodiscard]] std::string class_name() const override { return "MemberExpression"; }
 	std::unique_ptr<Identifier> m_object;
 	std::unique_ptr<Identifier> m_member;
+	std::variant<TokenType, std::unique_ptr<Identifier>> m_type;
 	TokenType m_accessor;
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	MemberExpression(TokenType accessor, std::unique_ptr<Identifier> object, std::unique_ptr<Identifier> member)
+	MemberExpression(TokenType accessor,
+					 std::unique_ptr<Identifier> object,
+					 std::unique_ptr<Identifier> member,
+					 std::variant<TokenType, std::unique_ptr<Identifier>> type)
 		: m_accessor(accessor),
 		  m_object(std::move(object)),
-		  m_member(std::move(member)) {}
+		  m_member(std::move(member)),
+		  m_type(std::move(type)) {}
 
 	[[nodiscard]] const Identifier& Object() const { return *m_object; }
 	[[nodiscard]] const Identifier& Member() const { return *m_member; }
+	[[nodiscard]] auto* Type() const { return &m_type; }
+	[[nodiscard]] TokenType TypeAsPrimitive() const { return std::get<0>(m_type); }
+	[[nodiscard]] Identifier* TypeAsIdentifier() const { return std::get<1>(m_type).get(); }
+	[[nodiscard]] size_t TypeIndex() const { return m_type.index(); }
+	[[nodiscard]] TokenType Accessor() const { return m_accessor; }
 
 };
 

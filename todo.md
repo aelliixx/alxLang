@@ -1,6 +1,10 @@
 ### TODO:
 - [ ] Add objects
   - [ ] Structs
+    - [x] Primitive member vars
+    - [ ] Structured member vars
+    - [ ] Primitive member funcs
+    - [ ] Structured member funcs
   - [ ] Classes
 - [ ] Add arrays
 - [ ] Add strings

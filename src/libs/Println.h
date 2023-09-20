@@ -56,15 +56,15 @@ class VariadicArgParser
 	std::vector<std::string> _args;
 
 	template<typename T, typename... Rest>
-	void SetArgs(T& first, Rest& ... rest)
+	void set_args(T& first, Rest& ... rest)
 	{
 		_args.push_back(string_cast(first));
-		SetArgs(rest...);
+		set_args(rest...);
 	}
 
-	void SetArgs() {}
+	void set_args() {}
 
-	std::string parseColourSequence(const std::string& str)
+	std::string parse_colour_sequence(const std::string& str)
 	{
 		std::stringstream stream(str);
 		std::string item;
@@ -81,7 +81,7 @@ class VariadicArgParser
 		return out;
 	}
 
-	std::string parseVector(const std::string& str)
+	std::string parse_vector(const std::string& str)
 	{
 		static std::string componentColours[] = { ";200;0;0m", ";0;200;0m", ";0;0;200m", ";200;200;0m" };
 		std::stringstream base(str);
@@ -104,7 +104,7 @@ class VariadicArgParser
 		return out;
 	}
 
-	void ParseParams()
+	void parse_params()
 	{
 		std::string parsed = _format;
 		auto length = parsed.length();
@@ -126,7 +126,7 @@ class VariadicArgParser
 			{
 				paramSequence = false;
 				const auto vector = _args.at(bodyArgs);
-				auto span = parseVector(vector.substr(1, vector.length() - 2));
+				auto span = parse_vector(vector.substr(1, vector.length() - 2));
 				parsed.replace(seqStartIndex, 3, span);
 				++bodyArgs;
 				continue;
@@ -147,17 +147,19 @@ class VariadicArgParser
 				const auto n = i - seqStartIndex + 1;
 				if (n > 2)
 				{
-					// Hey {} dwad => 4, 5. 5-4+1=2
-					// Hey {;255} dwadw => 4, 9. 9-4+1=6.
-
 					const auto colourSequence = parsed.substr(seqStartIndex + 1, i - seqStartIndex - 1);
-					auto span = parseColourSequence(colourSequence);
+					auto span = parse_colour_sequence(colourSequence);
 
 					span += "m" + _args.at(bodyArgs) + "\033[0m";
 					parsed.replace(seqStartIndex, n, span);
 				}
 				else
+				{
 					parsed.replace(seqStartIndex, i - seqStartIndex + 1, _args.at(bodyArgs));
+					if (_args.at(bodyArgs).empty())
+						--i;
+					--i;
+				}
 
 				++bodyArgs;
 				assert(bodyArgs <= argCount && "Error: body argument count cannot exceed argument count.");
@@ -175,8 +177,8 @@ public:
 	explicit VariadicArgParser(std::string format, const Param& ... args)
 		: _format(std::move(format))
 	{
-		SetArgs(args...);
-		ParseParams();
+		set_args(args...);
+		parse_params();
 	}
 
 	operator std::string() const { return _text; }
@@ -224,8 +226,6 @@ void print(Colour colour, const std::string& format, const Param& ... arguments)
 	const auto text = getFormatted(format, arguments...);
 	print("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
 }
-
-
 
 static std::string token_to_string(TokenType token)
 {

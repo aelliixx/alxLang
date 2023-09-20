@@ -20,9 +20,9 @@ std::unique_ptr<StructDeclaration> Parser::parse_struct_declaration()
 	must_consume(TokenType::T_CURLY_OPEN);
 	std::vector<std::unique_ptr<ASTNode>> members;
 	std::vector<std::unique_ptr<ASTNode>> methods;
-	m_current_scope_name = name.value.value();
+	m_current_scope_name = name.Value.value();
 	m_variables[m_current_scope_name] = {};
-	while (peek().has_value() && peek().value().type != TokenType::T_CURLY_CLOSE)
+	while (peek().has_value() && peek().value().Type != TokenType::T_CURLY_CLOSE)
 	{
 		auto statement = parse_statement();
 		must_consume(TokenType::T_SEMI);
@@ -33,7 +33,7 @@ std::unique_ptr<StructDeclaration> Parser::parse_struct_declaration()
 	}
 	must_consume(TokenType::T_CURLY_CLOSE);
 	m_current_scope_name = oldScopeName;
-	return std::make_unique<StructDeclaration>(name.value.value(), std::move(members), std::move(methods));
+	return std::make_unique<StructDeclaration>(name.Value.value(), std::move(members), std::move(methods));
 }
 
 }

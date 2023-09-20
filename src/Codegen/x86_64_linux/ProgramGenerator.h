@@ -38,7 +38,7 @@ public:
 		  m_flags(flags) {}
 	[[nodiscard]] std::string Asm() const { return m_asm_str; }
 	std::string Generate();
-	static std::string FormatAsm(const std::string& assembly); // TODO
+	static std::string FormatAsm(const std::string& assembly);
 
 private:
 	void init();

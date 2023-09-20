@@ -15,6 +15,6 @@ std::unique_ptr<UnaryExpression> Parser::parse_unary_expression()
 	auto rhs = parse_term();
 	if (!rhs)
 		return nullptr;
-	return std::make_unique<UnaryExpression>(std::move(rhs), op.type);
+	return std::make_unique<UnaryExpression>(std::move(rhs), op.Type);
 }
 }

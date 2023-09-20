@@ -7,12 +7,12 @@
 //
 
 #include <regex>
+#include <utility>
 #include "Tokeniser.h"
-#include "../libs/Println.h"
-#include "../libs/Error.h"
 
 namespace alx {
-Tokeniser::Tokeniser(std::string source) : m_source(std::move(source))
+Tokeniser::Tokeniser(std::string source, const std::shared_ptr<ErrorHandler>& errorHandler)
+	: m_source(std::move(source)), m_error_handler(errorHandler)
 {
 	// Types
 	m_keywords["int"] = TokenType::T_INT;
@@ -72,10 +72,14 @@ std::vector<Token> Tokeniser::Tokenise()
 						value = "1";
 					else if (buffer == "false")
 						value = "0";
-					m_tokens.emplace_back(m_keywords.find(buffer)->second, value, m_line_index, m_column_index);
+					m_tokens.emplace_back(m_keywords.find(buffer)->second,
+										  value,
+										  m_line_index,
+										  m_column_index,
+										  m_index);
 					continue;
 				}
-				m_tokens.emplace_back(TokenType::T_IDENTIFIER, buffer, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_IDENTIFIER, buffer, m_line_index, m_column_index, m_index);
 				continue;
 			}
 				// Is a number
@@ -91,7 +95,7 @@ std::vector<Token> Tokeniser::Tokenise()
 				{
 					if (buffer == ".")
 					{
-						m_tokens.emplace_back(TokenType::T_DOT, buffer, m_line_index, m_column_index);
+						m_tokens.emplace_back(TokenType::T_DOT, buffer, m_line_index, m_column_index, m_index);
 						continue;
 					}
 					println(Colour::Red,
@@ -102,48 +106,48 @@ std::vector<Token> Tokeniser::Tokenise()
 				}
 				if (is_integer(buffer))
 				{
-					m_tokens.emplace_back(TokenType::T_INT_L, buffer, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_INT_L, buffer, m_line_index, m_column_index, m_index);
 					continue;
 				}
 				else if (is_float(buffer))
 				{
-					m_tokens.emplace_back(TokenType::T_FLOAT_L, buffer, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_FLOAT_L, buffer, m_line_index, m_column_index, m_index);
 					continue;
 				}
 				else if (is_double(buffer))
 				{
-					m_tokens.emplace_back(TokenType::T_DOUBLE_L, buffer, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_DOUBLE_L, buffer, m_line_index, m_column_index, m_index);
 					continue;
 				}
 			}
 			else if (peek().value() == ',')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_COMMA, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_COMMA, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '(')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_OPEN_PAREN, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_OPEN_PAREN, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == ')')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_CLOSE_PAREN, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_CLOSE_PAREN, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '{')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_CURLY_OPEN, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_CURLY_OPEN, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '}')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_CURLY_CLOSE, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_CURLY_CLOSE, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '=')
@@ -152,10 +156,10 @@ std::vector<Token> Tokeniser::Tokenise()
 				if (peek().value() == '=')
 				{
 					consume();
-					m_tokens.emplace_back(TokenType::T_EQEQ, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_EQEQ, m_line_index, m_column_index, m_index);
 					continue;
 				}
-				m_tokens.emplace_back(TokenType::T_EQ, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_EQ, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '<')
@@ -164,10 +168,10 @@ std::vector<Token> Tokeniser::Tokenise()
 				if (peek().value() == '=')
 				{
 					consume();
-					m_tokens.emplace_back(TokenType::T_LTE, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_LTE, m_line_index, m_column_index, m_index);
 					continue;
 				}
-				m_tokens.emplace_back(TokenType::T_LT, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_LT, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '>')
@@ -176,10 +180,10 @@ std::vector<Token> Tokeniser::Tokenise()
 				if (peek().value() == '=')
 				{
 					consume();
-					m_tokens.emplace_back(TokenType::T_GTE, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_GTE, m_line_index, m_column_index, m_index);
 					continue;
 				}
-				m_tokens.emplace_back(TokenType::T_GT, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_GT, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '!')
@@ -188,16 +192,16 @@ std::vector<Token> Tokeniser::Tokenise()
 				if (peek().value() == '=')
 				{
 					consume();
-					m_tokens.emplace_back(TokenType::T_NOT_EQ, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_NOT_EQ, m_line_index, m_column_index, m_index);
 					continue;
 				}
-				m_tokens.emplace_back(TokenType::T_NOT, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_NOT, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == ';')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_SEMI, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_SEMI, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '+')
@@ -206,10 +210,10 @@ std::vector<Token> Tokeniser::Tokenise()
 				if (peek().value() == '=')
 				{
 					consume();
-					m_tokens.emplace_back(TokenType::T_ADD_EQ, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_ADD_EQ, m_line_index, m_column_index, m_index);
 					continue;
 				}
-				m_tokens.emplace_back(TokenType::T_PLUS, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_PLUS, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '-')
@@ -218,40 +222,40 @@ std::vector<Token> Tokeniser::Tokenise()
 				if (peek().value() == '=')
 				{
 					consume();
-					m_tokens.emplace_back(TokenType::T_SUB_EQ, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_SUB_EQ, m_line_index, m_column_index, m_index);
 					continue;
 				}
 				if (peek().value() == '>')
 				{
 					consume();
-					m_tokens.emplace_back(TokenType::T_ARROW, m_line_index, m_column_index);
+					m_tokens.emplace_back(TokenType::T_ARROW, m_line_index, m_column_index, m_index);
 					continue;
 				}
-				m_tokens.emplace_back(TokenType::T_MINUS, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_MINUS, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '*')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_STAR, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_STAR, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '^')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_POW, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_POW, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == ':')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_COLON, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_COLON, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '.')
 			{
 				consume();
-				m_tokens.emplace_back(TokenType::T_DOT, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_DOT, m_line_index, m_column_index, m_index);
 				continue;
 			}
 			else if (peek().value() == '/')
@@ -262,14 +266,16 @@ std::vector<Token> Tokeniser::Tokenise()
 					continue;
 				}
 				consume();
-				m_tokens.emplace_back(TokenType::T_FWD_SLASH, m_line_index, m_column_index);
+				m_tokens.emplace_back(TokenType::T_FWD_SLASH, m_line_index, m_column_index, m_index);
 				continue;
 			}
-			error("Undefined token {} at ", buffer);
+			m_error_handler->Error(m_line_index, m_column_index, m_index, "Undefined token {} at ", buffer);
+			consume();
 		}
 	}
-	catch (const std::bad_optional_access&) {} // If the tokens suddenly end, it doesn't necessarily mean we have an invalid token stream.
-	                                               // If we do, we'll catch that in the parsing stage anyway.
+	catch (const std::bad_optional_access&) {} 
+	// If the tokens suddenly end, it doesn't necessarily mean we have an invalid token stream.
+	// If we do, we'll catch that in the parsing stage anyway.
 	return m_tokens;
 }
 

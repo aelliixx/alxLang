@@ -12,52 +12,53 @@
 #include <map>
 #include <regex>
 #include "../Utils/Types.h"
+#include "../libs/ErrorHandler.h"
 
 namespace alx {
 
 struct Token
 {
-	explicit Token(TokenType type, size_t line_num, size_t col_num)
-		: type(type),
-		  lineNumber(line_num),
-		  columnNumber(col_num - 1) {}
-	Token(TokenType type, std::optional<std::string> value, size_t line_num, size_t col_num)
-		: type(type),
-		  value(std::move(value)),
-		  lineNumber(line_num),
-		  columnNumber(col_num - 1) {}
-	TokenType type;
-	std::optional<std::string> value;
-	size_t lineNumber;
-	size_t columnNumber;
+	Token(TokenType type, size_t lineNum, size_t colNum, size_t posNum)
+		: Type(type),
+		  LineNumber(lineNum),
+		  ColumnNumber(colNum),
+		  PosNumber(posNum - 1) {}
+	Token(TokenType type, std::optional<std::string> value, size_t lineNum, size_t colNum, size_t posNum)
+		: Type(type),
+		  Value(std::move(value)),
+		  LineNumber(lineNum),
+		  ColumnNumber(colNum),
+		  PosNumber(posNum - 1) {}
+	TokenType Type;
+	std::optional<std::string> Value;
+	size_t LineNumber;
+	size_t ColumnNumber;
+	size_t PosNumber;
 };
 
 class Tokeniser
 {
 private:
-	const std::regex m_alpha{"[a-zA-Z][a-zA-Z0-9]*"};
-	const std::regex m_alpha_numeric{"[a-zA-Z0-9-_]"};
-	const std::regex m_double{R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?\b$)"};
-	const std::regex m_integer{R"(^[-]?(\d*|\d{1,3}(,\d{3})*)\b$)"};
-	const std::regex m_float{R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?f\b$)"};
-	const std::regex m_digit{R"(\d)"};
+	const std::regex m_alpha{ "[a-zA-Z][a-zA-Z0-9]*" };
+	const std::regex m_alpha_numeric{ "[a-zA-Z0-9-_]" };
+	const std::regex m_double{ R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?\b$)" };
+	const std::regex m_integer{ R"(^[-]?(\d*|\d{1,3}(,\d{3})*)\b$)" };
+	const std::regex m_float{ R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?f\b$)" };
+	const std::regex m_digit{ R"(\d)" };
 
 	std::string m_temp_char;
-	
-	
-	
-
+	std::shared_ptr<ErrorHandler> m_error_handler;
 
 public:
-	explicit Tokeniser(std::string source);
+	Tokeniser(std::string source, const std::shared_ptr<ErrorHandler>& errorHandler);
 	[[nodiscard]] std::vector<Token> Tokenise();
 
 private:
 
 	std::string m_source;
 	size_t m_index{};
-	size_t m_line_index{1};
-	size_t m_column_index{0};
+	size_t m_line_index{ 1 };
+	size_t m_column_index{ 0 };
 	std::vector<Token> m_tokens{};
 	std::map<std::string, TokenType> m_keywords;
 

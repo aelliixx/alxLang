@@ -26,8 +26,8 @@ void BlockGenerator::generate_unary_expression(const ASTNode* node)
 	else if (rhs->class_name() == "Identifier")
 	{
 		auto ident = static_cast<Identifier*>(rhs);
-		auto rhs_ptr = m_stack[ident->Name()].second;
-		auto rhs_size = size_of(m_stack[ident->Name()].first->TypeAsPrimitive());
+		auto rhs_ptr = m_stack[ident->Name()].first;
+		auto rhs_size = m_stack[ident->Name()].second;
 
 		m_asm << "cmp " << bytes_to_data_size(rhs_size) << " " << offset(rhs_ptr, rhs_size) << ", 0\n";
 		m_asm << "sete " << reg(Reg::rax, 1) << "\n";
