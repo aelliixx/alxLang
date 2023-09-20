@@ -1,9 +1,1 @@
-struct S {
-    int a = 10;
-}
-
-int main() {
-    S a;
-    S b = a;
-    return a;
-}
+int main() {}

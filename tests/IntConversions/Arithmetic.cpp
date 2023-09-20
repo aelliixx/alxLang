@@ -7,7 +7,7 @@
 //
 
 #include <string>
-#include "../src/Compiler.h"
+#include "../../src/Compiler.h"
 
 int main(int, char* argv[])
 {
