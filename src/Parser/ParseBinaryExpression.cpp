@@ -11,7 +11,7 @@
 namespace alx {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
-std::unique_ptr<Expression> Parser::parse_binary_operation(std::unique_ptr<Expression> lhs, int precedence)
+std::optional<ValueExpression> Parser::parse_binary_operation(ValueExpression lhs, int precedence)
 {
 	while (peek().has_value())
 	{
@@ -26,23 +26,25 @@ std::unique_ptr<Expression> Parser::parse_binary_operation(std::unique_ptr<Expre
 		if (tokenPrecedence < precedence)
 			return lhs;
 
-		auto rhs = parse_term();
+		std::optional<ValueExpression> rhs = parse_term();
 		if (!rhs)
-			return nullptr;
+			return {};
 
 		int nextPrecedence = get_binary_op_precedence(peek().value());
 		if (tokenPrecedence < nextPrecedence)
 		{
-			rhs = parse_binary_operation(std::move(rhs), tokenPrecedence + 1);
-			if (!rhs)
-				return nullptr;
+			rhs = parse_binary_operation(std::move(rhs.value()), tokenPrecedence + 1);
+			if (!rhs.has_value())
+				return {};
 		}
-		if (lhs->class_name() == "NumberLiteral" && op.Type == TokenType::T_EQ)
-			m_error->Error(op.LineNumber, op.ColumnNumber, op.PosNumber, "Expression is not assignable");
-		if (lhs->class_name() == "BinaryExpression" && op.Type == TokenType::T_EQ)
-			if (static_cast<BinaryExpression&>(*lhs).Rhs()->class_name() == "NumberLiteral")
-				m_error->Error(op.LineNumber, op.ColumnNumber, op.PosNumber, "Expression is not assignable");
-		lhs = std::make_unique<BinaryExpression>(std::move(lhs), std::move(rhs), op.Type);
+		
+		// FIXME: Add the errors back with visitor pattern
+//		if (lhs->class_name() == "NumberLiteral" && op.Type == TokenType::T_EQ)
+//			m_error->Error(op.LineNumber, op.ColumnNumber, op.PosNumber, "Expression is not assignable");
+//		if (lhs->class_name() == "BinaryExpression" && op.Type == TokenType::T_EQ)
+//			if (static_cast<BinaryExpression&>(*lhs).Rhs()->class_name() == "NumberLiteral")
+//				m_error->Error(op.LineNumber, op.ColumnNumber, op.PosNumber, "Expression is not assignable");
+		lhs = std::make_shared<BinaryExpression>(std::move(lhs), std::move(rhs.value()), op.Type);
 	}
 	ASSERT_NOT_REACHABLE();
 }

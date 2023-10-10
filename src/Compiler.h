@@ -16,7 +16,7 @@ class Compiler
 {
 	std::unique_ptr<Tokeniser> m_tokeniser;
 	std::unique_ptr<Parser> m_parser;
-	std::unique_ptr<ProgramGenerator> m_generator;
+//	std::unique_ptr<ProgramGenerator> m_generator;
 	std::shared_ptr<ErrorHandler> m_error_handler;
 	const Flags m_flags;
 	const std::string m_code;

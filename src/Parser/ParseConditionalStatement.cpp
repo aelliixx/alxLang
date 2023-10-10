@@ -13,9 +13,9 @@ namespace alx {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
-std::unique_ptr<IfStatement> Parser::parse_if_statement()
+RefPtr<IfStatement> Parser::parse_if_statement()
 {
-	std::unique_ptr<Expression> condition;
+	RefPtr<Expression> condition;
 
 	must_consume(TokenType::T_IF);
 	must_consume(TokenType::T_OPEN_PAREN);
@@ -44,7 +44,7 @@ std::unique_ptr<IfStatement> Parser::parse_if_statement()
 		consume_semicolon(statement);
 		body->Append(std::move(statement));
 	}
-	auto statement = std::make_unique<IfStatement>(std::move(condition), std::move(body));
+	auto statement = std::make_shared<IfStatement>(std::move(condition), std::move(body));
 	if (peek().has_value() && peek().value().Type == TokenType::T_ELSE)
 	{
 		must_consume(TokenType::T_ELSE);
@@ -57,7 +57,7 @@ std::unique_ptr<IfStatement> Parser::parse_if_statement()
 	}
 	return statement;
 }
-std::unique_ptr<BlockStatement> Parser::parse_else_statement()
+RefPtr<BlockStatement> Parser::parse_else_statement()
 {
 	auto body = std::make_unique<BlockStatement>();
 	if (must_consume(TokenType::T_CURLY_OPEN).Type == TokenType::T_CURLY_OPEN)
@@ -75,11 +75,11 @@ std::unique_ptr<BlockStatement> Parser::parse_else_statement()
 
 #pragma clang diagnostic pop
 
-std::unique_ptr<WhileStatement> Parser::parse_while_statement()
+RefPtr<WhileStatement> Parser::parse_while_statement()
 {
 	must_consume(TokenType::T_WHILE);
 	must_consume(TokenType::T_OPEN_PAREN);
-	std::unique_ptr<Expression> condition = parse_expression();
+	RefPtr<Expression> condition = parse_expression();
 	must_consume(TokenType::T_CLOSE_PAREN);
 	auto body = std::make_unique<BlockStatement>();
 	auto curly_open = peek();

@@ -11,7 +11,7 @@
 #include "../libs/ErrorHandler.h"
 namespace alx {
 
-std::unique_ptr<FunctionDeclaration> Parser::parse_function()
+std::shared_ptr<FunctionDeclaration> Parser::parse_function()
 {
 	auto returnType = consume().Type;
 	if (returnType == TokenType::T_INT || returnType == TokenType::T_FLOAT || returnType == TokenType::T_DOUBLE ||
@@ -27,7 +27,7 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 						   paren.ColumnNumber,
 						   paren.PosNumber,
 						   "Expected '(' in function '{}' declaration", name.value());
-		std::vector<std::unique_ptr<VariableDeclaration>> args{};
+		std::vector<std::shared_ptr<VariableDeclaration>> args{};
 		while (peek().has_value() && peek().value().Type != TokenType::T_CLOSE_PAREN)
 		{
 			// Arguments
@@ -66,11 +66,11 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 				continue;
 			}
 			// It is definitely not a default argument, therefore no default arguments could have preceded it.
-			if (std::find_if(args.begin(), args.end(), [](const std::unique_ptr<VariableDeclaration>& arg)
-			{ return arg->Value(); }) != args.end())
-				m_error->Error(argNameToken.LineNumber, argNameToken.ColumnNumber,
-							   argNameToken.PosNumber,
-							   "Missing default argument on {}", argName.value());
+//			if (std::find_if(args.begin(), args.end(), [](const std::shared_ptr<VariableDeclaration>& arg)
+//			{ return arg->Value(); }) != args.end())
+//				m_error->Error(argNameToken.LineNumber, argNameToken.ColumnNumber,
+//							   argNameToken.PosNumber,
+//							   "Missing default argument on {}", argName.value());
 
 			args.emplace_back(
 				std::make_unique<VariableDeclaration>(argType, std::make_unique<Identifier>(argName.value())));
@@ -90,7 +90,7 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 			}
 			must_consume(TokenType::T_CURLY_CLOSE); // Eat '}'
 		}
-		return std::make_unique<FunctionDeclaration>(returnType,
+		return std::make_shared<FunctionDeclaration>(returnType,
 													 std::make_unique<Identifier>(name.value()),
 													 std::move(body),
 													 std::move(args));

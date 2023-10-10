@@ -15,7 +15,7 @@
 
 namespace alx {
 
-enum class bitness
+enum class Bitness
 {
 	x86_64,
 	x86_32
@@ -26,7 +26,7 @@ class ProgramGenerator
 	const std::vector<std::unique_ptr<ASTNode>>& m_ast{};
 	std::stringstream m_asm;
 	std::string m_asm_str;
-	bitness m_bitness = bitness::x86_64;
+	Bitness m_bitness = Bitness::x86_64;
 	bool m_implicit_return = false;
 	Flags m_flags;
 	std::vector<std::string> m_labels;

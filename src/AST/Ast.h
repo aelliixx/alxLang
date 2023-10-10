@@ -18,6 +18,10 @@
 #include "../libs/Println.h"
 
 namespace alx {
+
+
+
+
 enum class AccessModeType
 {
 	a_global = 0,        // Global functions, global classes and structs, global enums
@@ -47,7 +51,7 @@ public:
 class ScopeNode : public ASTNode
 {
 protected:
-	std::vector<std::unique_ptr<ASTNode>> m_children;
+	std::vector<RefPtr<ASTNode>> m_children;
 	[[maybe_unused]] static void dump_nodes(const std::vector<std::unique_ptr<ASTNode>>&, int indent);
 	ScopeNode() = default;
 public:
@@ -58,13 +62,13 @@ public:
 		m_children.push_back(std::move(child));
 		return *static_cast<T*>(m_children.back().get());
 	}
-	void Append(std::unique_ptr<ASTNode> node)
+	void Append(RefPtr<ASTNode> node)
 	{
 		m_children.push_back(std::move(node));
 	}
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
-	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& Children() const { return m_children; }
+	[[nodiscard]] const std::vector<RefPtr<ASTNode>>& Children() const { return m_children; }
 };
 
 class Program : public ScopeNode
@@ -74,7 +78,7 @@ class Program : public ScopeNode
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	Program() = default;
-	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& GetChildren() const { return m_children; }
+	[[nodiscard]] const std::vector<RefPtr<ASTNode>>& GetChildren() const { return m_children; }
 };
 
 class BlockStatement : public ScopeNode
@@ -152,18 +156,18 @@ public:
 class BinaryExpression : public Expression
 {
 	[[nodiscard]] std::string class_name() const override { return "BinaryExpression"; }
-	std::unique_ptr<Expression> m_lhs, m_rhs;
+	ValueExpression m_lhs, m_rhs;
 	TokenType m_binary_op;
 	bool m_constexpr{};
 	std::optional<std::variant<NumberLiteral, StringLiteral>> m_value; // Only valid when constexpr
 	bool m_operands_match{};
 public:
-	BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs, TokenType binaryOp);
+	BinaryExpression(ValueExpression lhs, ValueExpression rhs, TokenType binaryOp);
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	[[nodiscard]] TokenType Operator() const { return m_binary_op; }
-	[[nodiscard]] Expression* Lhs() const { return m_lhs.get(); }
-	[[nodiscard]] Expression* Rhs() const { return m_rhs.get(); }
+	[[nodiscard]] ValueExpression Lhs() const { return m_lhs; }
+	[[nodiscard]] ValueExpression Rhs() const { return m_rhs; }
 	[[nodiscard]] bool Constexpr() const { return m_constexpr; }
 	[[nodiscard]] bool OperandsMatch() const { return m_operands_match; }
 	[[nodiscard]] std::unique_ptr<NumberLiteral> Evaluate() const;
@@ -172,12 +176,12 @@ public:
 class UnaryExpression : public Expression
 {
 	[[nodiscard]] std::string class_name() const override { return "UnaryExpression"; }
-	std::unique_ptr<Expression> m_rhs;
+	RefPtr<Expression> m_rhs;
 	TokenType m_unary_op;
 
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
-	UnaryExpression(std::unique_ptr<Expression> rhs, TokenType op) : m_rhs(std::move(rhs)), m_unary_op(op) {}
+	UnaryExpression(RefPtr<Expression> rhs, TokenType op) : m_rhs(std::move(rhs)), m_unary_op(op) {}
 
 	[[nodiscard]] TokenType Operator() const { return m_unary_op; }
 	[[nodiscard]] Expression* Rhs() const { return m_rhs.get(); }
@@ -187,25 +191,25 @@ class VariableDeclaration : public ASTNode
 {
 	[[nodiscard]] std::string class_name() const override { return "VariableDeclaration"; }
 
-	std::variant<TokenType, std::unique_ptr<Identifier>> m_type;
+	TypeExpression m_type;
 	std::unique_ptr<Identifier> m_identifier;
-	std::unique_ptr<Expression> m_value;
+	ValueExpression m_value;
 	AccessModeType m_access_mode = AccessModeType::a_scoped;
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+	VariableDeclaration(TypeExpression type,
 						std::unique_ptr<Identifier> identifier,
-						std::unique_ptr<Expression> value)
+						ValueExpression value)
 		: m_type(std::move(type)),
 		  m_identifier(std::move(identifier)),
 		  m_value(std::move(value))
 	{
 	}
 
-	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+	VariableDeclaration(TypeExpression type,
 						std::unique_ptr<Identifier> identifier,
-						std::unique_ptr<Expression> value,
+						ValueExpression value,
 						AccessModeType accessMode)
 		: m_type(std::move(type)),
 		  m_identifier(std::move(identifier)),
@@ -214,14 +218,14 @@ public:
 	{
 	}
 
-	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+	VariableDeclaration(TypeExpression type,
 						std::unique_ptr<Identifier> identifier)
 		: m_type(std::move(type)),
 		  m_identifier(std::move(identifier))
 	{
 	}
 
-	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+	VariableDeclaration(TypeExpression type,
 						std::unique_ptr<Identifier> identifier,
 						AccessModeType accessMode)
 		: m_type(std::move(type)),
@@ -230,40 +234,30 @@ public:
 	{
 	}
 
-	void AssignValue(std::unique_ptr<Expression> expression)
+	void AssignValue(ValueExpression expression)
 	{
 		m_value = std::move(expression);
 	}
 
 	[[nodiscard]] AccessModeType AccessMode() const { return m_access_mode; }
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
-	[[nodiscard]] Expression* Value() const { return m_value.get(); }
+	[[nodiscard]] ValueExpression Value() const { return m_value; }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
-	[[nodiscard]] auto* Type() const { return &m_type; }
+	[[nodiscard]] TypeExpression Type() const { return m_type; }
 	[[nodiscard]] size_t TypeIndex() const { return m_type.index(); }
-	[[nodiscard]] TokenType TypeAsPrimitive() const { return std::get<TokenType>(m_type); }
-	[[nodiscard]] Identifier* TypeAsIdentifier() const { return std::get<std::unique_ptr<Identifier>>(m_type).get(); }
-	[[nodiscard]] std::string TypeName() const
-	{
-		if (m_type.index() == 0)
-			return token_to_string(std::get<0>(m_type));
-		if (m_type.index() == 1)
-			return std::get<1>(m_type)->Name();
-		ASSERT_NOT_REACHABLE();
-	}
 };
 
 class IfStatement : public ScopeNode
 {
 	[[nodiscard]] std::string class_name() const override { return "IfStatement"; }
-	std::unique_ptr<Expression> m_condition;
-	std::unique_ptr<BlockStatement> m_body;
-	std::optional<std::unique_ptr<ScopeNode>> m_alternate; // This can be a block statement or another if statement
+	RefPtr<Expression> m_condition;
+	RefPtr<BlockStatement> m_body;
+	std::optional<RefPtr<ScopeNode>> m_alternate; // This can be a block statement or another if statement
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	IfStatement(std::unique_ptr<Expression> expression,
-				std::unique_ptr<BlockStatement> body)
+	IfStatement(RefPtr<Expression> expression,
+				RefPtr<BlockStatement> body)
 		: m_condition(std::move(expression)),
 		  m_body(std::move(body)) {}
 
@@ -271,13 +265,13 @@ public:
 	{
 		m_condition = std::make_unique<Expression>(expression);
 	}
-	void SetAlternate(std::unique_ptr<ScopeNode> alternate)
+	void SetAlternate(RefPtr<ScopeNode> alternate)
 	{
 		m_alternate = std::move(alternate);
 	}
 
 	[[nodiscard]] Expression* Condition() const { return m_condition.get(); }
-	[[nodiscard]] const std::optional<std::unique_ptr<ScopeNode>>& Alternate() const { return m_alternate; }
+	[[nodiscard]] const std::optional<RefPtr<ScopeNode>>& Alternate() const { return m_alternate; }
 	[[nodiscard]] bool HasAlternate() const { return m_alternate.has_value(); }
 	[[nodiscard]] ScopeNode* GetAlternate() const { return m_alternate.value().get(); }
 	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
@@ -313,7 +307,7 @@ class FunctionDeclaration : public ScopeNode
 
 	TokenType m_return_type;
 	std::unique_ptr<Identifier> m_identifier;
-	std::vector<std::unique_ptr<VariableDeclaration>> m_arguments;
+	std::vector<RefPtr<VariableDeclaration>> m_arguments;
 	std::unique_ptr<BlockStatement> m_body;
 	AccessModeType m_access_mode = AccessModeType::a_global;
 
@@ -321,7 +315,7 @@ public:
 	FunctionDeclaration(TokenType returnType,
 						std::unique_ptr<Identifier> name,
 						std::unique_ptr<BlockStatement> body,
-						std::vector<std::unique_ptr<VariableDeclaration>> args)
+						std::vector<RefPtr<VariableDeclaration>> args)
 		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
 		  m_body(std::move(body)),
@@ -330,7 +324,7 @@ public:
 	FunctionDeclaration(TokenType returnType,
 						std::unique_ptr<Identifier> name,
 						std::unique_ptr<BlockStatement> body,
-						std::vector<std::unique_ptr<VariableDeclaration>> args,
+						std::vector<RefPtr<VariableDeclaration>> args,
 						AccessModeType accessMode)
 		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
@@ -344,7 +338,7 @@ public:
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
 	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
-	[[nodiscard]] const std::vector<std::unique_ptr<VariableDeclaration>>& Arguments() const { return m_arguments; }
+	[[nodiscard]] const std::vector<RefPtr<VariableDeclaration>>& Arguments() const { return m_arguments; }
 	[[nodiscard]] size_t Argc() const { return m_arguments.size(); }
 };
 
@@ -378,7 +372,7 @@ class MemberExpression : public Expression
 	[[nodiscard]] std::string class_name() const override { return "MemberExpression"; }
 	std::unique_ptr<Identifier> m_object;
 	std::unique_ptr<Identifier> m_member;
-	std::variant<TokenType, std::unique_ptr<Identifier>> m_type;
+	TypeExpression m_type;
 	TokenType m_accessor;
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
@@ -386,7 +380,7 @@ public:
 	MemberExpression(TokenType accessor,
 					 std::unique_ptr<Identifier> object,
 					 std::unique_ptr<Identifier> member,
-					 std::variant<TokenType, std::unique_ptr<Identifier>> type)
+					 TypeExpression type)
 		: m_accessor(accessor),
 		  m_object(std::move(object)),
 		  m_member(std::move(member)),
@@ -394,9 +388,7 @@ public:
 
 	[[nodiscard]] const Identifier& Object() const { return *m_object; }
 	[[nodiscard]] const Identifier& Member() const { return *m_member; }
-	[[nodiscard]] auto* Type() const { return &m_type; }
-	[[nodiscard]] TokenType TypeAsPrimitive() const { return std::get<0>(m_type); }
-	[[nodiscard]] Identifier* TypeAsIdentifier() const { return std::get<1>(m_type).get(); }
+	[[nodiscard]] TypeExpression Type() const { return m_type; }
 	[[nodiscard]] size_t TypeIndex() const { return m_type.index(); }
 	[[nodiscard]] TokenType Accessor() const { return m_accessor; }
 

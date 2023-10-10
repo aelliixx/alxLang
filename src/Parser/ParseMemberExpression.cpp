@@ -10,7 +10,7 @@
 
 namespace alx {
 
-std::unique_ptr<MemberExpression> Parser::parse_member_expression()
+RefPtr<MemberExpression> Parser::parse_member_expression()
 {
 	auto identifier = must_consume(TokenType::T_IDENTIFIER);
 	auto identPtr = std::make_unique<Identifier>(identifier.Value.value());

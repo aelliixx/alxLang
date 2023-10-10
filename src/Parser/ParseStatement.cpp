@@ -11,7 +11,7 @@
 #include "../libs/ErrorHandler.h"
 
 namespace alx {
-std::unique_ptr<ASTNode> Parser::parse_statement()
+RefPtr<ASTNode> Parser::parse_statement()
 {
 	auto token = peek();
 	if (!token.has_value())

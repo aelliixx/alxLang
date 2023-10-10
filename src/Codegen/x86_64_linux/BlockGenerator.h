@@ -23,12 +23,14 @@ struct Context
 	bool AssignmentChain;
 };
 
+enum class Reg
+{
+	rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8, r9, r10, r11, r12, r13, r14, r15
+};
+
 class BlockGenerator
 {
-	enum class Reg
-	{
-		rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8, r9, r10, r11, r12, r13, r14, r15
-	};
+
 
 	const ScopeNode& m_block_ast;
 	std::stringstream m_asm;
@@ -45,7 +47,7 @@ class BlockGenerator
 	bool m_in_global_scope = false;
 	const std::vector<std::unique_ptr<ASTNode>>& m_program_ast;
 	std::map<std::string, std::pair<size_t, size_t>> m_stack;
-	std::map<std::string, TokenType> m_stack_types;
+	std::map<std::string, TypeExpression> m_stack_types;
 	TokenType m_return_type;
 
 	Flags m_flags{};
@@ -89,7 +91,7 @@ protected:
 private:
 	static std::string reg(Reg reg, size_t bytes = 4);
 
-	void add_to_stack(const std::string&, size_t, TokenType);
+	void add_to_stack(const std::string&, size_t, TypeExpression);
 	void push(const std::string&);
 	void pop(const std::string&);
 	std::string generate_local_label(ASTNode*);
@@ -128,7 +130,7 @@ private:
 							  size_t regSize = 8,
 							  bool positive = false);
 
-	void generate_variables(const std::unique_ptr<ASTNode>&);
+	void generate_variables(const VariableDeclaration&);
 	void generate_return_statement(const std::unique_ptr<ASTNode>&);
 	void generate_binary_expression(const ASTNode*, std::optional<Context> = {});
 	void generate_unary_expression(const ASTNode*);

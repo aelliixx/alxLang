@@ -9,12 +9,12 @@
 #include "Parser.h"
 
 namespace alx {
-std::unique_ptr<UnaryExpression> Parser::parse_unary_expression()
+RefPtr<UnaryExpression> Parser::parse_unary_expression()
 {
 	auto op = consume();
 	auto rhs = parse_term();
 	if (!rhs)
 		return nullptr;
-	return std::make_unique<UnaryExpression>(std::move(rhs), op.Type);
+	return std::make_shared<UnaryExpression>(std::make_shared<ValueExpression>(rhs), op.Type);
 }
 }

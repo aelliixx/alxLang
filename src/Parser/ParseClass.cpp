@@ -11,7 +11,7 @@
 
 namespace alx {
 
-std::unique_ptr<StructDeclaration> Parser::parse_struct_declaration()
+RefPtr<StructDeclaration> Parser::parse_struct_declaration()
 {
 	auto oldScopeName = m_current_scope_name;
 	consume(); // Consumes 'struct' or 'class'

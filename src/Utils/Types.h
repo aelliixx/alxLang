@@ -8,9 +8,17 @@
 
 #pragma once
 #include <cassert>
+#include <memory>
+#include <variant>
 #include "Utils.h"
 
 namespace alx {
+class MemberExpression;
+class Identifier;
+class NumberLiteral;
+class StringLiteral;
+class BinaryExpression;
+class UnaryExpression;
 
 enum class TokenType
 {
@@ -31,6 +39,17 @@ enum class TokenType
 	T_IF, T_ELSE, T_FOR, T_WHILE
 
 };
+
+template<class T>
+using RefPtr = std::shared_ptr<T>;
+
+using ValueExpression = std::variant<RefPtr<Identifier>,
+									 RefPtr<NumberLiteral>,
+									 RefPtr<StringLiteral>,
+									 RefPtr<BinaryExpression>,
+									 RefPtr<UnaryExpression>,
+									 RefPtr<MemberExpression>>;
+using TypeExpression = std::variant<TokenType, RefPtr<Identifier>>;
 
 static size_t size_of(TokenType token)
 {
@@ -62,6 +81,24 @@ static size_t size_of(TokenType token)
 	ASSERT_NOT_REACHABLE();
 	}
 }
+
+static size_t size_of(TypeExpression type)
+{
+	struct TypeVisitor
+	{
+		size_t operator()(TokenType tokenType)
+		{
+			return size_of(tokenType);
+		}
+		size_t operator()(const RefPtr<Identifier>&)
+		{
+			ASSERT_NOT_IMPLEMENTED();
+		}
+	};
+	return std::visit(TypeVisitor{}, type);
+}
+
+
 
 static TokenType literal_to_type(TokenType literal)
 {

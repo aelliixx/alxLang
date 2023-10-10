@@ -22,18 +22,19 @@ add_library(Utils src/Utils/Utils.h
         src/Utils/Flags.h
         src/libs/argparse.hpp)
 add_library(Compiler src/Compiler.h src/Compiler.cpp)
+add_library(IR src/IR/Ir.cpp src/IR/Ir.h)
 
 set_target_properties(Utils PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(Print PROPERTIES LINKER_LANGUAGE CXX)
 
-add_library(Codegen src/Codegen/x86_64_linux/BlockGenerator.cpp
-        src/Codegen/x86_64_linux/BinaryExpression.cpp
-        src/Codegen/x86_64_linux/VariableDeclaration.cpp
-        src/Codegen/x86_64_linux/ProgramGenerator.cpp
-        src/Codegen/x86_64_linux/IfStatement.cpp
-        src/Codegen/x86_64_linux/UnaryExpression.cpp
-        src/Codegen/x86_64_linux/LoopGenerator.cpp
-        src/Codegen/x86_64_linux/Structs.cpp)
+#add_library(Codegen src/Codegen/x86_64_linux/BlockGenerator.cpp
+#        src/Codegen/x86_64_linux/BinaryExpression.cpp
+#        src/Codegen/x86_64_linux/VariableDeclaration.cpp
+#        src/Codegen/x86_64_linux/ProgramGenerator.cpp
+#        src/Codegen/x86_64_linux/IfStatement.cpp
+#        src/Codegen/x86_64_linux/UnaryExpression.cpp
+#        src/Codegen/x86_64_linux/LoopGenerator.cpp
+#        src/Codegen/x86_64_linux/Structs.cpp)
 
 add_library(Parser src/Parser/Parser.cpp src/Parser/ParseFunction.cpp
         src/Parser/ParseVariable.cpp
@@ -46,7 +47,9 @@ add_library(Parser src/Parser/Parser.cpp src/Parser/ParseFunction.cpp
         src/Parser/ParseClass.cpp
         src/Parser/ParseMemberExpression.cpp)
 
-set(SOURCE_FILES src/main.cpp)
+set(SOURCE_FILES src/main.cpp
+        src/IR/Ir.cpp
+        src/IR/Ir.h)
 
 
 #include(FetchContent)
@@ -58,6 +61,6 @@ set(SOURCE_FILES src/main.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} Colour Compiler Codegen Parser Tokeniser AST Print Utils)
+target_link_libraries(${PROJECT_NAME} Colour Compiler Parser Tokeniser IR AST Print Utils)
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "acc")

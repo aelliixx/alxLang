@@ -24,6 +24,101 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 		return;
 	}
 
+	struct RhsVisitor
+	{
+		BlockGenerator& gen;
+		BinaryExpression& expr;
+		std::stringstream& output;
+		std::string operator()(const RefPtr<Identifier>& rhs)
+		{
+			gen.assert_ident_initialised(rhs.get());
+			auto rhsSize = size_of(gen.m_stack_types[rhs->Name()]);
+			auto rhsPtr = gen.m_stack[rhs->Name()].first;
+			gen.m_asm << BlockGenerator::mov(Reg::rdx, rhsSize, BlockGenerator::offset(rhsPtr, rhsSize));
+		}
+		std::string operator()(const RefPtr<NumberLiteral>& rhs)
+		{
+			
+		}
+		std::string operator()(const RefPtr<BinaryExpression>& rhs)
+		{
+		}
+		std::string operator()(const RefPtr<MemberExpression>& rhs)
+		{
+		}
+		std::string operator()(const RefPtr<UnaryExpression>& rhs)
+		{
+		}
+		std::string operator()(const RefPtr<StringLiteral>&)
+		{
+			ASSERT_NOT_IMPLEMENTED();
+		}
+	};
+
+	struct LhsVisitor
+	{
+		BlockGenerator& gen;
+		BinaryExpression& expr;
+		std::stringstream output{};
+		RhsVisitor rhsVisitor{ .gen = gen, .expr = expr, .output = output };
+
+		std::string operator()(const RefPtr<Identifier>& lhs)
+		{
+			gen.assert_ident_declared(lhs.get());
+			auto lhsSize = gen.m_stack[lhs->Name()].second;
+			auto lhsPtr = gen.m_stack[lhs->Name()].first;
+			output << mov(Reg::rax, lhsSize, offset(lhsPtr, lhsSize));
+			return output.str(); 
+		}
+		std::string operator()(const RefPtr<NumberLiteral>& lhs)
+		{
+		}
+		std::string operator()(const RefPtr<BinaryExpression>& lhs)
+		{
+		}
+		std::string operator()(const RefPtr<MemberExpression>& lhs)
+		{
+		}
+		std::string operator()(const RefPtr<UnaryExpression>& lhs)
+		{
+		}
+		std::string operator()(const RefPtr<StringLiteral>&)
+		{
+			ASSERT_NOT_IMPLEMENTED();
+		}
+	};
+
+	switch (op)
+	{
+	case TokenType::T_PLUS:
+	{
+		break;
+	}
+	case TokenType::T_MINUS:
+	case TokenType::T_STAR:
+	case TokenType::T_FWD_SLASH:
+	case TokenType::T_POW:
+	case TokenType::T_LT:
+	case TokenType::T_GT:
+	case TokenType::T_LTE:
+	case TokenType::T_GTE:
+	case TokenType::T_EQ:
+	case TokenType::T_MOD:
+	case TokenType::T_COLON:
+	case TokenType::T_EQEQ:
+	case TokenType::T_NOT_EQ:
+	case TokenType::T_ADD_EQ:
+	case TokenType::T_SUB_EQ:
+	case TokenType::T_MULT_EQ:
+	case TokenType::T_DIV_EQ:
+	case TokenType::T_MOD_EQ:
+	case TokenType::T_POW_EQ:
+	ASSERT_NOT_IMPLEMENTED();
+	default:
+	ASSERT_NOT_REACHABLE();
+	}
+
+#if 0
 	if (lhs->class_name() == "Identifier")
 	{
 		auto lhsId = static_cast<Identifier*>(lhs);
@@ -211,6 +306,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 			return;
 		}
 	}
+#endif
 	ASSERT_NOT_REACHABLE();
 }
 void BlockGenerator::generate_assign_num_l(size_t lhsSize, const NumberLiteral* rhsId)

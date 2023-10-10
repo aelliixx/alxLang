@@ -9,7 +9,7 @@
 #include "Parser.h"
 namespace alx {
 
-std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
+RefPtr<ReturnStatement> Parser::parse_return_statement()
 {
 	auto returnToken = consume(); // Eat 'return'
 

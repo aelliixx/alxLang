@@ -7,13 +7,12 @@
 //
 
 #include "Parser.h"
-#include "../libs/ErrorHandler.h"
 
 namespace alx {
-std::unique_ptr<VariableDeclaration> Parser::parse_variable()
+std::shared_ptr<VariableDeclaration> Parser::parse_variable()
 {
 	auto typeToken = consume();
-	std::variant<TokenType, std::unique_ptr<Identifier>> type;
+	TypeExpression type;
 	if (typeToken.Type == TokenType::T_IDENTIFIER)
 		type = std::make_unique<Identifier>(typeToken.Value.value());
 	else
@@ -62,59 +61,81 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 														 std::move(identifier),
 														 std::move(unaryExpression));
 		}
-		const Token expressionToken = peek().value();
 		TokenType expressionType;
-		auto expression = parse_expression();
+		ValueExpression expression = parse_expression();
 		size_t expressionSize;
-		if (expression->class_name() == "Identifier")
-		{
-			auto& ident = static_cast<Identifier&>(*expression);
-			auto identIt = std::find_if(m_variables.at(m_current_scope_name).begin(),
-										m_variables.at(m_current_scope_name).end(),
-										[ident](VariableDeclaration* var)
-										{
-										  return var->Name() == ident.Name();
-										});
-			if ((*identIt)->TypeIndex() == 0)
-			{
-				expressionType = (*identIt)->TypeAsPrimitive();
-				expressionSize = size_of(expressionType);
-				if (expressionSize > size_of(typeToken.Type))
-					m_error->Warning(expressionToken.LineNumber,
-									 expressionToken.ColumnNumber + 2,
-									 expressionToken.PosNumber + 2,
-									 "Narrowing conversion from type '{}' to '{}'",
-									 token_to_string(expressionType),
-									 token_to_string(typeToken.Type));
-			}
-		}
-		else if (expression->class_name() == "MemberExpression")
-		{
-			auto& memExpr = static_cast<MemberExpression&>(*expression);
-			if (memExpr.TypeIndex() == 0)
-			{
-				expressionType = memExpr.TypeAsPrimitive();
-				expressionSize = size_of(expressionType);
-				if (expressionSize > size_of(typeToken.Type))
-					m_error->Warning(expressionToken.LineNumber,
-									 expressionToken.ColumnNumber + 2,
-									 expressionToken.PosNumber + 2,
-									 "Narrowing conversion from type '{}' to '{}'",
-									 token_to_string(expressionType),
-									 token_to_string(typeToken.Type));
-			}
-		}
 
-		
+		struct ValueVisitor
+		{
+			struct TypeVisitor
+			{
+				size_t size{};
+				Parser& parser;
+				Token expressionToken;
+				void operator()(TokenType tokenType) const
+				{
+					if (size > size_of(tokenType))
+					{
+						parser.m_error->Warning(expressionToken.LineNumber,
+												expressionToken.ColumnNumber + 2,
+												expressionToken.PosNumber + 2,
+												"Narrowing conversion from type '{}' to '{}'",
+												token_to_string(TokenType::T_VOID),
+												token_to_string(tokenType));
+					}
+				}
+				void operator()(const RefPtr<Identifier>&)
+				{
+					ASSERT_NOT_IMPLEMENTED();
+				}
+			};
 
-		auto var = std::make_unique<VariableDeclaration>(std::move(type), std::move(identifier), std::move(expression));
+			Parser& parser;
+			TokenType expressionType;
+			size_t expressionSize;
+			const Token expressionToken = parser.peek().value();
+			void operator()(const RefPtr<Identifier>& identifier)
+			{
+				auto identIt = std::find_if(parser.m_variables.at(parser.m_current_scope_name).begin(),
+											parser.m_variables.at(parser.m_current_scope_name).end(),
+											[identifier](VariableDeclaration* var)
+											{
+											  return var->Name() == identifier->Name();
+											});
+				TypeVisitor visitor{ .size = expressionSize, .parser = parser, .expressionToken = expressionToken };
+				std::visit(visitor, (*identIt)->Type());
+			}
+			void operator()(const RefPtr<MemberExpression>& memberExpression)
+			{
+				TypeVisitor visitor{ .size = expressionSize, .parser = parser, .expressionToken = expressionToken };
+				std::visit(visitor, memberExpression->Type());
+			}
+			void operator()(const RefPtr<NumberLiteral>&)
+			{
+			}
+			void operator()(const RefPtr<StringLiteral>&)
+			{
+			}
+			void operator()(const RefPtr<BinaryExpression>&)
+			{
+			}
+			void operator()(const RefPtr<UnaryExpression>&)
+			{
+			}
+
+		};
+		ValueVisitor visitor{ .parser = *this, .expressionType = expressionType, .expressionSize = expressionSize };
+		std::visit(visitor, expression);
+
+		auto var = std::make_shared<VariableDeclaration>(std::move(type),
+														 std::move(identifier), expression);
 		add_variable(var.get());
 		return std::move(var);
 	}
 		// Declaration
 	else if (peek().has_value() && peek().value().Type == TokenType::T_SEMI)
 	{
-		auto var = std::make_unique<VariableDeclaration>(std::move(type), std::move(identifier));
+		auto var = std::make_shared<VariableDeclaration>(std::move(type), std::move(identifier));
 		add_variable(var.get());
 		return std::move(var);
 	}

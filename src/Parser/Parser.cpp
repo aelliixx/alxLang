@@ -59,21 +59,21 @@ std::unique_ptr<Program> Parser::Parse()
 	return std::move(m_program);
 }
 
-std::unique_ptr<Expression> Parser::parse_expression()
+RefPtr<ValueExpression> Parser::parse_expression()
 {
 	auto lhs = parse_term();
 	if (!lhs)
 		return nullptr;
 
-	auto bin = parse_binary_operation(std::move(lhs), 0);
-	return bin;
+	auto bin = parse_binary_operation(lhs.value(), 0);
+	return std::make_shared<ValueExpression>(bin.value());
 }
 
-std::unique_ptr<Expression> Parser::parse_term()
+std::optional<ValueExpression> Parser::parse_term()
 {
 	auto token = peek();
 	if (!token.has_value())
-		return nullptr;
+		return {};
 	switch (token.value().Type)
 	{
 	case TokenType::T_INT_L:
@@ -110,7 +110,7 @@ std::unique_ptr<Expression> Parser::parse_term()
 		consume();
 		auto expr = parse_expression();
 		must_consume(TokenType::T_CLOSE_PAREN);
-		return expr;
+		return *expr;
 	}
 	case TokenType::T_NOT:
 		return parse_unary_expression();
@@ -159,7 +159,7 @@ Token Parser::must_consume(TokenType token)
 				   token_to_string(peek(-1).value().Type));
 	exit(EXIT_FAILURE);
 }
-void Parser::consume_semicolon(const std::unique_ptr<ASTNode>& statement)
+void Parser::consume_semicolon(const RefPtr<ASTNode>& statement)
 {
 	if (statement->class_name() != "IfStatement" && statement->class_name() != "WhileStatement"
 		&& statement->class_name() != "StructDeclaration")

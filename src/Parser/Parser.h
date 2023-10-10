@@ -40,22 +40,22 @@ public:
 	[[nodiscard]] const Program& GetAst() { return *m_program;}
 
 private:
-	std::unique_ptr<FunctionDeclaration> parse_function();
-	std::unique_ptr<VariableDeclaration> parse_variable();
-	std::unique_ptr<ASTNode> parse_statement();
-	std::unique_ptr<NumberLiteral> parse_number_literal();
-	std::unique_ptr<StringLiteral> parse_string_literal();
-	std::unique_ptr<Expression> parse_binary_operation(std::unique_ptr<Expression> lhs, int precedence);
-	std::unique_ptr<Expression> parse_expression();
-	std::unique_ptr<Expression> parse_term();
-	std::unique_ptr<ReturnStatement> parse_return_statement();
-	std::unique_ptr<IfStatement> parse_if_statement();
-	std::unique_ptr<WhileStatement> parse_while_statement();
-	std::unique_ptr<BlockStatement> parse_else_statement();
-	std::unique_ptr<UnaryExpression> parse_unary_expression();
-	std::unique_ptr<StructDeclaration> parse_struct_declaration();
-	std::unique_ptr<MemberExpression> parse_member_expression();
-	void consume_semicolon(const std::unique_ptr<ASTNode>& statement);
+	RefPtr<FunctionDeclaration> parse_function();
+	RefPtr<VariableDeclaration> parse_variable();
+	RefPtr<ASTNode> parse_statement();
+	RefPtr<NumberLiteral> parse_number_literal();
+	RefPtr<StringLiteral> parse_string_literal();
+	std::optional<ValueExpression> parse_binary_operation(ValueExpression lhs, int precedence);
+	RefPtr<ValueExpression> parse_expression();
+	std::optional<ValueExpression> parse_term();
+	RefPtr<ReturnStatement> parse_return_statement();
+	RefPtr<IfStatement> parse_if_statement();
+	RefPtr<WhileStatement> parse_while_statement();
+	RefPtr<BlockStatement> parse_else_statement();
+	RefPtr<UnaryExpression> parse_unary_expression();
+	RefPtr<StructDeclaration> parse_struct_declaration();
+	RefPtr<MemberExpression> parse_member_expression();
+	void consume_semicolon(const RefPtr<ASTNode>& statement);
 	void add_variable(VariableDeclaration*);
 };
 }

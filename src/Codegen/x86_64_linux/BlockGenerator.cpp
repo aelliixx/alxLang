@@ -22,7 +22,7 @@ void BlockGenerator::GenerateBlock()
 		{
 			const auto& var = static_cast<VariableDeclaration&>(*node);
 			if (var.TypeIndex() == 0)
-				generate_variables(node);
+				generate_variables(var);
 			else
 				generate_struct_variable(*node);
 		}
@@ -100,7 +100,7 @@ void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& n
 	m_early_returns = true;
 }
 
-void BlockGenerator::add_to_stack(const std::string& name, size_t size, TokenType type)
+void BlockGenerator::add_to_stack(const std::string& name, size_t size, TypeExpression type)
 {
 	align_stack(size);
 	m_bp_offset += size;

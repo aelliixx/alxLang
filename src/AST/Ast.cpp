@@ -76,28 +76,30 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 
 	BinaryExpression* binaryExpression;
 
-	if (m_lhs->class_name() == "BinaryExpression")
-	{
-		auto lhs = static_cast<BinaryExpression*>(m_lhs.get())->Evaluate();
-		auto rhs = static_cast<NumberLiteral*>(m_rhs.get());
-		auto lhsVal = lhs->Value();
-		auto rhsVal = rhs->Value();
-		return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhsVal, rhsVal));
-	}
+	ASSERT_NOT_IMPLEMENTED();
+	// FIXME: Add this back
+//	if (m_lhs->class_name() == "BinaryExpression")
+//	{
+//		auto lhs = static_cast<BinaryExpression*>(m_lhs.get())->Evaluate();
+//		auto rhs = static_cast<NumberLiteral*>(m_rhs.get());
+//		auto lhsVal = lhs->Value();
+//		auto rhsVal = rhs->Value();
+//		return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhsVal, rhsVal));
+//	}
+//
+//	assert(m_rhs->class_name() == "NumberLiteral");
+//	assert(m_lhs->class_name() == "NumberLiteral");
+//	auto* lhs = static_cast<NumberLiteral*>(m_lhs.get());
+//	auto* rhs = static_cast<NumberLiteral*>(m_rhs.get());
 
-	assert(m_rhs->class_name() == "NumberLiteral");
-	assert(m_lhs->class_name() == "NumberLiteral");
-	auto* lhs = static_cast<NumberLiteral*>(m_lhs.get());
-	auto* rhs = static_cast<NumberLiteral*>(m_rhs.get());
+//	auto lhs_val = lhs->Value();
+//	auto rhs_val = rhs->Value();
 
-	auto lhs_val = lhs->Value();
-	auto rhs_val = rhs->Value();
-
-	return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhs_val, rhs_val));
+//	return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhs_val, rhs_val));
 }
 #pragma clang diagnostic pop
 
-BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs, TokenType binaryOp)
+BinaryExpression::BinaryExpression(ValueExpression lhs, ValueExpression rhs, TokenType binaryOp)
 	: m_lhs(std::move(lhs)),
 	  m_rhs(std::move(rhs)),
 	  m_binary_op(binaryOp)
@@ -105,18 +107,19 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_
 	assert(isBinaryOp(m_binary_op) && "Invalid binary operator");
 
 	// Check if both sides are numbers or binary expressions and if they are constant
-	if (m_lhs->class_name() == "NumberLiteral" && m_rhs->class_name() == "NumberLiteral")
-		m_constexpr = true;
-	else if (m_lhs->class_name() == "BinaryExpression" && m_rhs->class_name() == "NumberLiteral")
-		m_constexpr = static_cast<BinaryExpression*>(m_lhs.get())->m_constexpr;
-
-	if (m_lhs->class_name() == "Identifier" && m_rhs->class_name() == "Identifier")
-	{
-		auto lhsId = static_cast<Identifier*>(m_lhs.get());
-		auto rhsId = static_cast<Identifier*>(m_rhs.get());
-		
-		m_operands_match = lhsId->Name() == rhsId->Name();
-	}
+	// FIXME: add this back
+//	if (m_lhs->class_name() == "NumberLiteral" && m_rhs->class_name() == "NumberLiteral")
+//		m_constexpr = true;
+//	else if (m_lhs->class_name() == "BinaryExpression" && m_rhs->class_name() == "NumberLiteral")
+//		m_constexpr = static_cast<BinaryExpression*>(m_lhs.get())->m_constexpr;
+//
+//	if (m_lhs->class_name() == "Identifier" && m_rhs->class_name() == "Identifier")
+//	{
+//		auto lhsId = static_cast<Identifier*>(m_lhs.get());
+//		auto rhsId = static_cast<Identifier*>(m_rhs.get());
+//		
+//		m_operands_match = lhsId->Name() == rhsId->Name();
+//	}
 
 }
 
@@ -127,12 +130,12 @@ StructDeclaration::StructDeclaration(std::string name,
 	  m_members(std::move(members)),
 	  m_methods(std::move(methods))
 {
-	for (const auto& member : m_members) {
-		auto& var = static_cast<VariableDeclaration&>(*member);
-		if (var.TypeIndex() == 0) {
-			m_size += size_of(var.TypeAsPrimitive());
-		}
-	}
+//	for (const auto& member : m_members) {
+//		auto& var = static_cast<VariableDeclaration&>(*member);
+//		if (var.TypeIndex() == 0) {
+//			m_size += size_of(var.TypeAsPrimitive());
+//		}
+//	}
 }
 
 }

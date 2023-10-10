@@ -41,12 +41,13 @@ void Compiler::Compile()
 	const auto parseStart = SysClock::now();
 	m_parser = std::make_unique<Parser>(tokens, m_error_handler);
 	const auto& ast = m_parser->Parse();
-
+	exit(0);
 	if (m_debug_flags.show_timing)
 	{
 		const Seconds duration = SysClock::now() - parseStart;
 		alx::println(alx::Colour::LightGreen, "Built AST in {}ms", duration.count() * 1000);
 	}
+#if 0
 	if (m_error_handler->ErrorCount() == 0)
 	{
 		const auto generateStart = SysClock::now();
@@ -70,7 +71,7 @@ void Compiler::Compile()
 	}
 	if (m_debug_flags.quiet_mode)
 		return;
-	
+#endif
 	m_error_handler->EmitErrorCount();
 
 	if (m_debug_flags.dump_ast)
@@ -78,6 +79,7 @@ void Compiler::Compile()
 		alx::println();
 		ast->PrintNode(0);
 	}
+#if 0
 	if (m_debug_flags.dump_asm || m_debug_flags.dump_unformatted_asm)
 	{
 		alx::println();
@@ -86,10 +88,11 @@ void Compiler::Compile()
 		else if (m_debug_flags.dump_unformatted_asm)
 			alx::println(m_generator->Asm());
 	}
+#endif
 }
 std::string Compiler::GetAsm()
 {
-	return m_generator->Asm();
+//	return m_generator->Asm();
 }
 const Program& Compiler::GetAst()
 {
