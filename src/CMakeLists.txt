@@ -7,5 +7,6 @@ add_subdirectory(libs)
 add_subdirectory(AST)
 add_subdirectory(Codegen)
 add_subdirectory(Tokeniser)
+add_subdirectory(Utils)
 
 add_library(Compiler Compiler.cpp)
