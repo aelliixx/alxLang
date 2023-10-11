@@ -155,6 +155,8 @@ class VariadicArgParser
 				}
 				else
 				{
+					// FIXME: Fix bodyArgs being incremented by an argument string which itself contains '{}'
+					//        e.g. println("{}", "foo {}"), crashes the program
 					parsed.replace(seqStartIndex, i - seqStartIndex + 1, _args.at(bodyArgs));
 					if (_args.at(bodyArgs).empty())
 						--i;

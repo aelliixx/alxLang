@@ -102,7 +102,7 @@ private:
 		size_t errorIndexInLine;
 		for (auto i = posNum; m_code[i] != '\n'; --i)
 		{
-			if (m_code.at(i) == ' ' && m_code.at(i - 1) && m_code.at(i - 1) == ' ')
+			if (m_code.at(i) == ' ' && m_code.at(i) && m_code.at(i) == ' ')
 				break;
 			lineStartIndex = i;
 		}

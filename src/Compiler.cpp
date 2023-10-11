@@ -47,6 +47,18 @@ void Compiler::Compile()
 		const Seconds duration = SysClock::now() - parseStart;
 		alx::println(alx::Colour::LightGreen, "Built AST in {}ms", duration.count() * 1000);
 	}
+
+	const auto irStart = SysClock::now();
+	m_intermediate_representation = std::make_unique<ir::IR>(ast->GetChildren());
+	m_intermediate_representation->Generate();
+
+	if (m_debug_flags.show_timing)
+	{
+		const Seconds duration = SysClock::now() - irStart;
+		alx::println(alx::Colour::LightGreen, "Generated IR in {}ms", duration.count() * 1000);
+	}
+	
+	
 	if (m_error_handler->ErrorCount() == 0)
 	{
 		const auto generateStart = SysClock::now();
@@ -77,6 +89,10 @@ void Compiler::Compile()
 	{
 		alx::println();
 		ast->PrintNode(0);
+	}
+	if (m_debug_flags.dump_ir) {
+		alx::println();
+		m_intermediate_representation->Dump();
 	}
 	if (m_debug_flags.dump_asm || m_debug_flags.dump_unformatted_asm)
 	{

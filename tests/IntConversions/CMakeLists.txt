@@ -3,7 +3,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Arithmetic Arithmetic.cpp)
 
-target_link_libraries(Arithmetic Compiler Codegen Parser Tokeniser AST Utils Print Colour)
+target_link_libraries(Arithmetic Compiler Codegen Parser Tokeniser IR AST Utils Print Colour)
 
 
 

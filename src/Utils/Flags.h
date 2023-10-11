@@ -21,6 +21,7 @@ struct DebugFlags
 	bool dump_asm;
 	bool dump_unformatted_asm;
 	bool quiet_mode;
+	bool dump_ir;
 };
 
 struct Flags
@@ -36,7 +37,8 @@ static DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 		.dump_ast = argParser.get<bool>("-d") && !argParser.get<bool>("-q"),
 		.dump_asm = argParser.get<bool>("-a") && !argParser.get<bool>("-q"),
 		.dump_unformatted_asm = argParser.get<bool>("--asm-no-format") && !argParser.get<bool>("-q"),
-		.quiet_mode = argParser.get<bool>("-q")
+		.quiet_mode = argParser.get<bool>("-q"),
+		.dump_ir = argParser.get<bool>("--dump-ir")
 	};
 }
 

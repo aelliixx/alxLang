@@ -34,6 +34,11 @@ int main(int argc, const char** argv)
 		.implicit_value(true)
 		.help("Output assembly to the console.");
 
+	program.add_argument("--dump-ir")
+		.default_value(false)
+		.implicit_value(true)
+		.help("Output intermediate representation to the console.");
+
 	program.add_argument("-q", "--quiet")
 		.default_value(false)
 		.implicit_value(true)

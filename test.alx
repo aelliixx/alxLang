@@ -1,1 +1,7 @@
+struct S {}
+
+int foo(int a, S b) {
+
+}
+
 int main() {}
