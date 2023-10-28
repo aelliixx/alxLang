@@ -136,6 +136,12 @@ static bool isNumberType(TokenType type)
 		type == TokenType::T_SHORT;
 }
 
+static bool isIntegerLiteral(TokenType type)
+{
+	return type == TokenType::T_INT_L ||
+		type == TokenType::T_CHAR_L || type == TokenType::T_TRUE || type == TokenType::T_FALSE;
+}
+
 static bool isNumberLiteral(TokenType type)
 {
 	return type == TokenType::T_INT_L || type == TokenType::T_FLOAT_L || type == TokenType::T_DOUBLE_L ||

@@ -88,7 +88,8 @@ std::vector<Token> Tokeniser::Tokenise()
 			{
 				buffer += consume();
 				while (peek().has_value()
-					&& (is_digit(peek().value()) || peek().value() == '.' || peek().value() == ','))
+					&& (is_digit(peek().value()) || peek().value() == '.' || peek().value() == ','
+						|| peek().value() == 'f'))
 					buffer += consume();
 
 				if (!is_number(buffer))
@@ -273,7 +274,7 @@ std::vector<Token> Tokeniser::Tokenise()
 			consume();
 		}
 	}
-	catch (const std::bad_optional_access&) {} 
+	catch (const std::bad_optional_access&) {}
 	// If the tokens suddenly end, it doesn't necessarily mean we have an invalid token stream.
 	// If we do, we'll catch that in the parsing stage anyway.
 	return m_tokens;

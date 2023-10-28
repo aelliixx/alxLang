@@ -4,4 +4,6 @@ set(CMAKE_CXX_STANDARD 20)
 add_library(IR Ir.cpp
         PrintNode.cpp
         Types.h
-        Attributes.h)
+        Attributes.h
+        Instructions.h
+        Values.h)

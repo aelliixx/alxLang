@@ -8,6 +8,8 @@
 
 #pragma once
 #include <string>
-#define ASSERT_NOT_REACHABLE() assert(false && "Not reachable"); do{}while(false)
-#define ASSERT_NOT_IMPLEMENTED() assert(false && "Not implemented"); do{}while(false)
+//#define ASSERT_NOT_REACHABLE() assert(false && "Not reachable"); do{}while(false)
+//#define ASSERT_NOT_IMPLEMENTED() assert(false && "Not implemented"); do{}while(false)
+#define ASSERT_NOT_IMPLEMENTED() throw std::runtime_error("Not implemented")
+#define ASSERT_NOT_REACHABLE() throw std::runtime_error("Not reachable")
 

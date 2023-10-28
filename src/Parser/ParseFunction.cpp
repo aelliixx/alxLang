@@ -14,6 +14,7 @@ namespace alx {
 std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 {
 	auto returnType = consume().Type;
+	m_current_return_type = returnType;
 	if (returnType == TokenType::T_INT || returnType == TokenType::T_FLOAT || returnType == TokenType::T_DOUBLE ||
 		returnType == TokenType::T_VOID || returnType == TokenType::T_STRING || returnType == TokenType::T_CHAR ||
 		returnType == TokenType::T_BOOL)

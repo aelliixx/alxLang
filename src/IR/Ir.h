@@ -13,10 +13,11 @@
 #include <vector>
 #include "Types.h"
 #include "../AST/Ast.h"
+#include "Instructions.h"
 
 namespace alx::ir {
 
-using BodyTypes = std::variant<LabelType>;
+using BodyTypes = std::variant<LabelType, ReturnInst>;
 
 struct FunctionParameter {
 	Types Type;
@@ -25,6 +26,11 @@ struct FunctionParameter {
 	std::string Name;
 	
 	void PrintNode() const;
+};
+
+struct LogicalBlock {
+	LabelType Label;
+	std::vector<BodyTypes> Body;
 };
 
 struct Function
@@ -36,8 +42,7 @@ struct Function
 	Types ReturnType;
 	
 	std::vector<FunctionParameter> Arguments;
-	std::vector<BodyTypes> Body;
-	
+	std::vector<LogicalBlock> Blocks;
 	void PrintNode() const;
 };
 
@@ -48,6 +53,7 @@ class IR
 	using IRNodes = std::variant<std::unique_ptr<Function>>;
 	const std::vector<std::unique_ptr<ASTNode>>& m_ast{};
 	std::vector<IRNodes> m_ir;
+	
 
 public:
 	explicit IR(const std::vector<std::unique_ptr<ASTNode>>& ast)
@@ -64,6 +70,8 @@ public:
 private:
 	void GenerateFunction(FunctionDeclaration&);
 	void GenerateFuncParameters(FunctionDeclaration& astNode, Function& function);
+	void GenerateFuncBody(FunctionDeclaration& astNode, Function& function);
+	void GenerateReturnStatement(ReturnStatement& astNode, Function& function);
 };
 
 #pragma clang diagnostic pop

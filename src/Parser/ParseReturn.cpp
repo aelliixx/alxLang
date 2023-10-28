@@ -14,20 +14,22 @@ std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
 	auto returnToken = consume(); // Eat 'return'
 
 	// Get return type of the current function
-	auto funcIterator = std::find_if(m_program->GetChildren().begin(), m_program->GetChildren().end(),
-									 [&](const std::unique_ptr<ASTNode>& node)
-									 {
-									   if (node->class_name() == "FunctionDeclaration")
-									   {
-										   return static_cast<FunctionDeclaration&>(*node).Name()
-											   == m_current_scope_name;
-									   }
-									   return false;
-									 });
+//	auto funcIterator = std::find_if(m_program->GetChildren().begin(), m_program->GetChildren().end(),
+//									 [&](const std::unique_ptr<ASTNode>& node)
+//									 {
+//									   if (node->class_name() == "FunctionDeclaration")
+//									   {
+//										   return static_cast<FunctionDeclaration&>(*node).Name()
+//											   == m_current_scope_name;
+//									   }
+//									   return false;
+//									 });
+//
+//	assert(funcIterator != m_program->GetChildren().end() && "Function not found");
+//	const auto& func = static_cast<FunctionDeclaration&>(**funcIterator);
+//	auto returnType = func.ReturnType();
 
-	assert(funcIterator != m_program->GetChildren().end() && "Function not found");
-	const auto& func = static_cast<FunctionDeclaration&>(**funcIterator);
-	auto returnType = func.ReturnType();
+	auto returnType = std::get<TokenType>(m_current_return_type);
 
 	if (returnType == TokenType::T_VOID)
 	{
@@ -46,13 +48,14 @@ std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
 	if (expr->class_name() == "NumberLiteral")
 	{
 		auto& numLit = static_cast<NumberLiteral&>(*expr);
-		if (numLit.Type() != returnType)
+		if (literal_to_type(numLit.Type()) != returnType)
 			m_error->Error(returnToken.LineNumber,
 						   returnToken.ColumnNumber,
 						   returnToken.PosNumber,
-						   "Function '{}' must return '{}'",
+						   "Function '{}' must return '{}', returns '{}' instead",
 						   m_current_scope_name,
-						   token_to_string(returnType));
+						   token_to_string(returnType),
+						   token_to_string(numLit.Type()));
 	}
 	else if (expr->class_name() == "StringLiteral")
 	{
@@ -60,9 +63,10 @@ std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
 			m_error->Error(returnToken.LineNumber,
 						   returnToken.ColumnNumber,
 						   returnToken.PosNumber,
-						   "Function '{}' must return '{}'",
+						   "Function '{}' must return '{}', returns '{}' instead",
 						   m_current_scope_name,
-						   token_to_string(returnType));
+						   token_to_string(returnType),
+						   token_to_string(TokenType::T_STRING));
 	}
 	else if (expr->class_name() == "MemberExpression")
 	{
@@ -74,7 +78,7 @@ std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
 						   returnToken.PosNumber,
 						   "Function '{}' must return '{}'",
 						   m_current_scope_name,
-						   token_to_string(returnType));
+						   token_to_string(returnType)); // FIXME: Get the type of the member
 	}
 
 	return std::make_unique<ReturnStatement>(std::move(expr));

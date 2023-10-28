@@ -34,7 +34,6 @@ struct PtrType
 struct LabelType
 {
 	std::string Name;
-	explicit LabelType(std::string name) : Name(std::move(name)) {}
 };
 
 struct StructType;

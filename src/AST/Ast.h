@@ -125,6 +125,8 @@ public:
 	[[nodiscard]] TokenType Type() const { return m_type; }
 	[[nodiscard]] const std::string& Value() const { return m_value; }
 	[[nodiscard]] long AsInt() const { return std::stoi(m_value); }
+	[[nodiscard]] float AsFloat() const { return std::stof(m_value); }
+	[[nodiscard]] double AsDouble() const { return std::stod(m_value); }
 	[[nodiscard]] long AsBoolNum() const { return !!std::stoi(m_value); }
 	[[nodiscard]] std::string AsBool() const
 	{

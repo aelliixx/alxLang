@@ -43,7 +43,7 @@ private:
 	const std::regex m_alpha_numeric{ "[a-zA-Z0-9-_]" };
 	const std::regex m_double{ R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?\b$)" };
 	const std::regex m_integer{ R"(^[-]?(\d*|\d{1,3}(,\d{3})*)\b$)" };
-	const std::regex m_float{ R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?f\b$)" };
+	const std::regex m_float{ R"(^[-]?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?[f]\b$)" };
 	const std::regex m_digit{ R"(\d)" };
 
 	std::string m_temp_char;

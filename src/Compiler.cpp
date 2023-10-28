@@ -67,10 +67,14 @@ void Compiler::Compile()
 			m_generator = std::make_unique<ProgramGenerator>(ast->GetChildren(), m_flags);
 			m_generator->Generate();
 		}
-		catch (std::runtime_error&)
+		catch (std::runtime_error& err)
 		{
-			alx::println(alx::Colour::LightRed, "Something went wrong when generating assembly. AST:");
+			alx::println(alx::Colour::LightRed, "Something went wrong when generating assembly: {}",
+						 err.what());
+			alx::println(alx::Colour::LightRed, "Current AST:");
 			ast->PrintNode(0);
+			alx::println(alx::Colour::LightRed, "\nIR:");
+			m_intermediate_representation->Dump();
 			m_error_handler->EmitErrorCount();
 			exit(1);
 		}

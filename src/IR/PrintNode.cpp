@@ -12,6 +12,7 @@ namespace alx::ir {
 
 #define BLUE Colour{70,160,220}
 #define GREEN Colour{60,197,172}
+#define OLIVE Colour{171,189,138}
 
 void IR::Dump()
 {
@@ -66,10 +67,43 @@ void Function::PrintNode() const
 		{
 			println(BLUE, "{}: ", label.Name);
 		}
+		void operator()(const ReturnInst& ret)
+		{
+			struct ValueVisitor
+			{
+				std::string operator()(const Constant& constant)
+				{
+					struct ConstantVisitor
+					{
+						std::string operator()(long constant)
+						{
+							return std::to_string(constant);
+						}
+						std::string operator()(float constant)
+						{
+							return std::to_string(constant);
+						}
+						std::string operator()(double constant)
+						{
+							return std::to_string(constant);
+						}
+					};
+					return alx::getFormatted("{;60;197;172} {;171;189;138}", constant.TypeToString(),
+											 std::visit(ConstantVisitor{}, constant.Value));
+				}
+				
+			} valueVisitor;
+			std::string returnType = std::visit(valueVisitor, ret.Value);
+			println("ret {}", returnType);
+		}
 	};
 
-	for (const auto& child : Body)
-		std::visit(BodyVisitor{}, child);
+	for (const auto& block : Blocks)
+	{
+		println(BLUE, "{}:", block.Label.Name);
+		for (const auto& child : block.Body)
+			std::visit(BodyVisitor{}, child);
+	}
 	println("}");
 }
 
