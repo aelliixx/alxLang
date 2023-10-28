@@ -90,18 +90,28 @@ void IR::GenerateFuncParameters(FunctionDeclaration& astNode, Function& function
 
 void IR::GenerateFuncBody(FunctionDeclaration& astNode, Function& function)
 {
+	bool hasReturned = false;
 	for (const auto& node : astNode.Body().Children())
 	{
 		if (node->class_name() == "ReturnStatement")
-			GenerateReturnStatement(static_cast<ReturnStatement&>(*node), function);
+		{
+			GenerateReturnStatement(static_cast<ReturnStatement&>(*node), function, hasReturned);
+			hasReturned = true;
+		}
 		else
 			println(Colour::Red, "Unknown node type: {;255;255;255}", node->class_name());
 	}
+	if (!hasReturned)
+	{
+		LogicalBlock ret{{ "return" }};
+		ret.Body.emplace_back(ReturnInst{});
+		function.Blocks.emplace_back(std::move(ret));
+	}
 }
 
-void IR::GenerateReturnStatement(ReturnStatement& astNode, Function& function)
+void IR::GenerateReturnStatement(ReturnStatement& astNode, Function& function, bool hasReturned)
 {
-	LogicalBlock ret{{ "ret" }};
+	LogicalBlock ret{{ "return" }};
 
 	if (astNode.Argument()->class_name() == "NumberLiteral")
 	{
@@ -159,7 +169,7 @@ void IR::GenerateReturnStatement(ReturnStatement& astNode, Function& function)
 		println(Colour::Red, "Unknown node type: {;255;255;255}", astNode.Argument()->class_name());
 	}
 
-	if (function.Blocks.size() > 1)
+	if (hasReturned)
 		function.Blocks.emplace_back(std::move(ret));
 	else
 		function.Blocks[0].Body.insert(std::end(function.Blocks[0].Body),

@@ -71,7 +71,7 @@ private:
 	void GenerateFunction(FunctionDeclaration&);
 	void GenerateFuncParameters(FunctionDeclaration& astNode, Function& function);
 	void GenerateFuncBody(FunctionDeclaration& astNode, Function& function);
-	void GenerateReturnStatement(ReturnStatement& astNode, Function& function);
+	void GenerateReturnStatement(ReturnStatement& astNode, Function& function, bool hasReturned);
 };
 
 #pragma clang diagnostic pop

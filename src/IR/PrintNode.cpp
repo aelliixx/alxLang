@@ -88,10 +88,12 @@ void Function::PrintNode() const
 							return std::to_string(constant);
 						}
 					};
+					if (constant.Type.index() == 0 && std::get<SingleValueType>(constant.Type) == SingleValueType::Void)
+						return alx::getFormatted("{;60;197;172}", "void");
 					return alx::getFormatted("{;60;197;172} {;171;189;138}", constant.TypeToString(),
 											 std::visit(ConstantVisitor{}, constant.Value));
 				}
-				
+
 			} valueVisitor;
 			std::string returnType = std::visit(valueVisitor, ret.Value);
 			println("ret {}", returnType);
@@ -227,7 +229,7 @@ Types IR::TokenTypeToIRType(TokenType tokenType)
 	case TokenType::T_IDENTIFIER:
 		return StructType{};
 	default:
-	ASSERT_NOT_REACHABLE();
+		ASSERT_NOT_REACHABLE();
 	}
 }
 
