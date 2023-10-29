@@ -118,6 +118,6 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 		add_variable(var.get());
 		return std::move(var);
 	}
-	assert(false && "Not reachable");
+	ASSERT_NOT_REACHABLE();
 }
 }

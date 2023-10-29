@@ -10,14 +10,16 @@
 
 #include <variant>
 #include "Types.h"
+#include "Variables.h"
 namespace alx::ir {
 
 
 // Simple constants
 
+using ConstantTypes = std::variant<SingleValueType, IntType, PtrType>;
 struct Constant
 {
-	std::variant<SingleValueType, IntType, PtrType> Type;
+	ConstantTypes Type;
 	std::variant<long, float, double> Value;
 
 	[[nodiscard]] std::string TypeToString() const
@@ -54,6 +56,6 @@ struct Constant
 		return std::visit(visitor, Type);
 	}
 };
-
-using Values = std::variant<Constant>;
+struct Variable;
+using Values = std::variant<Constant, std::shared_ptr<Variable>>;
 }

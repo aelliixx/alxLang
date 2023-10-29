@@ -6,7 +6,7 @@
            |___/|_|
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-SPDX-License-Identifier: MIT
+SPDX-License-Variable: MIT
 Copyright (c) 2019-2022 Pranav Srinivas Kumar <pranav.srinivas.kumar@gmail.com>
 and other contributors.
 

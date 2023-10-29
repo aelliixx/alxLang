@@ -241,7 +241,7 @@ public:
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] Expression* Value() const { return m_value.get(); }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
-	[[nodiscard]] auto* Type() const { return &m_type; }
+	[[nodiscard]] auto& Type() const { return m_type; }
 	[[nodiscard]] size_t TypeIndex() const { return m_type.index(); }
 	[[nodiscard]] TokenType TypeAsPrimitive() const { return std::get<TokenType>(m_type); }
 	[[nodiscard]] Identifier* TypeAsIdentifier() const { return std::get<std::unique_ptr<Identifier>>(m_type).get(); }
@@ -315,7 +315,7 @@ class FunctionDeclaration : public ScopeNode
 
 	TokenType m_return_type;
 	std::unique_ptr<Identifier> m_identifier;
-	std::vector<std::unique_ptr<VariableDeclaration>> m_arguments;
+	std::vector<std::unique_ptr<VariableDeclaration>> m_parameters;
 	std::unique_ptr<BlockStatement> m_body;
 	AccessModeType m_access_mode = AccessModeType::a_global;
 
@@ -327,7 +327,7 @@ public:
 		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
 		  m_body(std::move(body)),
-		  m_arguments(std::move(args)) {}
+		  m_parameters(std::move(args)) {}
 
 	FunctionDeclaration(TokenType returnType,
 						std::unique_ptr<Identifier> name,
@@ -337,7 +337,7 @@ public:
 		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
 		  m_body(std::move(body)),
-		  m_arguments(std::move(args)),
+		  m_parameters(std::move(args)),
 		  m_access_mode(accessMode) {}
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
@@ -346,8 +346,8 @@ public:
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
 	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
-	[[nodiscard]] const std::vector<std::unique_ptr<VariableDeclaration>>& Arguments() const { return m_arguments; }
-	[[nodiscard]] size_t Argc() const { return m_arguments.size(); }
+	[[nodiscard]] const std::vector<std::unique_ptr<VariableDeclaration>>& Arguments() const { return m_parameters; }
+	[[nodiscard]] size_t Argc() const { return m_parameters.size(); }
 };
 
 class StructDeclaration : public ASTNode
@@ -367,6 +367,7 @@ public:
 	[[nodiscard]] const std::string& Name() const { return m_name; }
 	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& Members() const { return m_members; }
 	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& Methods() const { return m_methods; }
+	[[nodiscard]] size_t Size() const { return m_size; }
 };
 
 class ClassDeclaration : public StructDeclaration

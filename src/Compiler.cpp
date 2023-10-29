@@ -50,15 +50,26 @@ void Compiler::Compile()
 
 	const auto irStart = SysClock::now();
 	m_intermediate_representation = std::make_unique<ir::IR>(ast->GetChildren());
-	m_intermediate_representation->Generate();
+	try
+	{
+		m_intermediate_representation->Generate();
+	}
+	catch (std::runtime_error& err)
+	{
+		alx::println(alx::Colour::LightRed, "Something went wrong when generating IR: {}",
+					 err.what());
+		alx::println(alx::Colour::LightRed, "Current AST:");
+		ast->PrintNode(0);
+		m_error_handler->EmitErrorCount();
+		exit(1);
+	}
 
 	if (m_debug_flags.show_timing)
 	{
 		const Seconds duration = SysClock::now() - irStart;
 		alx::println(alx::Colour::LightGreen, "Generated IR in {}ms", duration.count() * 1000);
 	}
-	
-	
+
 	if (m_error_handler->ErrorCount() == 0)
 	{
 		const auto generateStart = SysClock::now();
@@ -86,7 +97,7 @@ void Compiler::Compile()
 	}
 	if (m_debug_flags.quiet_mode)
 		return;
-	
+
 	m_error_handler->EmitErrorCount();
 
 	if (m_debug_flags.dump_ast)
@@ -94,7 +105,8 @@ void Compiler::Compile()
 		alx::println();
 		ast->PrintNode(0);
 	}
-	if (m_debug_flags.dump_ir) {
+	if (m_debug_flags.dump_ir)
+	{
 		alx::println();
 		m_intermediate_representation->Dump();
 	}

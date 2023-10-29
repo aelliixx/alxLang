@@ -1,10 +1,7 @@
-float foo() {
-    return 1.0f;
+void foo() {
+    short a = 10;
+    a = 20;
+    int b = a;
 }
 
-int bar() {
-    return 1;
-}
-
-int main() {
-}
+int main() {}

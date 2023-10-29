@@ -24,7 +24,7 @@ static std::string access_mode_to_string(AccessModeType mode)
 	case AccessModeType::a_private:
 		return "private";
 	default:
-	ASSERT_NOT_REACHABLE();
+		ASSERT_NOT_REACHABLE();
 	}
 }
 
@@ -50,7 +50,7 @@ void Program::PrintNode(int indent) const
 
 void Identifier::PrintNode(int indent) const
 {
-	println("{>}Identifier: {}", indent, m_name);
+	println("{>}Variable: {}", indent, m_name);
 }
 void NumberLiteral::PrintNode(int indent) const
 {
@@ -106,6 +106,15 @@ void FunctionDeclaration::PrintNode(int indent) const
 	println("{>}FunctionDeclaration: {", indent);
 	println("{>}name: {}", indent + 2, Name());
 	println("{>}return_type: {}", indent + 2, token_to_string(m_return_type));
+	println("{>}parameters:", indent + 2);
+	if (m_parameters.empty())
+		println("{>}[none]", indent + 4);
+	else
+		for (const auto& param : m_parameters)
+			println("{>}type: {}, identifier: {}",
+					indent + 4,
+					token_to_string(param->TypeAsPrimitive()),
+					param->Name());
 	println("{>}body:", indent + 2);
 	m_body->PrintNode(indent + 4);
 	println("{>}}", indent);

@@ -43,7 +43,7 @@ using Types = std::variant<SingleValueType, IntType, LabelType, PtrType, StructT
 struct ArrayType
 {
 	size_t Size;
-	std::unique_ptr<Types> Type;
+	std::shared_ptr<Types> Type;
 	ArrayType(size_t size, std::unique_ptr<Types> type) : Size(size), Type(std::move(type)) {}
 };
 

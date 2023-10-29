@@ -356,6 +356,6 @@ static std::string token_to_string(TokenType token)
 	case TokenType::T_COLON:
 		return ":";
 	}
-	assert(false && "Not reachable");
+	ASSERT_NOT_REACHABLE();
 }
 }
