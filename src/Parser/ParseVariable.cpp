@@ -80,9 +80,9 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 				expressionType = (*identIt)->TypeAsPrimitive();
 				expressionSize = size_of(expressionType);
 				if (expressionSize > size_of(typeToken.Type))
-					m_error->Warning(expressionToken.LineNumber,
-									 expressionToken.ColumnNumber + 2,
-									 expressionToken.PosNumber + 2,
+					m_error->Warning(typeToken.LineNumber,
+									 typeToken.ColumnNumber + 2,
+									 typeToken.PosNumber + 2,
 									 "Narrowing conversion from type '{}' to '{}'",
 									 token_to_string(expressionType),
 									 token_to_string(typeToken.Type));
@@ -96,9 +96,9 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 				expressionType = memExpr.TypeAsPrimitive();
 				expressionSize = size_of(expressionType);
 				if (expressionSize > size_of(typeToken.Type))
-					m_error->Warning(expressionToken.LineNumber,
-									 expressionToken.ColumnNumber + 2,
-									 expressionToken.PosNumber + 2,
+					m_error->Warning(typeToken.LineNumber,
+									 typeToken.ColumnNumber + 2,
+									 typeToken.PosNumber + 2,
 									 "Narrowing conversion from type '{}' to '{}'",
 									 token_to_string(expressionType),
 									 token_to_string(typeToken.Type));

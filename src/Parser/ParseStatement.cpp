@@ -6,18 +6,17 @@
 // Created by aelliixx on 2023-09-07.
 //
 
-#include "Parser.h"
 #include "../Utils/Utils.h"
 #include "../libs/ErrorHandler.h"
+#include "Parser.h"
 
 namespace alx {
-std::unique_ptr<ASTNode> Parser::parse_statement()
+std::unique_ptr<ASTNode>
+Parser::parse_statement()
 {
 	auto token = peek();
-	if (!token.has_value())
-		return nullptr;
-	switch (token.value().Type)
-	{
+	if (!token.has_value()) return nullptr;
+	switch (token.value().Type) {
 	case TokenType::T_INT:
 	case TokenType::T_LONG:
 	case TokenType::T_SHORT:
@@ -26,19 +25,17 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	case TokenType::T_STRING:
 	case TokenType::T_CHAR:
 	case TokenType::T_BOOL:
-		if (peek(1).has_value() && peek(1).value().Type == TokenType::T_IDENTIFIER)
-		{
-			if (peek(2).has_value() && peek(2).value().Type == TokenType::T_OPEN_PAREN)
-				return parse_function();
-			else if (peek(2).has_value() && peek(2).value().Type == TokenType::T_EQ ||
-				peek(2).value().Type == TokenType::T_SEMI)
+		if (peek(1).has_value() && peek(1).value().Type == TokenType::T_IDENTIFIER) {
+			if (peek(2).has_value() && peek(2).value().Type == TokenType::T_OPEN_PAREN) return parse_function();
+			else if (peek(2).has_value() && peek(2).value().Type == TokenType::T_EQ
+					 || peek(2).value().Type == TokenType::T_SEMI)
 				return parse_variable();
 		}
 		else
-			m_error->Error(token.value().LineNumber,
-						   token.value().ColumnNumber,
-						   token.value().PosNumber,
-						   "Expected identifier after type declaration");
+			m_error->FatalError(token.value().LineNumber,
+								token.value().ColumnNumber,
+								token.value().PosNumber,
+								"Expected identifier after type declaration");
 	case TokenType::T_VOID:
 		return parse_function();
 	case TokenType::T_RET:
@@ -51,14 +48,13 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 					   token.value().PosNumber,
 					   "An 'else' statement must succeed an 'if' statement");
 	case TokenType::T_FOR:
-	ASSERT_NOT_IMPLEMENTED();
+		ASSERT_NOT_IMPLEMENTED();
 	case TokenType::T_WHILE:
 		return parse_while_statement();
 	case TokenType::T_STRUCT:
 		return parse_struct_declaration();
 	case TokenType::T_IDENTIFIER:
-		if (peek(1).value().Type == TokenType::T_IDENTIFIER)
-			return parse_variable();
+		if (peek(1).value().Type == TokenType::T_IDENTIFIER) return parse_variable();
 	default:
 		return parse_expression();
 	}

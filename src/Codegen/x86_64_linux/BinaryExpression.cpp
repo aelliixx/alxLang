@@ -230,8 +230,6 @@ void BlockGenerator::generate_assignment_ident(const Identifier& rhsId, size_t l
 	else
 		m_asm << mov(Reg::rax, rhsSize, offset(rhsPtrOffset, rhsSize), rhsSize, isUnsigned); // FIXME: Add back signs
 	m_asm << mov(offset(m_bp_offset, lhsSize), rhsSize, Reg::rax, lhsSize, isUnsigned);
-
-	// FIXME: Narrowing conversions should emit warnings in parsing stage
 }
 
 void BlockGenerator::generate_bin_eq(const ASTNode* node, std::optional<Context> context)

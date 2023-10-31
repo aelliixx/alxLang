@@ -17,9 +17,7 @@ namespace alx::ir {
 // Terminator instructions
 
 
-
-struct ReturnInst
-{
+struct ReturnInst {
 	Values Value;
 };
 
@@ -86,18 +84,15 @@ struct URemInst {
 
 // Memory access and addressing instructions
 
-struct AllocaInst
-{
+struct AllocaInst {
 	std::shared_ptr<Types> Type;
 	// Sizeof type in bytes
 	[[nodiscard]] size_t Size() const
 	{
-		struct SizeVisitor
-		{
+		struct SizeVisitor {
 			size_t operator()(const SingleValueType& value) const
 			{
-				switch (value)
-				{
+				switch (value) {
 				case SingleValueType::Void:
 					return 0;
 				case SingleValueType::Half:
@@ -111,49 +106,34 @@ struct AllocaInst
 				}
 			}
 
-			size_t operator()(const IntType& type) const
-			{
-				return type.Size / 8;
-			}
+			size_t operator()(const IntType& type) const { return type.Size; }
 
-			size_t operator()(const PtrType&) const
-			{
-				return sizeof(void*);
-			}
+			size_t operator()(const PtrType&) const { return sizeof(void*); }
 
 			size_t operator()(const StructType& type) const
 			{
 				size_t size = 0;
-				for (const auto& t : type.TypeList)
-				{
+				for (const auto& t : type.TypeList) {
 					size += std::visit(SizeVisitor{}, t);
 				}
 				return size;
 			}
 
-			size_t operator()(const ArrayType& type) const
-			{
-				return type.Size * std::visit(SizeVisitor{}, *type.Type);
-			}
-			size_t operator()(const LabelType&) const
-			{
-				ASSERT_NOT_REACHABLE();
-			};
+			size_t operator()(const ArrayType& type) const { return type.Size * std::visit(SizeVisitor{}, *type.Type); }
+			size_t operator()(const LabelType&) const { ASSERT_NOT_REACHABLE(); };
 		};
 		return std::visit(SizeVisitor{}, *Type);
 	}
 };
 
 struct Variable;
-struct StoreInst
-{
+struct StoreInst {
 	Values Value;
 	std::shared_ptr<Variable> Ptr;
 	AlignAttribute Alignment;
 };
 
-struct LoadInst
-{
+struct LoadInst {
 	Types Type;
 	std::shared_ptr<Variable> Ptr;
 	AlignAttribute Alignment;
@@ -161,4 +141,4 @@ struct LoadInst
 
 using IdentifierInstruction = std::variant<AllocaInst, LoadInst, AddInst, SubInst, MulInst, SDivInst>;
 
-};
+}; // namespace alx::ir

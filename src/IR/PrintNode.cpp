@@ -234,9 +234,9 @@ void Variable::PrintNode(IR& ir) const
 	std::visit(visitor, Allocation);
 	if (!Attributes.empty())
 	{
-		print(", ");
+		print(",");
 		for (const auto& attribute : Attributes)
-			print("{} ", IR::EnumToString(attribute));
+			print(" {}", IR::EnumToString(attribute));
 	}
 	println("");
 }
@@ -262,7 +262,7 @@ std::string IR::TypesToString(const Types& types)
 		}
 		std::string operator()(IntType intType) const
 		{
-			return getFormatted("i{}", intType.Size);
+			return getFormatted("i{}", intType.Size * 8);
 		}
 		std::string operator()(const LabelType&) const
 		{
@@ -336,14 +336,14 @@ Types IR::TokenTypeToIRType(TokenType tokenType)
 	case TokenType::T_BOOL:
 	case TokenType::T_TRUE:
 	case TokenType::T_FALSE:
-		return IntType{ 8 };
+		return IntType{ 1 };
 	case TokenType::T_INT_L:
 	case TokenType::T_INT:
-		return IntType{ 32 };
+		return IntType{ 4 };
 	case TokenType::T_LONG:
-		return IntType{ 64 };
+		return IntType{ 8 };
 	case TokenType::T_SHORT:
-		return IntType{ 16 };
+		return IntType{ 2 };
 	case TokenType::T_FLOAT_L:
 	case TokenType::T_FLOAT:
 		return SingleValueType::Float;

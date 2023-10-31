@@ -11,12 +11,13 @@ namespace alx::ir {
 enum class LinkageType
 {
 	Internal,
-	External, // Exported
+	External,// Exported
 };
 
-enum class VisibilityAttribute {
-	Global, // Functions, structs, classes
-	Local // Everything
+enum class VisibilityAttribute
+{
+	Global,// Functions, structs, classes
+	Local  // Everything
 };
 
 enum class ParamAttributes
@@ -32,4 +33,4 @@ struct AlignAttribute {
 
 using ParameterAttributes = std::variant<ParamAttributes, AlignAttribute>;
 
-}
+}// namespace alx::ir

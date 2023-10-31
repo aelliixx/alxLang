@@ -31,7 +31,7 @@ void IR::generate_variable(VariableDeclaration& variable, Function& function)
 				const auto& numLit = static_cast<NumberLiteral&>(*variable.Value());
 				if (isIntegerLiteral(numLit.Type()))
 				{
-					Constant value{ .Type = IntType{ size * 8 }, .Value = numLit.AsInt() };
+					Constant value{ .Type = IntType{ size  }, .Value = numLit.AsInt() };
 					StoreInst store{ .Value = value, .Ptr = identifier, .Alignment = { size }};
 					function.Blocks.back().Body.emplace_back(store);
 				}

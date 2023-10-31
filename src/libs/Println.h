@@ -29,24 +29,34 @@ template<typename T>
 concept Char = std::is_same_v<T, char>;
 
 template<typename T>
-concept Number = std::is_arithmetic_v<T> &&
-	!std::is_same_v<T, bool> &&
-	!std::is_same_v<T, char>;
+concept Number = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_same_v<T, char>;
 
 template<typename T>
 concept Boolean = std::is_same_v<T, bool>;
 
 template<__alx::Stringable T>
-std::string string_cast(T from) { return from; }
+std::string string_cast(T from)
+{
+	return from;
+}
 
 template<Boolean T>
-std::string string_cast(T from) { return from ? "true" : "false"; }
+std::string string_cast(T from)
+{
+	return from ? "true" : "false";
+}
 
 template<__alx::Number T>
-std::string string_cast(T from) { return std::to_string(from); }
+std::string string_cast(T from)
+{
+	return std::to_string(from);
+}
 
 template<__alx::Char T>
-std::string string_cast(T from) { return std::string(1, from); }
+std::string string_cast(T from)
+{
+	return std::string(1, from);
+}
 
 template<typename... Param>
 class VariadicArgParser
@@ -57,7 +67,7 @@ class VariadicArgParser
 	std::vector<std::string> _args;
 
 	template<typename T, typename... Rest>
-	void set_args(T& first, Rest& ... rest)
+	void set_args(T& first, Rest&... rest)
 	{
 		_args.push_back(string_cast(first));
 		set_args(rest...);
@@ -72,13 +82,11 @@ class VariadicArgParser
 		std::string out = "\033[38;2";
 		int matches = 0;
 		while (std::getline(stream, item, ';'))
-			if (item.length() > 0)
-			{
+			if (item.length() > 0) {
 				++matches;
 				out += ";" + item;
 			}
-		for (int i = matches; i < 3; ++i)
-			out += ";0";
+		for (int i = matches; i < 3; ++i) out += ";0";
 		return out + "m";
 	}
 
@@ -91,11 +99,9 @@ class VariadicArgParser
 		std::string out = "{";
 		int matches = 0;
 		int maxMatches = 0;
-		while (std::getline(base, item, ','))
-			++maxMatches;
+		while (std::getline(base, item, ',')) ++maxMatches;
 
-		while (std::getline(stream, item, ','))
-		{
+		while (std::getline(stream, item, ',')) {
 			out +=
 				"\033[38;2" + componentColours[matches % 4] + item + "\033[0m" + (matches != maxMatches - 1 ? "," : "");
 			++matches;
@@ -115,16 +121,13 @@ class VariadicArgParser
 		bool paramSequence = false;
 		uint seqStartIndex;
 
-		for (uint i = 0; i < length; ++i)
-		{
-			if (parsed[i] == '{')
-			{
+		for (uint i = 0; i < length; ++i) {
+			if (parsed[i] == '{') {
 				paramSequence = true;
 				seqStartIndex = i;
 				continue;
 			}
-			if (paramSequence && parsed[i] == 'v')
-			{
+			if (paramSequence && parsed[i] == 'v') {
 				paramSequence = false;
 				const auto vector = _args.at(bodyArgs);
 				auto span = parse_vector(vector.substr(1, vector.length() - 2));
@@ -132,8 +135,7 @@ class VariadicArgParser
 				++bodyArgs;
 				continue;
 			}
-			if (paramSequence && parsed[i] == '>')
-			{
+			if (paramSequence && parsed[i] == '>') {
 				paramSequence = false;
 				const auto indentLength = std::stoi(_args.at(bodyArgs));
 				std::string padding(indentLength, ' ');
@@ -142,12 +144,10 @@ class VariadicArgParser
 				continue;
 			}
 
-			if (parsed[i] == '}' && paramSequence)
-			{
+			if (parsed[i] == '}' && paramSequence) {
 				paramSequence = false;
 				const auto n = i - seqStartIndex + 1;
-				if (n > 2)
-				{
+				if (n > 2) {
 					const auto colourSequence = parsed.substr(seqStartIndex + 1, i - seqStartIndex - 1);
 #ifndef DISABLE_COLOURS
 					auto span = parse_colour_sequence(colourSequence);
@@ -158,13 +158,11 @@ class VariadicArgParser
 #endif
 					parsed.replace(seqStartIndex, n, span);
 				}
-				else
-				{
+				else {
 					// FIXME: Fix bodyArgs being incremented by an argument string which itself contains '{}'
 					//        e.g. println("{}", "foo {}"), crashes the program
 					parsed.replace(seqStartIndex, i - seqStartIndex + 1, _args.at(bodyArgs));
-					if (_args.at(bodyArgs).empty())
-						--i;
+					if (_args.at(bodyArgs).empty()) --i;
 					--i;
 				}
 
@@ -181,8 +179,7 @@ class VariadicArgParser
 public:
 	VariadicArgParser() = delete;
 
-	explicit VariadicArgParser(std::string format, const Param& ... args)
-		: _format(std::move(format))
+	explicit VariadicArgParser(std::string format, const Param&... args) : _format(std::move(format))
 	{
 		set_args(args...);
 		parse_params();
@@ -191,24 +188,24 @@ public:
 	operator std::string() const { return _text; }
 };
 
-}
+} // namespace __alx
 
 template<typename... Param>
-std::string getFormatted([[maybe_unused]] Colour colour, const std::string& format, const Param& ... arguments)
+std::string getFormatted([[maybe_unused]] Colour colour, const std::string& format, const Param&... arguments)
 {
 	const __alx::VariadicArgParser<Param...> parser{ format, arguments... };
 	return parser;
 }
 
 template<typename... Param>
-std::string getFormatted(const std::string& format, const Param& ... arguments)
+std::string getFormatted(const std::string& format, const Param&... arguments)
 {
 	const __alx::VariadicArgParser<Param...> parser{ format, arguments... };
 	return parser;
 }
 
 template<typename... Param>
-void println(const std::string& format, const Param& ... arguments)
+void println(const std::string& format, const Param&... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
 	std::cout << text << '\n';
@@ -221,7 +218,7 @@ void println()
 }
 
 template<typename... Param>
-void println(Colour colour, const std::string& format, const Param& ... arguments)
+void println(Colour colour, const std::string& format, const Param&... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
 #ifndef DISABLE_COLOURS
@@ -232,14 +229,14 @@ void println(Colour colour, const std::string& format, const Param& ... argument
 }
 
 template<typename... Param>
-void print(const std::string& format, const Param& ... arguments)
+void print(const std::string& format, const Param&... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
 	std::cout << text;
 }
 
 template<typename... Param>
-void print(Colour colour, const std::string& format, const Param& ... arguments)
+void print(Colour colour, const std::string& format, const Param&... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
 #ifndef DISABLE_COLOURS
@@ -249,10 +246,23 @@ void print(Colour colour, const std::string& format, const Param& ... arguments)
 #endif
 }
 
+template<typename... Param>
+void todo(const std::string& format, const Param&... arguments)
+{
+	const auto text = getFormatted(format, arguments...);
+	println(Colour::LightBlue, "TODO: {}", text);
+}
+
+template<typename... Param>
+void fixme(const std::string& format, const Param&... arguments)
+{
+	const auto text = getFormatted(format, arguments...);
+	println(Colour::Orange, "FIXME: {}", text);
+}
+
 static std::string token_to_string(TokenType token)
 {
-	switch (token)
-	{
+	switch (token) {
 	case TokenType::T_INT_L:
 		return "int";
 	case TokenType::T_FLOAT_L:
@@ -378,4 +388,4 @@ static std::string token_to_string(TokenType token)
 	}
 	ASSERT_NOT_REACHABLE();
 }
-}
+} // namespace alx

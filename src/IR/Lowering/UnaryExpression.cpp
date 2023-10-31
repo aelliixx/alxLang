@@ -21,11 +21,11 @@ std::optional<std::shared_ptr<Variable>> IR::generate_unary_expression(const Una
 		// FIXME: this should resolve to a negative variable in the parser (e.g. -(1) -> -1)
 		if (rhs->class_name() == "NumberLiteral")
 		{
-			println(Colour::Orange, "FIXME: Unary minus on number literal");
+			fixme("Unary minus on number literal");
 			auto& numLit = static_cast<NumberLiteral&>(*rhs);
-			auto value = IR::NumberLiteralToValue(numLit, size_of(numLit.Type()) * 8);
+			auto value = IR::NumberLiteralToValue(numLit, size_of(numLit.Type()) );
 			SubInst sub{
-				.Lhs = Constant{ .Type = IntType{ 32 }, .Value = 0 },
+				.Lhs = Constant{ .Type = IntType{ 4 }, .Value = 0 },
 				.Rhs = value,
 			};
 			auto subTemp = std::make_shared<Variable>(Variable{
@@ -52,7 +52,7 @@ std::optional<std::shared_ptr<Variable>> IR::generate_unary_expression(const Una
 				.IsTemporary = true
 			});
 			SubInst sub{
-				.Lhs = Constant{ .Type = IntType{ 32 }, .Value = 0 },
+				.Lhs = Constant{ .Type = IntType{ 4 }, .Value = 0 },
 				.Rhs = temporary,
 			};
 			auto subTemp = std::make_shared<Variable>(Variable{
@@ -71,9 +71,9 @@ std::optional<std::shared_ptr<Variable>> IR::generate_unary_expression(const Una
 			{
 				const auto& rhsExpr = static_cast<const BinaryExpression&>(*rhs);
 				auto eval = rhsExpr.Evaluate();
-				auto value = IR::NumberLiteralToValue(*eval, size_of(eval->Type()) * 8);
+				auto value = IR::NumberLiteralToValue(*eval, size_of(eval->Type()) );
 				SubInst sub{
-					.Lhs = Constant{ .Type = IntType{ 32 }, .Value = 0 },
+					.Lhs = Constant{ .Type = IntType{ 4 }, .Value = 0 },
 					.Rhs = value,
 				};
 				auto subTemp = std::make_shared<Variable>(Variable{
@@ -89,7 +89,7 @@ std::optional<std::shared_ptr<Variable>> IR::generate_unary_expression(const Una
 				auto result = generate_binary_expression(binExpr, function);
 				MUST(result.has_value());
 				SubInst sub{
-					.Lhs = Constant{ .Type = IntType{ 32 }, .Value = 0 },
+					.Lhs = Constant{ .Type = IntType{ 4 }, .Value = 0 },
 					.Rhs = result.value(),
 				};
 				auto subTemp = std::make_shared<Variable>(Variable{
@@ -108,7 +108,7 @@ std::optional<std::shared_ptr<Variable>> IR::generate_unary_expression(const Una
 			if (!result.has_value())
 				return {};
 			SubInst sub{
-				.Lhs = Constant{ .Type = IntType{ 32 }, .Value = 0 },
+				.Lhs = Constant{ .Type = IntType{ 4 }, .Value = 0 },
 				.Rhs = result.value(), // FIXME
 			};
 			auto subTemp = std::make_shared<Variable>(Variable{

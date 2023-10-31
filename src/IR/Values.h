@@ -42,7 +42,7 @@ struct Constant
 
 		std::pair<size_t, std::string> operator()(const IntType& type) const
 		{
-			return { type.Size, "i" + std::to_string(type.Size) };
+			return { type.Size, "i" + std::to_string(type.Size * 8) };
 		}
 
 		std::pair<size_t, std::string> operator()(const PtrType&) const

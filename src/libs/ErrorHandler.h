@@ -6,11 +6,18 @@
 // Created by aelliixx on 2023-09-16.
 //
 #pragma once
+#include <algorithm>
 #include <list>
 #include <utility>
 #include "Println.h"
 
 namespace alx {
+
+class CompilerError : public std::runtime_error
+{
+public:
+	CompilerError(const std::string& msg) : std::runtime_error(msg) {}
+};
 
 enum class ErrorCode
 {
@@ -91,18 +98,18 @@ public:
 	{
 		const auto text = getFormatted(format, arguments...);
 		Error(lineNum, colNum, posNum, text);
-		throw std::runtime_error(text);
+		throw CompilerError(text);
 	}
 
 private:
 	void give_context(size_t lineNum, size_t colNum, size_t posNum)
 	{
 		std::string lineBuffer;
-		size_t lineStartIndex;
-		size_t errorIndexInLine;
+		size_t lineStartIndex{0};
+		size_t errorIndexInLine{0};
 		for (auto i = posNum; m_code[i] != '\n'; --i)
 		{
-			if (m_code.at(i) == ' ' && m_code.at(i) && m_code.at(i) == ' ')
+			if (!m_code.at(i))
 				break;
 			lineStartIndex = i;
 		}
@@ -116,7 +123,7 @@ private:
 
 		println("--> {}:{}:{}", m_file_name, lineNum, colNum);
 		println(" | {}", lineBuffer);
-		println(" | {}{}", std::string(errorIndexInLine - 1, ' '), '^');
+		println(" | {}{}", std::string(errorIndexInLine ? errorIndexInLine - 1 :  0, ' '), '^');
 	}
 };
 
