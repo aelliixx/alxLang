@@ -27,7 +27,7 @@ void BlockGenerator::generate_struct_variable(const ASTNode& node)
 		  }
 		  return false;
 		});
-	assert(structIt != m_program_ast.end() && "Could not find struct declaration");
+	MUST(structIt != m_program_ast.end() && "Could not find struct declaration");
 
 	auto structDecl = static_cast<StructDeclaration*>(structIt->get());
 
@@ -40,7 +40,7 @@ void BlockGenerator::generate_struct_variable(const ASTNode& node)
 			add_to_stack(variable.Name() + "::" + member.Name(), size_of(member.TypeAsPrimitive()), TokenType::T_STRUCT);
 			if (member.Value()->class_name() == "NumberLiteral")
 			{
-				assert(member.TypeIndex() == 0 && "Non-primitive types are not yet supported");
+				MUST(member.TypeIndex() == 0 && "Non-primitive types are not yet supported");
 				m_asm << mov(offset(m_bp_offset, size_of(member.TypeAsPrimitive())), 4,
 							 static_cast<NumberLiteral&>(*member.Value()).Value());
 			}

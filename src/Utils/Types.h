@@ -81,7 +81,7 @@ static TokenType literal_to_type(TokenType literal)
 	case TokenType::T_FALSE:
 		return TokenType::T_BOOL;
 	default:
-		assert(false && "Not reachable");
+		MUST(false && "Not reachable");
 	}
 }
 
@@ -125,7 +125,7 @@ static bool isLiteralAssignable(TokenType lhs, TokenType rhs)
 	case TokenType::T_BOOL:
 		return rhs == TokenType::T_TRUE || rhs == TokenType::T_FALSE;
 	default:
-		assert(false && "Not reachable");
+		MUST(false && "Not reachable");
 	}
 }
 

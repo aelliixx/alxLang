@@ -25,7 +25,7 @@ std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
 //									   return false;
 //									 });
 //
-//	assert(funcIterator != m_program->GetChildren().end() && "Function not found");
+//	MUST(funcIterator != m_program->GetChildren().end() && "Function not found");
 //	const auto& func = static_cast<FunctionDeclaration&>(**funcIterator);
 //	auto returnType = func.ReturnType();
 

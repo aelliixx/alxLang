@@ -50,7 +50,7 @@ void Program::PrintNode(int indent) const
 
 void Identifier::PrintNode(int indent) const
 {
-	println("{>}Variable: {}", indent, m_name);
+	println("{>}Identifier: {}", indent, m_name);
 }
 void NumberLiteral::PrintNode(int indent) const
 {
@@ -79,7 +79,7 @@ void NumberLiteral::PrintNode(int indent) const
 		println("{>}value: {}", indent + 2, AsBool());
 		break;
 	default:
-		assert(false && "Invalid literal type");
+		MUST(false && "Invalid literal type");
 	}
 }
 void VariableDeclaration::PrintNode(int indent) const

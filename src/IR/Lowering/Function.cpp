@@ -8,7 +8,6 @@
 
 #include "../Ir.h"
 
-
 namespace alx::ir {
 std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& name)
 {
@@ -40,14 +39,14 @@ std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& 
 	}
 	return std::make_unique<Variable>(variable);
 }
-void IR::generate_func_parameters(FunctionDeclaration& astNode, Function& function)
+void IR::generate_func_parameters(FunctionDeclaration& functionDeclaration, Function& function)
 {
 
 }
-void IR::generate_func_body(FunctionDeclaration& astNode, Function& function)
+void IR::generate_func_body(FunctionDeclaration& functionDeclaration, Function& function)
 {
 	bool hasReturned = false;
-	for (const auto& node : astNode.Body().Children())
+	for (const auto& node : functionDeclaration.Body().Children())
 	{
 		if (node->class_name() == "ReturnStatement")
 		{
@@ -59,9 +58,13 @@ void IR::generate_func_body(FunctionDeclaration& astNode, Function& function)
 			auto& varDecl = static_cast<VariableDeclaration&>(*node);
 			generate_variable(varDecl, function);
 		}
-		else if (node->class_name() == "BinaryExpression") {
+		else if (node->class_name() == "BinaryExpression")
+		{
 			auto& binExpr = static_cast<BinaryExpression&>(*node);
-			generate_binary_expression(binExpr, function);
+			auto result = generate_binary_expression(binExpr, function);
+			MUST(result);
+//			if (std::holds_alternative<std::shared_ptr<Variable>>(result.value()))
+//				function.Blocks.back().Body.emplace_back(*std::get<std::shared_ptr<Variable>>(result.value()));
 		}
 		else
 			println(Colour::Red, "Unknown node type: {;255;255;255}", node->class_name());

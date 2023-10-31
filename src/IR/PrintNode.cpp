@@ -14,21 +14,102 @@ namespace alx::ir {
 #define GREEN Colour{60,197,172}
 #define OLIVE Colour{171,189,138}
 
+#if OUTPUT_IR_TO_STRING
+#define print(...) ir.m_ir_string += alx::getFormatted(__VA_ARGS__)
+#define println(...) (ir.m_ir_string += alx::getFormatted(__VA_ARGS__) + "\n")
+#endif
+
+struct ConstantVisitor
+{
+	std::string operator()(long constant)
+	{
+		return std::to_string(constant);
+	}
+	std::string operator()(float constant)
+	{
+		return std::to_string(constant);
+	}
+	std::string operator()(double constant)
+	{
+		return std::to_string(constant);
+	}
+};
+struct ValueVisitor
+{
+	bool OutputIdentifier = true;
+	bool OutputType = true;
+	std::string operator()(const Constant& constant) const
+	{
+		if (constant.Type.index() == 0 && std::get<SingleValueType>(constant.Type) == SingleValueType::Void)
+			return alx::getFormatted("{;60;197;172}", "void");
+		else if (OutputIdentifier)
+			return alx::getFormatted("{;60;197;172}{;171;189;138}",
+									 OutputType ?
+										 constant.TypeToString() + " " : "",
+									 std::visit(ConstantVisitor{}, constant.Value));
+		else
+			return alx::getFormatted("{;60;197;172}", constant.TypeToString());
+	}
+	std::string operator()(const std::shared_ptr<Variable>& variable) const
+	{
+		struct AllocatorVisitor
+		{
+			std::string operator()(const AllocaInst& alloca)
+			{
+				return IR::TypesToString(*alloca.Type);
+			}
+			std::string operator()(const LoadInst& load)
+			{
+				return IR::TypesToString(load.Type);
+			}
+			std::string operator()(const AddInst& add)
+			{
+				return std::visit(ValueVisitor{ false }, add.Rhs);
+			}
+			std::string operator()(const SubInst& sub)
+			{
+				return std::visit(ValueVisitor{ false }, sub.Rhs);
+			}
+			std::string operator()(const MulInst& sub)
+			{
+				return std::visit(ValueVisitor{ false }, sub.Rhs);
+			}
+			std::string operator()(const SDivInst& sub)
+			{
+				return std::visit(ValueVisitor{ false }, sub.Rhs);
+			}
+		};
+		if (OutputIdentifier)
+			return alx::getFormatted("{;60;197;172}{;70;160;220}",
+									 OutputType ?
+										 std::visit(AllocatorVisitor{}, variable->Allocation) + " " : "",
+									 (variable->Visibility == VisibilityAttribute::Local ? "%" : "@") +
+										 variable->Name);
+		else
+			return alx::getFormatted("{;60;197;172}",
+									 std::visit(AllocatorVisitor{}, variable->Allocation));
+
+	}
+};
+
 void IR::Dump()
 {
+#if !OUTPUT_IR_TO_STRING
 	println("Dumping IR with --dump-ir:\n");
+#endif
 	struct IrVisitor
 	{
+		IR& ir;
 		void operator()(const std::unique_ptr<Function>& func)
 		{
-			func->PrintNode();
+			func->PrintNode(ir);
 		}
 	};
 	for (const auto& node : m_ir)
-		std::visit(IrVisitor{}, node);
+		std::visit(IrVisitor{ *this }, node);
 }
 
-void FunctionParameter::PrintNode() const
+void FunctionParameter::PrintNode(IR& ir) const
 {
 	print(GREEN, "{} ", IR::TypesToString(Type));
 	for (const auto& attribute : Attributes)
@@ -38,10 +119,11 @@ void FunctionParameter::PrintNode() const
 		  Name);
 }
 
-void Function::PrintNode() const
+void Function::PrintNode(IR& ir) const
 {
 	print(BLUE, "define ");
 	print("{}", IR::EnumToString(Linkage));
+	print(GREEN, " {}", IR::TypesToString(ReturnType));
 	print(BLUE, " {}{}",
 		  Visibility == VisibilityAttribute::Global ? "@" : "%",
 		  Name);
@@ -53,7 +135,7 @@ void Function::PrintNode() const
 		for (const auto& arg : Arguments)
 		{
 			print(separator);
-			arg.PrintNode();
+			arg.PrintNode(ir);
 			separator = ", ";
 		}
 		print(")");
@@ -63,49 +145,7 @@ void Function::PrintNode() const
 
 	struct BodyVisitor
 	{
-		struct ConstantVisitor
-		{
-			std::string operator()(long constant)
-			{
-				return std::to_string(constant);
-			}
-			std::string operator()(float constant)
-			{
-				return std::to_string(constant);
-			}
-			std::string operator()(double constant)
-			{
-				return std::to_string(constant);
-			}
-		};
-		struct ValueVisitor
-		{
-			std::string operator()(const Constant& constant)
-			{
-				if (constant.Type.index() == 0 && std::get<SingleValueType>(constant.Type) == SingleValueType::Void)
-					return alx::getFormatted("{;60;197;172}", "void");
-				return alx::getFormatted("{;60;197;172} {;171;189;138}", constant.TypeToString(),
-										 std::visit(ConstantVisitor{}, constant.Value));
-			}
-			std::string operator()(const std::shared_ptr<Variable>& variable)
-			{
-				struct AllocatorVisitor
-				{
-					std::string operator()(const AllocaInst& alloca)
-					{
-						return IR::TypesToString(*alloca.Type);
-					}
-					std::string operator()(const LoadInst& load)
-					{
-						return IR::TypesToString(load.Type);
-					}
-				};
-				return alx::getFormatted("{;60;197;172} {;171;189;138}",
-										 std::visit(AllocatorVisitor{}, variable->Allocation),
-										 (variable->Visibility == VisibilityAttribute::Local ? "%" : "@") +
-											 variable->Name);
-			}
-		};
+		IR& ir;
 		void operator()(const LabelType& label)
 		{
 			println(BLUE, "{}: ", label.Name);
@@ -118,13 +158,13 @@ void Function::PrintNode() const
 		}
 		void operator()(const Variable& var)
 		{
-			var.PrintNode();
+			var.PrintNode(ir);
 		}
 		void operator()(const StoreInst& store)
 		{
 			std::string value = std::visit(ValueVisitor{}, store.Value);
 			print("  store");
-			print(OLIVE, " {}", value);
+			print(" {}", value);
 			print(", ptr ");
 			print(BLUE, "{}{}", store.Ptr->Visibility == VisibilityAttribute::Local ? "%" : "@", store.Ptr->Name);
 			println(", align {}", store.Alignment.Alignment);
@@ -135,15 +175,16 @@ void Function::PrintNode() const
 	{
 		println(BLUE, "{}:", block.Label.Name);
 		for (const auto& child : block.Body)
-			std::visit(BodyVisitor{}, child);
+			std::visit(BodyVisitor{ ir }, child);
 	}
 	println("}");
 }
 
-void Variable::PrintNode() const
+void Variable::PrintNode(IR& ir) const
 {
 	struct AllocatorVisitor
 	{
+		IR& ir;
 		void operator()(const AllocaInst& alloca)
 		{
 			print(" = alloca ");
@@ -154,9 +195,38 @@ void Variable::PrintNode() const
 			print(" = load ");
 			print(GREEN, "{}", IR::TypesToString(load.Type));
 			print(", ");
+			print("ptr ");
 			print(BLUE, "{}{}", load.Ptr->Visibility == VisibilityAttribute::Local ? "%" : "@", load.Ptr->Name);
 		}
-	} visitor;
+		void operator()(const AddInst& add)
+		{
+			print(" = add ");
+			print(std::visit(ValueVisitor{}, add.Lhs));
+			print(", ");
+			print(std::visit(ValueVisitor{ .OutputType = false }, add.Rhs));
+		}
+		void operator()(const SubInst& sub)
+		{
+			print(" = sub ");
+			print(std::visit(ValueVisitor{}, sub.Lhs));
+			print(", ");
+			print(std::visit(ValueVisitor{ .OutputType = false }, sub.Rhs));
+		}
+		void operator()(const MulInst& sub)
+		{
+			print(" = mul ");
+			print(std::visit(ValueVisitor{}, sub.Lhs));
+			print(", ");
+			print(std::visit(ValueVisitor{ .OutputType = false }, sub.Rhs));
+		}
+		void operator()(const SDivInst& sub)
+		{
+			print(" = sdiv ");
+			print(std::visit(ValueVisitor{}, sub.Lhs));
+			print(", ");
+			print(std::visit(ValueVisitor{ .OutputType = false }, sub.Rhs));
+		}
+	} visitor{ ir };
 	print("  ");
 	print(BLUE, "{}{}",
 		  Visibility == VisibilityAttribute::Local ? "%" : "@",

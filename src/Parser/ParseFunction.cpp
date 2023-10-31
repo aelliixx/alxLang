@@ -102,6 +102,6 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 													 std::move(body),
 													 std::move(args));
 	}
-	assert(false && "Not reachable");
+	MUST(false && "Not reachable");
 }
 }

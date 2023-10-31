@@ -5,7 +5,8 @@
 //
 // Created by aelliixx on 2023-10-08.
 //
-
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCInconsistentNamingInspection"
 #pragma once
 #include <string>
 #include <variant>
@@ -16,8 +17,9 @@
 #include "Variables.h"
 #include "Instructions.h"
 
-namespace alx::ir {
 
+namespace alx::ir {
+class IR;
 
 struct FunctionParameter
 {
@@ -25,8 +27,7 @@ struct FunctionParameter
 	std::vector<ParameterAttributes> Attributes;
 	VisibilityAttribute Visibility;
 	std::string Name;
-
-	void PrintNode() const;
+	void PrintNode(IR& ir) const;
 };
 
 using BodyTypes = std::variant<LabelType, ReturnInst, Variable, StoreInst>;
@@ -69,15 +70,20 @@ struct Function
 
 	std::vector<FunctionParameter> Arguments;
 	std::vector<LogicalBlock> Blocks;
-	
+
 	[[nodiscard]] std::shared_ptr<Variable> FindVariableByIdentifier(const std::string& name);
-	void PrintNode() const;
-	
+	void PrintNode(IR&) const;
+
 	std::string GetNewUnnamedTemporary()
 	{
 		return std::to_string(UnnamedTemporaryCounter++);
 	}
 	size_t UnnamedTemporaryCounter = 0;
+
+	void AppendInstruction(const BodyTypes& body)
+	{
+		Blocks.back().Body.push_back(body);
+	}
 };
 
 #pragma clang diagnostic push
@@ -87,6 +93,10 @@ class IR
 	using IRNodes = std::variant<std::unique_ptr<Function>>;
 	const std::vector<std::unique_ptr<ASTNode>>& m_ast{};
 	std::vector<IRNodes> m_ir;
+	std::string m_ir_string;
+	friend void FunctionParameter::PrintNode(IR& ir) const;
+	friend void Function::PrintNode(IR&) const;
+	friend void Variable::PrintNode(IR& ir) const;
 
 public:
 	explicit IR(const std::vector<std::unique_ptr<ASTNode>>& ast)
@@ -99,16 +109,29 @@ public:
 	static std::string EnumToString(std::variant<LinkageType, ParameterAttributes>);
 	static std::string TypesToString(const Types&);
 	static Types TokenTypeToIRType(TokenType);
+	static Values NumberLiteralToValue(const NumberLiteral&, size_t);
+
+#if OUTPUT_IR_TO_STRING
+	[[nodiscard]] const std::string& GetIRString() const { return m_ir_string; }
+#endif
 
 private:
 	void generate_function(FunctionDeclaration&);
-	void generate_func_parameters(FunctionDeclaration& astNode, Function& function);
-	void generate_func_body(FunctionDeclaration& astNode, Function& function);
-	void generate_variable(VariableDeclaration& variable, Function& function);
-	static void generate_binary_expression(BinaryExpression& astNode, Function& function);
-	static void generate_return_statement(ReturnStatement& astNode, Function& function, bool hasReturned);
+	void generate_func_parameters(FunctionDeclaration&, Function&);
+	void generate_func_body(FunctionDeclaration&, Function&);
+	void generate_variable(VariableDeclaration&, Function&);
+	[[nodiscard]] std::optional<Values> generate_binary_expression(const BinaryExpression&,
+																					  Function&);
+	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_expression(const UnaryExpression&, Function&);
+	static void generate_return_statement(ReturnStatement&, Function&, bool);
+	[[nodiscard]] std::optional<Values> generate_bin_eq(const BinaryExpression&, Function&);
+	template<typename Func>
+	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_binary_op(const BinaryExpression& binaryExpression,
+																			  Function& function,
+																			  Func instruction);
 };
 
 #pragma clang diagnostic pop
 
 }
+#pragma clang diagnostic pop

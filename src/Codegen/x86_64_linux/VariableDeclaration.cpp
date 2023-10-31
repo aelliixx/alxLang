@@ -27,7 +27,7 @@ void BlockGenerator::generate_variables(const std::unique_ptr<ASTNode>& node)
 	if (!value)
 	{
 		if (!variable->Ident().Assignable())
-			assert("Must initialise constant values");
+			MUST("Must initialise constant values");
 		return;
 	}
 	if (value->class_name() == "NumberLiteral")

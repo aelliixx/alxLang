@@ -73,7 +73,7 @@ void BlockGenerator::generate_return_statement(const std::unique_ptr<ASTNode>& n
 		case TokenType::T_FALSE:
 		ASSERT_NOT_IMPLEMENTED();
 		default:
-			assert(false && "Not reached");
+			MUST(false && "Not reached");
 		}
 	}
 	else if (arg->class_name() == "BinaryExpression")

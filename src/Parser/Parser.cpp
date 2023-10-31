@@ -77,10 +77,15 @@ std::unique_ptr<Expression> Parser::parse_term()
 	switch (token.value().Type)
 	{
 	case TokenType::T_INT_L:
+		[[fallthrough]];
 	case TokenType::T_FLOAT_L:
+		[[fallthrough]];
 	case TokenType::T_DOUBLE_L:
+		[[fallthrough]];
 	case TokenType::T_CHAR_L:
+		[[fallthrough]];
 	case TokenType::T_TRUE:
+		[[fallthrough]];
 	case TokenType::T_FALSE:
 		return parse_number_literal();
 	case TokenType::T_STR_L:
@@ -102,7 +107,7 @@ std::unique_ptr<Expression> Parser::parse_term()
 							 }) == m_variables[m_current_scope_name].end())
 				m_error->Error(identifier.LineNumber, identifier.ColumnNumber, identifier.PosNumber,
 							   "Use of undeclared identifier '{}'", identifier.Value.value());
-			
+
 			return std::make_unique<Identifier>(identifier.Value.value());
 		}
 	case TokenType::T_OPEN_PAREN:
@@ -112,6 +117,14 @@ std::unique_ptr<Expression> Parser::parse_term()
 		must_consume(TokenType::T_CLOSE_PAREN);
 		return expr;
 	}
+	case TokenType::T_MINUS:
+		[[fallthrough]];
+	case TokenType::T_PLUS:
+		[[fallthrough]];
+	case TokenType::T_ADD:
+		[[fallthrough]];
+	case TokenType::T_SUB:
+		[[fallthrough]];
 	case TokenType::T_NOT:
 		return parse_unary_expression();
 	default:

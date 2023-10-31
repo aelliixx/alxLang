@@ -11,23 +11,57 @@
 #include "Instructions.h"
 
 namespace alx::ir {
-
+class IR;
 struct Variable
 {
 	std::string Name;
 	VisibilityAttribute Visibility = VisibilityAttribute::Local;
 	std::vector<ParameterAttributes> Attributes;
-	std::variant<AllocaInst, LoadInst> Allocation;
+	IdentifierInstruction Allocation;
 	bool IsTemporary = false;
-	void PrintNode() const;
-	size_t Size() const
+	void PrintNode(IR& ir) const;
+	// Size in bytes
+	[[nodiscard]] size_t Size() const
 	{
-		if (std::holds_alternative<AllocaInst>(Allocation))
-			return std::get<AllocaInst>(Allocation).Size();
-		else if (std::holds_alternative<LoadInst>(Allocation))
-			return std::get<LoadInst>(Allocation).Alignment.Alignment; // TODO: Does this need to be multiplied by 8?
-		else
-			return 0;
+		struct ValueVisitor
+		{
+			size_t operator()(const Constant& constant) const {
+				return constant.Size();
+			}
+			size_t operator()(const std::shared_ptr<Variable>& var) const
+			{
+				return var->Size();
+			}
+		};
+		struct SizeVisitor
+		{
+			size_t operator()(const AllocaInst& inst) const
+			{
+				return inst.Size();
+			}
+			size_t operator()(const LoadInst& inst) const
+			{
+				return inst.Alignment.Alignment;
+			}
+			size_t operator()(const AddInst& inst) const
+			{
+				return std::visit(ValueVisitor{}, inst.Lhs);
+			}
+			size_t operator()(const SubInst& inst) const
+			{
+				return std::visit(ValueVisitor{}, inst.Lhs);
+			}
+			size_t operator()(const MulInst& inst) const
+			{
+				return std::visit(ValueVisitor{}, inst.Lhs);
+			}
+			size_t operator()(const SDivInst& inst) const
+			{
+				return std::visit(ValueVisitor{}, inst.Lhs);
+			}
+		} visitor;
+
+		return std::visit(visitor, Allocation);
 	}
 };
 }

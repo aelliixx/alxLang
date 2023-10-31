@@ -56,12 +56,16 @@ void Compiler::Compile()
 	}
 	catch (std::runtime_error& err)
 	{
-		alx::println(alx::Colour::LightRed, "Something went wrong when generating IR: {}",
-					 err.what());
-		alx::println(alx::Colour::LightRed, "Current AST:");
-		ast->PrintNode(0);
-		m_error_handler->EmitErrorCount();
-		exit(1);
+		if (!m_debug_flags.quiet_mode)
+		{
+			alx::println(alx::Colour::LightRed, "Something went wrong when generating IR: {;255;255;255}",
+						 err.what());
+			if (m_debug_flags.dump_ast)
+			{
+				alx::println(alx::Colour::LightRed, "Current AST:");
+				ast->PrintNode(0);
+			}
+		}
 	}
 
 	if (m_debug_flags.show_timing)
@@ -80,13 +84,22 @@ void Compiler::Compile()
 		}
 		catch (std::runtime_error& err)
 		{
-			alx::println(alx::Colour::LightRed, "Something went wrong when generating assembly: {}",
-						 err.what());
-			alx::println(alx::Colour::LightRed, "Current AST:");
-			ast->PrintNode(0);
-			alx::println(alx::Colour::LightRed, "\nIR:");
-			m_intermediate_representation->Dump();
-			m_error_handler->EmitErrorCount();
+			if (!m_debug_flags.quiet_mode)
+			{
+				alx::println(alx::Colour::LightRed, "Something went wrong when generating assembly: {;255;255;255}",
+							 err.what());
+				if (m_debug_flags.dump_ast)
+				{
+					alx::println(alx::Colour::LightRed, "Current AST:");
+					ast->PrintNode(0);
+				}
+				if (m_debug_flags.dump_ir)
+				{
+					alx::println(alx::Colour::LightRed, "\nIR:");
+					m_intermediate_representation->Dump();
+				}
+				m_error_handler->EmitErrorCount();
+			}
 			exit(1);
 		}
 		const Seconds duration = SysClock::now() - generateStart;
@@ -131,5 +144,12 @@ std::string Compiler::GetFormattedAsm()
 {
 	return ProgramGenerator::FormatAsm(GetAsm());
 }
+
+#if OUTPUT_IR_TO_STRING
+std::string Compiler::GetIr() {
+	m_intermediate_representation->Dump();
+	return m_intermediate_representation->GetIRString();
+}
+#endif
 
 } // alx

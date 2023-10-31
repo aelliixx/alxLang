@@ -57,7 +57,7 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 		}
 		else if (peek().has_value() && isUnaryOp(peek().value().Type))
 		{
-			auto unaryExpression = parse_unary_expression();
+			auto unaryExpression = parse_expression();
 			return std::make_unique<VariableDeclaration>(std::move(type),
 														 std::move(identifier),
 														 std::move(unaryExpression));

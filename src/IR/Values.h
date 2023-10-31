@@ -22,38 +22,43 @@ struct Constant
 	ConstantTypes Type;
 	std::variant<long, float, double> Value;
 
+	struct TypeVisitor
+	{
+		std::pair<size_t, std::string> operator()(SingleValueType type) const
+		{
+			switch (type)
+			{
+			case SingleValueType::Void:
+				return { 0, "void" };
+			case SingleValueType::Half:
+				return { 2, "half" };
+			case SingleValueType::Float:
+				return { 4, "float" };
+			case SingleValueType::Double:
+				return { 8, "double" };
+			}
+			ASSERT_NOT_REACHABLE();
+		}
+
+		std::pair<size_t, std::string> operator()(const IntType& type) const
+		{
+			return { type.Size, "i" + std::to_string(type.Size) };
+		}
+
+		std::pair<size_t, std::string> operator()(const PtrType&) const
+		{
+			return { 8, "ptr" };
+		}
+	};
+
+	[[nodiscard]] size_t Size() const
+	{
+		return std::visit(TypeVisitor{}, Type).first;
+	}
+
 	[[nodiscard]] std::string TypeToString() const
 	{
-		struct TypeVisitor
-		{
-			std::string operator()(SingleValueType type) const
-			{
-				switch (type)
-				{
-				case SingleValueType::Void:
-					return "void";
-				case SingleValueType::Half:
-					return "half";
-				case SingleValueType::Float:
-					return "float";
-				case SingleValueType::Double:
-					return "double";
-				default:
-				ASSERT_NOT_REACHABLE();
-				}
-			}
-
-			std::string operator()(const IntType& type) const
-			{
-				return "i" + std::to_string(type.Size);
-			}
-
-			std::string operator()(const PtrType&) const
-			{
-				return "ptr";
-			}
-		} visitor;
-		return std::visit(visitor, Type);
+		return std::visit(TypeVisitor{}, Type).second;
 	}
 };
 struct Variable;

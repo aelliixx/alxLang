@@ -23,6 +23,67 @@ struct ReturnInst
 	Values Value;
 };
 
+// Binary operations
+
+struct AddInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct SubInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct MulInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct SDivInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+#if 0 // For future use
+struct FAddInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct FSubInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct FMulInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct UDivInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+
+
+struct PowInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct SRemInst {
+	Values Lhs;
+	Values Rhs;
+};
+
+struct URemInst {
+	Values Lhs;
+	Values Rhs;
+};
+#endif
+
 // Memory access and addressing instructions
 
 struct AllocaInst
@@ -97,5 +158,7 @@ struct LoadInst
 	std::shared_ptr<Variable> Ptr;
 	AlignAttribute Alignment;
 };
+
+using IdentifierInstruction = std::variant<AllocaInst, LoadInst, AddInst, SubInst, MulInst, SDivInst>;
 
 };

@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "../Utils/Types.h"
+#include "../Utils/Utils.h"
 #include "Colours.h"
 
 #define MAX_ARGS 256
@@ -78,7 +79,7 @@ class VariadicArgParser
 			}
 		for (int i = matches; i < 3; ++i)
 			out += ";0";
-		return out;
+		return out + "m";
 	}
 
 	std::string parse_vector(const std::string& str)
@@ -148,9 +149,13 @@ class VariadicArgParser
 				if (n > 2)
 				{
 					const auto colourSequence = parsed.substr(seqStartIndex + 1, i - seqStartIndex - 1);
+#ifndef DISABLE_COLOURS
 					auto span = parse_colour_sequence(colourSequence);
-
-					span += "m" + _args.at(bodyArgs) + "\033[0m";
+					span += _args.at(bodyArgs) + "\033[0m";
+#else
+					auto span = _args.at(bodyArgs);
+					i = -1;
+#endif
 					parsed.replace(seqStartIndex, n, span);
 				}
 				else
@@ -164,12 +169,12 @@ class VariadicArgParser
 				}
 
 				++bodyArgs;
-				assert(bodyArgs <= argCount && "Error: body argument count cannot exceed argument count.");
+				MUST(bodyArgs <= argCount && "Error: body argument count cannot exceed argument count.");
 				length = parsed.length();
 			}
 			length = parsed.length();
 		}
-		assert(argCount == bodyArgs && "Error: argument count cannot exceed body argument count.");
+		MUST(argCount == bodyArgs && "Error: argument count cannot exceed body argument count.");
 		_text = parsed;
 	}
 
@@ -186,6 +191,13 @@ public:
 	operator std::string() const { return _text; }
 };
 
+}
+
+template<typename... Param>
+std::string getFormatted([[maybe_unused]] Colour colour, const std::string& format, const Param& ... arguments)
+{
+	const __alx::VariadicArgParser<Param...> parser{ format, arguments... };
+	return parser;
 }
 
 template<typename... Param>
@@ -212,7 +224,11 @@ template<typename... Param>
 void println(Colour colour, const std::string& format, const Param& ... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
+#ifndef DISABLE_COLOURS
 	println("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
+#else
+	println(text);
+#endif
 }
 
 template<typename... Param>
@@ -226,7 +242,11 @@ template<typename... Param>
 void print(Colour colour, const std::string& format, const Param& ... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
+#ifndef DISABLE_COLOURS
 	print("\033[38;2;{};{};{}m{}\033[0m", colour.r, colour.g, colour.b, text);
+#else
+	print(text);
+#endif
 }
 
 static std::string token_to_string(TokenType token)

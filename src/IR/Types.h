@@ -22,6 +22,7 @@ enum class SingleValueType
 
 struct IntType
 {
+	// Size in bits
 	size_t Size;
 	explicit IntType(size_t size) : Size(size) {}
 };

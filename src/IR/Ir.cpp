@@ -30,6 +30,30 @@ void IR::Generate()
 	println("Done generating IR");
 }
 
+Values IR::NumberLiteralToValue(const NumberLiteral& literal, size_t size)
+{
+	const auto& numLit = static_cast<const NumberLiteral&>(literal);
+	if (isIntegerLiteral(numLit.Type()))
+	{
+		return Constant{ .Type = IntType{ size }, .Value = numLit.AsInt() };
+	}
+	else if (!isIntegerLiteral(numLit.Type()) && isNumberLiteral(numLit.Type()))
+	{
+		SingleValueType type;
+		if (numLit.Type() == TokenType::T_FLOAT_L)
+			type = SingleValueType::Float;
+		else if (numLit.Type() == TokenType::T_DOUBLE_L)
+			type = SingleValueType::Double;
+		return Constant{ .Type = type, .Value = numLit.AsDouble() };
+	}
+	else
+	{
+		println(Colour::Red, "Unknown number type: {;255;255;255}",
+				token_to_string(numLit.Type()));
+		ASSERT_NOT_REACHABLE();
+	}
+}
+
 
 
 

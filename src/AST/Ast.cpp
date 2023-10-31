@@ -19,7 +19,7 @@ namespace alx {
 #pragma ide diagnostic ignored "misc-no-recursion"
 std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 {
-	assert(m_constexpr && "Cannot evaluate non constant binary expressions");
+	MUST(m_constexpr && "Cannot evaluate non constant binary expressions");
 	auto add = [this](TokenType lhs, const std::string& lhsVal, const std::string& rhsVal)
 	{
 	  // FIXME: Add evaluation for doubles and floats
@@ -85,8 +85,8 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 		return std::make_unique<NumberLiteral>(lhs->Type(), add(lhs->Type(), lhsVal, rhsVal));
 	}
 
-	assert(m_rhs->class_name() == "NumberLiteral");
-	assert(m_lhs->class_name() == "NumberLiteral");
+	MUST(m_rhs->class_name() == "NumberLiteral");
+	MUST(m_lhs->class_name() == "NumberLiteral");
 	auto* lhs = static_cast<NumberLiteral*>(m_lhs.get());
 	auto* rhs = static_cast<NumberLiteral*>(m_rhs.get());
 
@@ -102,7 +102,7 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_
 	  m_rhs(std::move(rhs)),
 	  m_binary_op(binaryOp)
 {
-	assert(isBinaryOp(m_binary_op) && "Invalid binary operator");
+	MUST(isBinaryOp(m_binary_op) && "Invalid binary operator");
 
 	// Check if both sides are numbers or binary expressions and if they are constant
 	if (m_lhs->class_name() == "NumberLiteral" && m_rhs->class_name() == "NumberLiteral")

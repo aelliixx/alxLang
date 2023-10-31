@@ -35,6 +35,9 @@ public:
 	std::string GetAsm();
 	const Program& GetAst();
 	std::string GetFormattedAsm();
+#if OUTPUT_IR_TO_STRING
+	std::string GetIr();
+#endif
 };
 
 } // alx

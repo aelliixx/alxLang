@@ -64,14 +64,16 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 	auto programName = program.get<std::string>("filename");
-	alx::println("Parsing {}", programName);
+	if (!program.get<bool>("-q"))
+		alx::println("Parsing {}", programName);
 	std::string sourceBuffer;
 	{
 		auto ss = std::ostringstream{};
 		std::ifstream input(programName);
 		if (!input.is_open())
 		{
-			alx::error("File {} not found!", programName);
+			if (!program.get<bool>("-q"))
+				alx::error("File {} not found!", programName);
 			return EXIT_FAILURE;
 		}
 		ss << input.rdbuf();
@@ -82,6 +84,6 @@ int main(int argc, const char** argv)
 		return 0;
 
 	alx::Compiler compiler{ sourceBuffer, programName, alx::resolveFlags(program), alx::resolveDebugFlags(program) };
-	compiler.Compile();	
+	compiler.Compile();
 	// nasm -f elf64 comp.asm -o comp.o && ld comp.o -o comp
 }

@@ -136,7 +136,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 		}
 		if (rhs->class_name() == "NumberLiteral") // 5 + 2
 		{
-			assert(expr->Constexpr() && "Expression with number literals on both sides should be constexpr");
+			MUST(expr->Constexpr() && "Expression with number literals on both sides should be constexpr");
 			m_asm << mov(Reg::rax, lhsSize, expr->Evaluate()->Value());
 			return;
 		}
@@ -162,7 +162,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 	if (lhs->class_name() == "BinaryExpression")
 	{
 		generate_binary_expression(lhs, context);
-		assert(context.has_value() && "lhs context is missing");
+		MUST(context.has_value() && "lhs context is missing");
 		auto lhsSize = context.value().LhsSize;
 		if (rhs->class_name() == "Identifier")
 		{
