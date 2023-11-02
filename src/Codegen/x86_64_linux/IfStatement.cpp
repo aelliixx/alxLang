@@ -10,8 +10,10 @@
 
 namespace alx {
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
+#endif
 void BlockGenerator::generate_if_statement(ASTNode* node, const std::optional<std::string>& exitLabel)
 {
 	auto statement = static_cast<IfStatement*>(node);
@@ -95,7 +97,7 @@ void BlockGenerator::generate_branch(Expression* condition,
 
 	if (condition->class_name() == "NumberLiteral")
 	{
-		auto condNum = static_cast<NumberLiteral*>(condition);
+//		auto condNum = static_cast<NumberLiteral*>(condition);
 		ASSERT_NOT_IMPLEMENTED();
 	}
 	else if (condition->class_name() == "BinaryExpression")
@@ -164,6 +166,8 @@ void BlockGenerator::generate_branch(Expression* condition,
 		m_asm << jump(jumpType) << exitLabelActual << '\n';
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 }

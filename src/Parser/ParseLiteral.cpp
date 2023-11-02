@@ -13,7 +13,7 @@ namespace alx {
 
 std::unique_ptr<NumberLiteral> Parser::parse_number_literal()
 {
-	if (peek().has_value() && peek().value().Type == TokenType::T_INT_L
+	if ((peek().has_value() && peek().value().Type == TokenType::T_INT_L)
 		|| peek().value().Type == TokenType::T_FLOAT_L || peek().value().Type == TokenType::T_DOUBLE_L ||
 		peek().value().Type == TokenType::T_TRUE || peek().value().Type == TokenType::T_FALSE)
 	{

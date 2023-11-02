@@ -5,8 +5,10 @@
 //
 // Created by aelliixx on 2023-10-08.
 //
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCInconsistentNamingInspection"
+#endif
 #pragma once
 #include <string>
 #include <variant>
@@ -46,7 +48,6 @@ public:
 		m_identifiers_cache.clear();
 		for (const auto& types : Body) {
 			if (std::holds_alternative<Variable>(types)) {
-				auto& ident = std::get<Variable>(types);
 				m_identifiers_cache.push_back(std::get<Variable>(types));
 			}
 		}
@@ -76,8 +77,10 @@ struct Function {
 	void AppendInstruction(const BodyTypes& body) { Blocks.back().Body.push_back(body); }
 };
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCInconsistentNamingInspection"
+#endif
 class IR
 {
 	using IRNodes = std::variant<std::unique_ptr<Function>>;
@@ -124,7 +127,11 @@ private:
 																			  Func instruction);
 };
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 } // namespace alx::ir
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif

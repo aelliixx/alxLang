@@ -71,14 +71,14 @@ std::unique_ptr<ReturnStatement> Parser::parse_return_statement()
 	else if (expr->class_name() == "MemberExpression")
 	{
 		ASSERT_NOT_IMPLEMENTED();
-		auto& memberExpression = static_cast<MemberExpression&>(*expr);
-		if (TokenType::T_STRING != returnType)
-			m_error->Error(returnToken.LineNumber,
-						   returnToken.ColumnNumber,
-						   returnToken.PosNumber,
-						   "Function '{}' must return '{}'",
-						   m_current_scope_name,
-						   token_to_string(returnType)); // FIXME: Get the type of the member
+//		auto& memberExpression = static_cast<MemberExpression&>(*expr);
+//		if (TokenType::T_STRING != returnType)
+//			m_error->Error(returnToken.LineNumber,
+//						   returnToken.ColumnNumber,
+//						   returnToken.PosNumber,
+//						   "Function '{}' must return '{}'",
+//						   m_current_scope_name,
+//						   token_to_string(returnType)); // FIXME: Get the type of the member
 	}
 
 	return std::make_unique<ReturnStatement>(std::move(expr));

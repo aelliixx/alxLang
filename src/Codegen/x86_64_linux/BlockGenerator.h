@@ -59,18 +59,18 @@ public:
 				   const std::vector<std::unique_ptr<ASTNode>>& parent,
 				   Flags flags)
 		: m_block_ast(block),
-		  m_stack(stack),
-		  m_bp_offset(bpOffset),
-		  m_label_index(labelIndex),
 		  m_local_labels(labels),
+		  m_label_index(labelIndex),
+		  m_bp_offset(bpOffset),
 		  m_program_ast(parent),
+		  m_stack(stack),
 		  m_flags(flags) {}
 
 	BlockGenerator(const ScopeNode& block,
 				   const std::vector<std::unique_ptr<ASTNode>>& node,
 				   Flags flags,
 				   TokenType returnType)
-		: m_block_ast(block), m_program_ast(node), m_flags(flags), m_return_type(returnType)
+		: m_block_ast(block), m_program_ast(node), m_return_type(returnType), m_flags(flags)
 	{
 		m_in_global_scope = true;
 	}
@@ -102,8 +102,7 @@ private:
 	static std::string mov(const std::string& dest,
 						   size_t srcSize,
 						   Reg src,
-						   size_t destSize = 0,
-						   bool isUnsigned = false);
+						   size_t destSize = 0);
 	static std::string mov(const std::string& dest,
 						   size_t srcSize,
 						   const std::string& src,
@@ -120,7 +119,7 @@ private:
 						   size_t destSize = 0,
 						   bool isUnsigned = false);
 
-	static std::string mov(Reg dest, Reg src, size_t srcSize = 4, bool sign = true);
+	static std::string mov(Reg dest, Reg src, size_t srcSize = 4);
 
 	static std::string offset(size_t offset,
 							  size_t dataSize,

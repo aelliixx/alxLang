@@ -17,7 +17,6 @@ void BlockGenerator::generate_structs(const ASTNode&)
 void BlockGenerator::generate_struct_variable(const ASTNode& node)
 {
 	const auto& variable = static_cast<const VariableDeclaration&>(node);
-	auto type = variable.TypeAsIdentifier();
 	auto structIt =
 		std::find_if(m_program_ast.begin(), m_program_ast.end(), [&variable](const std::unique_ptr<ASTNode>& ast_node)
 		{

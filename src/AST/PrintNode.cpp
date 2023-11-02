@@ -135,7 +135,7 @@ void ReturnStatement::PrintNode(int indent) const
 	m_argument->PrintNode(indent + 4);
 	println("{>}}", indent);
 }
-void Expression::PrintNode(int indent) const {}
+void Expression::PrintNode(int) const {}
 
 void IfStatement::PrintNode(int indent) const
 {

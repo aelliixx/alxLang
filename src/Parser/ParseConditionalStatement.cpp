@@ -11,8 +11,11 @@
 
 namespace alx {
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
+#endif
+
 std::unique_ptr<IfStatement> Parser::parse_if_statement()
 {
 	std::unique_ptr<Expression> condition;
@@ -73,7 +76,9 @@ std::unique_ptr<BlockStatement> Parser::parse_else_statement()
 	return body;
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 std::unique_ptr<WhileStatement> Parser::parse_while_statement()
 {

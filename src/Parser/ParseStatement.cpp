@@ -49,7 +49,7 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 		if (peek(1).has_value() && peek(1).value().Type == TokenType::T_IDENTIFIER) {
 			if (peek(2).has_value() && peek(2).value().Type == TokenType::T_OPEN_PAREN)
 				return parse_function();
-			else if (peek(2).has_value() && peek(2).value().Type == TokenType::T_EQ
+			else if ((peek(2).has_value() && peek(2).value().Type == TokenType::T_EQ)
 					 || peek(2).value().Type == TokenType::T_SEMI)
 				return parse_variable();
 		}

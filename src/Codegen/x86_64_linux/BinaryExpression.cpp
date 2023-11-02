@@ -1,5 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "misc-no-recursion"
 /*
  * Copyright (c) 2023 Donatas Mockus.
  */
@@ -7,6 +5,11 @@
 //
 // Created by aelliixx on 2023-09-09.
 //
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
+#endif
 
 #include "BlockGenerator.h"
 
@@ -229,7 +232,7 @@ void BlockGenerator::generate_assignment_ident(const Identifier& rhsId, size_t l
 		m_asm << mov(Reg::rax, rhsSize, offset(rhsPtrOffset, rhsSize), lhsSize, isUnsigned); // FIXME: Add back signs
 	else
 		m_asm << mov(Reg::rax, rhsSize, offset(rhsPtrOffset, rhsSize), rhsSize, isUnsigned); // FIXME: Add back signs
-	m_asm << mov(offset(m_bp_offset, lhsSize), rhsSize, Reg::rax, lhsSize, isUnsigned);
+	m_asm << mov(offset(m_bp_offset, lhsSize), rhsSize, Reg::rax, lhsSize);
 }
 
 void BlockGenerator::generate_bin_eq(const ASTNode* node, std::optional<Context> context)
@@ -309,4 +312,6 @@ void BlockGenerator::generate_bin_eq(const ASTNode* node, std::optional<Context>
 }
 
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif

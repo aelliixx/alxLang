@@ -183,7 +183,7 @@ std::string BlockGenerator::mov(BlockGenerator::Reg dest,
 	return code.str();
 }
 
-std::string BlockGenerator::mov(BlockGenerator::Reg dest, BlockGenerator::Reg src, size_t srcSize, bool sign)
+std::string BlockGenerator::mov(BlockGenerator::Reg dest, BlockGenerator::Reg src, size_t srcSize)
 {
 	std::stringstream code;
 	code << "mov " << reg(dest, srcSize) << ", " << reg(src, srcSize) << "\n";
@@ -193,8 +193,7 @@ std::string BlockGenerator::mov(BlockGenerator::Reg dest, BlockGenerator::Reg sr
 std::string BlockGenerator::mov(const std::string& dest,
 								size_t srcSize,
 								BlockGenerator::Reg src,
-								size_t destSize,
-								bool isUnsigned)
+								size_t destSize)
 {
 	std::stringstream code;
 	if (destSize == 0)

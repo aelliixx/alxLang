@@ -33,7 +33,7 @@ enum class TokenType
 	T_CONST, T_MUT
 };
 
-static size_t size_of(TokenType token)
+inline size_t size_of(TokenType token)
 {
 	switch (token)
 	{
@@ -64,7 +64,7 @@ static size_t size_of(TokenType token)
 	}
 }
 
-static TokenType literal_to_type(TokenType literal)
+inline TokenType literal_to_type(TokenType literal)
 {
 	switch (literal)
 	{
@@ -86,12 +86,12 @@ static TokenType literal_to_type(TokenType literal)
 	}
 }
 
-static bool isUnsigned(TokenType type)
+inline bool isUnsigned(TokenType type)
 {
 	return type == TokenType::T_BOOL || type == TokenType::T_TRUE || type == TokenType::T_FALSE;
 }
 
-static bool isBinaryOp(TokenType type)
+inline bool isBinaryOp(TokenType type)
 {
 	return type == TokenType::T_PLUS || type == TokenType::T_MINUS || type == TokenType::T_STAR ||
 		type == TokenType::T_FWD_SLASH || type == TokenType::T_POW || type == TokenType::T_LT ||
@@ -101,13 +101,13 @@ static bool isBinaryOp(TokenType type)
 		|| type == TokenType::T_ADD_EQ;
 }
 
-static bool isUnaryOp(TokenType type)
+inline bool isUnaryOp(TokenType type)
 {
 	return type == TokenType::T_NOT || type == TokenType::T_MINUS || type == TokenType::T_PLUS ||
 		type == TokenType::T_SUB || type == TokenType::T_ADD;
 }
 
-static bool isLiteralAssignable(TokenType lhs, TokenType rhs)
+[[maybe_unused]] inline bool isLiteralAssignable(TokenType lhs, TokenType rhs)
 {
 	switch (lhs)
 	{
@@ -130,20 +130,20 @@ static bool isLiteralAssignable(TokenType lhs, TokenType rhs)
 	}
 }
 
-static bool isNumberType(TokenType type)
+inline bool isNumberType(TokenType type)
 {
 	return type == TokenType::T_INT || type == TokenType::T_FLOAT || type == TokenType::T_DOUBLE ||
 		type == TokenType::T_CHAR || type == TokenType::T_BOOL || type == TokenType::T_LONG ||
 		type == TokenType::T_SHORT;
 }
 
-static bool isIntegerLiteral(TokenType type)
+inline bool isIntegerLiteral(TokenType type)
 {
 	return type == TokenType::T_INT_L ||
 		type == TokenType::T_CHAR_L || type == TokenType::T_TRUE || type == TokenType::T_FALSE;
 }
 
-static bool isNumberLiteral(TokenType type)
+inline bool isNumberLiteral(TokenType type)
 {
 	return type == TokenType::T_INT_L || type == TokenType::T_FLOAT_L || type == TokenType::T_DOUBLE_L ||
 		type == TokenType::T_CHAR_L || type == TokenType::T_TRUE || type == TokenType::T_FALSE;

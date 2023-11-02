@@ -13,8 +13,7 @@ namespace alx {
 std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 {
 	auto assignable = true;
-	if (peek().has_value() && peek().value().Type == TokenType::T_CONST)
-	{
+	if (peek().has_value() && peek().value().Type == TokenType::T_CONST) {
 		assignable = false;
 		must_consume(TokenType::T_CONST); // Eat 'const'
 	}
@@ -28,61 +27,49 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 	auto identifier = std::make_unique<Identifier>(identToken.Value.value(), assignable);
 	if (std::find_if(m_variables.at(m_current_scope_name).begin(),
 					 m_variables.at(m_current_scope_name).end(),
-					 [&identifier](const VariableDeclaration* var)
-					 {
-					   return identifier->Name() == var->Name();
-					 })
+					 [&identifier](const VariableDeclaration* var) { return identifier->Name() == var->Name(); })
 		!= m_variables.at(m_current_scope_name).end())
 	{
-		m_error->Error(
-			identToken.LineNumber,
-			identToken.ColumnNumber,
-			identToken.PosNumber,
-			"Redefinition of variable '{}'",
-			identifier->Name());
+		m_error->Error(identToken.LineNumber,
+					   identToken.ColumnNumber,
+					   identToken.PosNumber,
+					   "Redefinition of variable '{}'",
+					   identifier->Name());
 	}
 	// Direct assignment
-	if (peek().has_value() && peek().value().Type == TokenType::T_EQ)
-	{
+	if (peek().has_value() && peek().value().Type == TokenType::T_EQ) {
 		must_consume(TokenType::T_EQ); // Eat '='
-		if (peek().has_value() && isNumberLiteral(peek().value().Type) &&
-			peek(1).has_value() && peek(1).value().Type == TokenType::T_SEMI)
+		if (peek().has_value() && isNumberLiteral(peek().value().Type) && peek(1).has_value()
+			&& peek(1).value().Type == TokenType::T_SEMI)
 		{
 			auto value = parse_number_literal();
 			auto var = std::make_unique<VariableDeclaration>(std::move(type), std::move(identifier), std::move(value));
 			add_variable(var.get());
-			return std::move(var);
+			return var;
 		}
-		else if (peek().has_value() && peek().value().Type == TokenType::T_STR_L &&
-			peek(1).has_value() && peek(1).value().Type == TokenType::T_SEMI)
+		else if (peek().has_value() && peek().value().Type == TokenType::T_STR_L && peek(1).has_value()
+				 && peek(1).value().Type == TokenType::T_SEMI)
 		{
 			auto string = parse_string_literal();
 			auto var = std::make_unique<VariableDeclaration>(std::move(type), std::move(identifier), std::move(string));
 			add_variable(var.get());
-			return std::move(var);
+			return var;
 		}
-		else if (peek().has_value() && isUnaryOp(peek().value().Type))
-		{
+		else if (peek().has_value() && isUnaryOp(peek().value().Type)) {
 			auto unaryExpression = parse_expression();
-			return std::make_unique<VariableDeclaration>(std::move(type),
-														 std::move(identifier),
-														 std::move(unaryExpression));
+			return std::make_unique<VariableDeclaration>(
+				std::move(type), std::move(identifier), std::move(unaryExpression));
 		}
 		const Token expressionToken = peek().value();
 		TokenType expressionType;
 		auto expression = parse_expression();
 		size_t expressionSize;
-		if (expression->class_name() == "Identifier")
-		{
+		if (expression->class_name() == "Identifier") {
 			auto& ident = static_cast<Identifier&>(*expression);
 			auto identIt = std::find_if(m_variables.at(m_current_scope_name).begin(),
 										m_variables.at(m_current_scope_name).end(),
-										[ident](VariableDeclaration* var)
-										{
-										  return var->Name() == ident.Name();
-										});
-			if ((*identIt)->TypeIndex() == 0)
-			{
+										[ident](VariableDeclaration* var) { return var->Name() == ident.Name(); });
+			if ((*identIt)->TypeIndex() == 0) {
 				expressionType = (*identIt)->TypeAsPrimitive();
 				expressionSize = size_of(expressionType);
 				if (expressionSize > size_of(typeToken.Type))
@@ -94,11 +81,9 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 									 token_to_string(typeToken.Type));
 			}
 		}
-		else if (expression->class_name() == "MemberExpression")
-		{
+		else if (expression->class_name() == "MemberExpression") {
 			auto& memExpr = static_cast<MemberExpression&>(*expression);
-			if (memExpr.TypeIndex() == 0)
-			{
+			if (memExpr.TypeIndex() == 0) {
 				expressionType = memExpr.TypeAsPrimitive();
 				expressionSize = size_of(expressionType);
 				if (expressionSize > size_of(typeToken.Type))
@@ -111,18 +96,16 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 			}
 		}
 
-		
-
+	
 		auto var = std::make_unique<VariableDeclaration>(std::move(type), std::move(identifier), std::move(expression));
 		add_variable(var.get());
-		return std::move(var);
+		return var;
 	}
-		// Declaration
-	else if (peek().has_value() && peek().value().Type == TokenType::T_SEMI)
-	{
+	// Declaration
+	else if (peek().has_value() && peek().value().Type == TokenType::T_SEMI) {
 		auto var = std::make_unique<VariableDeclaration>(std::move(type), std::move(identifier));
 		add_variable(var.get());
-		return std::move(var);
+		return var;
 	}
 	ASSERT_NOT_REACHABLE();
 }

@@ -326,8 +326,8 @@ public:
 						std::vector<std::unique_ptr<VariableDeclaration>> args)
 		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
-		  m_body(std::move(body)),
-		  m_parameters(std::move(args)) {}
+		  m_parameters(std::move(args)),
+		  m_body(std::move(body)) {}
 
 	FunctionDeclaration(TokenType returnType,
 						std::unique_ptr<Identifier> name,
@@ -336,8 +336,8 @@ public:
 						AccessModeType accessMode)
 		: m_return_type(returnType),
 		  m_identifier(std::move(name)),
-		  m_body(std::move(body)),
 		  m_parameters(std::move(args)),
+		  m_body(std::move(body)),
 		  m_access_mode(accessMode) {}
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
@@ -390,10 +390,10 @@ public:
 					 std::unique_ptr<Identifier> object,
 					 std::unique_ptr<Identifier> member,
 					 std::variant<TokenType, std::unique_ptr<Identifier>> type)
-		: m_accessor(accessor),
-		  m_object(std::move(object)),
+		: m_object(std::move(object)),
 		  m_member(std::move(member)),
-		  m_type(std::move(type)) {}
+		  m_type(std::move(type)),
+		  m_accessor(accessor) {}
 
 	[[nodiscard]] const Identifier& Object() const { return *m_object; }
 	[[nodiscard]] const Identifier& Member() const { return *m_member; }

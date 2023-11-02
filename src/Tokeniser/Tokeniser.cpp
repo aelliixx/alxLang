@@ -12,8 +12,8 @@
 
 namespace alx {
 Tokeniser::Tokeniser(std::string source, const std::shared_ptr<ErrorHandler>& errorHandler)
-  : m_source(std::move(source)),
-	m_error_handler(errorHandler)
+  : m_error_handler(errorHandler),
+	m_source(std::move(source))
 {
 	// Types
 	m_keywords["int"] = TokenType::T_INT;

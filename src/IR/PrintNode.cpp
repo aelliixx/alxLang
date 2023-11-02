@@ -109,7 +109,7 @@ void IR::Dump()
 		std::visit(IrVisitor{ *this }, node);
 }
 
-void FunctionParameter::PrintNode(IR& ir) const
+void FunctionParameter::PrintNode(IR&) const
 {
 	print(GREEN, "{} ", IR::TypesToString(Type));
 	for (const auto& attribute : Attributes)

@@ -12,8 +12,10 @@
 
 namespace alx {
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCInconsistentNamingInspection"
+#endif
 struct DebugFlags
 {
 	bool show_timing{};
@@ -28,9 +30,11 @@ struct Flags
 {
 	bool mno_red_zone;
 };
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
-static DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
+inline DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 {
 	return {
 		.show_timing = argParser.get<bool>("-t") && !argParser.get<bool>("-q"),
@@ -42,7 +46,7 @@ static DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 	};
 }
 
-static Flags resolveFlags(const argparse::ArgumentParser& argParser)
+inline Flags resolveFlags(const argparse::ArgumentParser& argParser)
 {
 	return {
 		.mno_red_zone = argParser.get<bool>("-mno-red-zone")

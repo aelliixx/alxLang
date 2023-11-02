@@ -13,7 +13,6 @@ namespace alx {
 void BlockGenerator::generate_unary_expression(const ASTNode* node)
 {
 	auto expression = static_cast<const UnaryExpression*>(node);
-	auto op = expression->Operator();
 	auto rhs = expression->Rhs();
 
 	if (rhs->class_name() == "NumberLiteral")

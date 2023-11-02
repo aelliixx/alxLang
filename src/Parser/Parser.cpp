@@ -2,8 +2,10 @@
  * Copyright (c) 2023 Donatas Mockus.
  */
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
+#endif
 /*
  * Copyright (c) 2023 Donatas Mockus.
  */
@@ -41,7 +43,6 @@ std::unique_ptr<Program> Parser::Parse()
 {
 	try {
 		while (peek().has_value()) {
-			auto type = peek().value().Type;
 			m_program->Append(parse_statement());
 		}
 	}

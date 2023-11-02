@@ -279,7 +279,7 @@ void fixme(const std::string& format, const Param&... arguments)
 	println(Colour::Orange, "FIXME: {}", text);
 }
 
-static std::string token_to_string(TokenType token)
+inline std::string token_to_string(TokenType token)
 {
 	switch (token) {
 	case TokenType::T_INT_L:
@@ -404,6 +404,10 @@ static std::string token_to_string(TokenType token)
 		return "::";
 	case TokenType::T_COLON:
 		return ":";
+	case TokenType::T_CONST:
+		return "const";
+	case TokenType::T_MUT:
+		return "mut";
 	}
 	ASSERT_NOT_REACHABLE();
 }

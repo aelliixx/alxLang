@@ -39,10 +39,13 @@ std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& 
 	}
 	return std::make_unique<Variable>(variable);
 }
-void IR::generate_func_parameters(FunctionDeclaration& functionDeclaration, Function& function)
+
+[[maybe_unused]] void IR::generate_func_parameters([[maybe_unused]] FunctionDeclaration& functionDeclaration,[[maybe_unused]]  Function& function)
 {
 
 }
+
+
 void IR::generate_func_body(FunctionDeclaration& functionDeclaration, Function& function)
 {
 	bool hasReturned = false;
