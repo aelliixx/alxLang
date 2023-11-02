@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-set(CMAKE_CXX_STANDARD 20)
+
 
 add_executable(Basic Basic.cpp)
 target_link_libraries(Basic Compiler Codegen Parser Tokeniser IR AST Utils Print Colour)
