@@ -85,4 +85,30 @@ void IR::generate_if_statement(IfStatement& statement, Function& function)
 }
 
 
+void IR::generate_while_statement(WhileStatement& statement, Function& function)
+{
+
+	if (statement.Condition()->class_name() == "BinaryExpression") {
+		LogicalBlock whileCond{ { function.GetNewNamedTemporary("while.cond") } };
+		LogicalBlock whileBody{ { function.GetNewNamedTemporary("while.body") } };
+		LogicalBlock whileEnd{ { function.GetNewNamedTemporary("while.end") } };
+		BranchInst condBranch{ .TrueLabel = whileCond.Label };
+
+		function.AppendInstruction(condBranch);
+		function.AppendBlock(whileCond);
+
+		auto condition = generate_binary_expression(static_cast<BinaryExpression&>(*statement.Condition()), function);
+		BranchInst bodyBranch{ .Condition = condition.value(), .TrueLabel = whileBody.Label, .FalseLabel = whileEnd.Label };
+		function.AppendInstruction(bodyBranch);
+
+		function.AppendBlock(whileBody);
+		generate_body(statement.Body(), function);
+		BranchInst loopBranch{ .TrueLabel = whileCond.Label };
+		function.AppendInstruction(loopBranch);
+
+		function.AppendBlock(whileEnd);
+	}
+}
+
+
 }

@@ -141,6 +141,7 @@ private:
 																			  Func instruction);
 	
 	void generate_if_statement(IfStatement&, Function&);
+	void generate_while_statement(WhileStatement&, Function&);
 };
 
 #ifdef __clang__

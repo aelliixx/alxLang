@@ -40,41 +40,53 @@ std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& 
 	return std::make_unique<Variable>(variable);
 }
 
-[[maybe_unused]] void IR::generate_func_parameters([[maybe_unused]] FunctionDeclaration& functionDeclaration,[[maybe_unused]]  Function& function)
-{
-
+[[maybe_unused]] LogicalBlock& Function::GetBlockByLabel(const std::string& label) { 
+	auto it = std::find_if(Blocks.begin(), Blocks.end(), [&label](const LogicalBlock& block) {
+		return block.Label.Name == label;
+	});
+	if (it == Blocks.end()) {
+		println(Colour::Red, "Could not find block with label {}", label);
+	}
+	return *it;
 }
+
+[[maybe_unused]] void IR::generate_func_parameters([[maybe_unused]] FunctionDeclaration& functionDeclaration,
+												   [[maybe_unused]] Function& function)
+{}
 
 
 void IR::generate_body(const BlockStatement& block, Function& function)
 {
 	bool hasReturned = false;
-	for (const auto& node : block.Children())
-	{
-		if (node->class_name() == "ReturnStatement")
-		{
+	for (const auto& node : block.Children()) {
+		if (node->class_name() == "ReturnStatement") {
 			generate_return_statement(static_cast<ReturnStatement&>(*node), function, hasReturned);
 			hasReturned = true;
 		}
-		else if (node->class_name() == "VariableDeclaration")
-		{
+		else if (node->class_name() == "VariableDeclaration") {
 			auto& varDecl = static_cast<VariableDeclaration&>(*node);
 			generate_variable(varDecl, function);
 		}
-		else if (node->class_name() == "BinaryExpression")
-		{
+		else if (node->class_name() == "BinaryExpression") {
 			auto& binExpr = static_cast<BinaryExpression&>(*node);
-			auto result = generate_binary_expression(binExpr, function);
-			MUST(result);
-//			if (std::holds_alternative<std::shared_ptr<Variable>>(result.value()))
-//				function.Blocks.back().Body.emplace_back(*std::get<std::shared_ptr<Variable>>(result.value()));
+			MUST(generate_binary_expression(binExpr, function).has_value());
+			//			if (std::holds_alternative<std::shared_ptr<Variable>>(result.value()))
+			//				function.Blocks.back().Body.emplace_back(*std::get<std::shared_ptr<Variable>>(result.value()));
 		}
 		else if (node->class_name() == "IfStatement") {
 			auto& ifStmt = static_cast<IfStatement&>(*node);
 			generate_if_statement(ifStmt, function);
 		}
+		else if (node->class_name() == "WhileStatement") {
+			auto& whileStmt = static_cast<WhileStatement&>(*node);
+			generate_while_statement(whileStmt, function);
+		}
+		else if (node->class_name() == "UnaryExpression") {
+			auto& unaryExpr = static_cast<UnaryExpression&>(*node);
+			MUST(generate_unary_expression(unaryExpr, function).has_value());
+		}
 		else
-			println(Colour::Red, "Unknown node type: {;255;255;255}", node->class_name());
+			ASSERT_NOT_IMPLEMENTED_MSG(getFormatted("Unknown node type: {}", node->class_name()));
 	}
 }
 
@@ -87,8 +99,7 @@ void IR::generate_function(FunctionDeclaration& functionDeclaration)
 	auto identifier = functionDeclaration.Name() + "(";
 	auto sep = "";
 	std::vector<FunctionParameter> parameters;
-	for (const auto& arg : functionDeclaration.Arguments())
-	{
+	for (const auto& arg : functionDeclaration.Arguments()) {
 		identifier += sep + arg->TypeName();
 		sep = ", ";
 
@@ -98,12 +109,9 @@ void IR::generate_function(FunctionDeclaration& functionDeclaration)
 			.Visibility = VisibilityAttribute::Local,
 			.Name = arg->Name(),
 		};
-		if (isIdent)
-		{
-			param.Type = StructType{
-				.Name = std::get<std::unique_ptr<alx::Identifier>>(argType)->Name(),
-				.Visibility = VisibilityAttribute::Local
-			};
+		if (isIdent) {
+			param.Type = StructType{ .Name = std::get<std::unique_ptr<alx::Identifier>>(argType)->Name(),
+									 .Visibility = VisibilityAttribute::Local };
 			param.Attributes.emplace_back(ParamAttributes::ByVal);
 			param.Attributes.emplace_back(AlignAttribute{ 8 });
 		}
@@ -113,14 +121,12 @@ void IR::generate_function(FunctionDeclaration& functionDeclaration)
 	}
 	identifier += ")";
 
-	auto function =
-		std::make_unique<Function>(Function{ .Name = identifier,
-			.Visibility = VisibilityAttribute::Global,
-			.ReturnType = TokenTypeToIRType(type),
-			.Arguments = std::move(parameters)
-		});
+	auto function = std::make_unique<Function>(Function{ .Name = identifier,
+														 .Visibility = VisibilityAttribute::Global,
+														 .ReturnType = TokenTypeToIRType(type),
+														 .Arguments = std::move(parameters) });
 
-	LogicalBlock entry{{ "entry" }};
+	LogicalBlock entry{ { "entry" } };
 	function->Blocks.push_back(entry);
 	generate_func_parameters(functionDeclaration, *function);
 
