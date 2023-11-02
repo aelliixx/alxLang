@@ -29,6 +29,7 @@ std::unique_ptr<IfStatement> Parser::parse_if_statement()
 				m_error->Note(keyword.LineNumber, keyword.ColumnNumber, keyword.PosNumber, "Expression is always true");
 			else
 				m_error->Note(keyword.LineNumber, keyword.ColumnNumber, keyword.PosNumber, "Expression is always false");
+			condition = std::move(eval);
 		}
 	} else if (condition->class_name() == "NumberLiteral") {
 		auto numLit = static_cast<NumberLiteral*>(condition.get());
