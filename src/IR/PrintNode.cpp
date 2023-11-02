@@ -140,6 +140,7 @@ void Function::PrintNode(IR& ir) const
 	for (const auto& block : Blocks) {
 		println(BLUE, "{}:", block.Label.Name);
 		for (const auto& child : block.Body) std::visit(BodyVisitor{ ir }, child);
+		println();
 	}
 	println("}");
 }
