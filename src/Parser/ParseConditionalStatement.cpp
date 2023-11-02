@@ -11,11 +11,6 @@
 
 namespace alx {
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "misc-no-recursion"
-#endif
-
 std::unique_ptr<IfStatement> Parser::parse_if_statement()
 {
 	std::unique_ptr<Expression> condition;
@@ -63,8 +58,14 @@ std::unique_ptr<IfStatement> Parser::parse_if_statement()
 std::unique_ptr<BlockStatement> Parser::parse_else_statement()
 {
 	auto body = std::make_unique<BlockStatement>();
-	if (must_consume(TokenType::T_CURLY_OPEN).Type == TokenType::T_CURLY_OPEN)
+	auto curlyOpen = peek();
+	if (!curlyOpen.has_value())
+		m_error->Error(peek(-1).value().LineNumber,
+					   peek(-1).value().ColumnNumber,
+					   peek(-1).value().PosNumber, "Expected statement");
+	if (curlyOpen.value().Type == TokenType::T_CURLY_OPEN)
 	{
+		must_consume(TokenType::T_CURLY_OPEN);
 		while (peek().value().Type != TokenType::T_CURLY_CLOSE)
 		{
 			auto statement = parse_statement();
@@ -73,12 +74,14 @@ std::unique_ptr<BlockStatement> Parser::parse_else_statement()
 		}
 		must_consume(TokenType::T_CURLY_CLOSE);
 	}
+	else
+	{
+		auto statement = parse_statement();
+		consume_semicolon(statement);
+		body->Append(std::move(statement));
+	}
 	return body;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 
 std::unique_ptr<WhileStatement> Parser::parse_while_statement()
 {
