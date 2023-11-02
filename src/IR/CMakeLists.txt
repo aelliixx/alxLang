@@ -13,4 +13,5 @@ add_library(IR Ir.cpp
         Lowering/Function.cpp
         Lowering/ReturnStatement.cpp
         Lowering/UnaryExpression.cpp
+        Lowering/Conditionals.cpp
 )

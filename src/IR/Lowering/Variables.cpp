@@ -9,7 +9,7 @@
 #include "../Ir.h"
 
 namespace alx::ir {
-void IR::generate_variable(VariableDeclaration& variable, Function& function)
+void IR::generate_variable(const VariableDeclaration& variable, Function& function)
 {
 	const auto& name = variable.Name();
 

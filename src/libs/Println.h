@@ -250,7 +250,7 @@ template<typename... Param>
 void todo(const std::string& format, const Param&... arguments)
 {
 	const auto text = getFormatted(format, arguments...);
-	println(Colour::LightBlue, "TODO: {}", text);
+	println(Colour::Yellow, "TODO: {}", text);
 }
 
 template<typename... Param>

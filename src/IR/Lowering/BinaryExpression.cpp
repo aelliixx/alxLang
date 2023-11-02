@@ -197,7 +197,7 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "NumberLiteral") {
-			// This should always be a constant expression and should be before
+			// This should always be a constant expression
 			ASSERT_NOT_REACHABLE();
 		}
 		else if (rhs->class_name() == "BinaryExpression") {
@@ -414,21 +414,69 @@ std::optional<Values> IR::generate_binary_expression(const BinaryExpression& bin
 	case TokenType::T_POW:
 		[[fallthrough]];
 	case TokenType::T_LT:
-		[[fallthrough]];
+		return generate_binary_op(binaryExpression, function, [&function](const Values& variable, const Values& value) {
+			// FIXME: Check whether we need to use icmp or fcmp
+			// FIXME: Check whether we need to use slt or ult
+			ICmpInst cmp{ .Lhs = variable, .Rhs = value, .Predicate = CmpPredicate::SLT };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = cmp, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
+			return instructionTemp;
+		});
 	case TokenType::T_GT:
-		[[fallthrough]];
+		return generate_binary_op(binaryExpression, function, [&function](const Values& variable, const Values& value) {
+			// FIXME: Check whether we need to use icmp or fcmp
+			// FIXME: Check whether we need to use slt or ult
+			ICmpInst cmp{ .Lhs = variable, .Rhs = value, .Predicate = CmpPredicate::SGT };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = cmp, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
+			return instructionTemp;
+		});
 	case TokenType::T_LTE:
-		[[fallthrough]];
+		return generate_binary_op(binaryExpression, function, [&function](const Values& variable, const Values& value) {
+			// FIXME: Check whether we need to use icmp or fcmp
+			// FIXME: Check whether we need to use slt or ult
+			ICmpInst cmp{ .Lhs = variable, .Rhs = value, .Predicate = CmpPredicate::SLE };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = cmp, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
+			return instructionTemp;
+		});
 	case TokenType::T_GTE:
-		[[fallthrough]];
+		return generate_binary_op(binaryExpression, function, [&function](const Values& variable, const Values& value) {
+			// FIXME: Check whether we need to use icmp or fcmp
+			// FIXME: Check whether we need to use slt or ult
+			ICmpInst cmp{ .Lhs = variable, .Rhs = value, .Predicate = CmpPredicate::SGE };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = cmp, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
+			return instructionTemp;
+		});
+	case TokenType::T_EQEQ:
+		return generate_binary_op(binaryExpression, function, [&function](const Values& variable, const Values& value) {
+			// FIXME: Check whether we need to use icmp or fcmp
+			// FIXME: Check whether we need to use slt or ult
+			ICmpInst cmp{ .Lhs = variable, .Rhs = value, .Predicate = CmpPredicate::EQ };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = cmp, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
+			return instructionTemp;
+		});
 	case TokenType::T_MOD:
 		[[fallthrough]];
 	case TokenType::T_COLON:
-		[[fallthrough]];
-	case TokenType::T_EQEQ:
-		[[fallthrough]];
-	case TokenType::T_NOT_EQ:
 		ASSERT_NOT_IMPLEMENTED_MSG(token_to_string(binaryExpression.Operator()));
+	case TokenType::T_NOT_EQ:
+		return generate_binary_op(binaryExpression, function, [&function](const Values& variable, const Values& value) {
+			// FIXME: Check whether we need to use icmp or fcmp
+			// FIXME: Check whether we need to use slt or ult
+			ICmpInst cmp{ .Lhs = variable, .Rhs = value, .Predicate = CmpPredicate::NE };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = cmp, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
+			return instructionTemp;
+		});
 	case TokenType::T_ADD_EQ: {
 		MUST(binaryExpression.Lhs()->class_name() == "Identifier");
 		auto lhsIdent = static_cast<const Identifier&>(*binaryExpression.Lhs());

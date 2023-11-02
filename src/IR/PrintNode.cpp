@@ -10,32 +10,24 @@
 
 namespace alx::ir {
 
-#define BLUE Colour{70,160,220}
-#define GREEN Colour{60,197,172}
-#define OLIVE Colour{171,189,138}
+#define BLUE                                                                                                           \
+	Colour { 70, 160, 220 }
+#define GREEN                                                                                                          \
+	Colour { 60, 197, 172 }
+#define OLIVE                                                                                                          \
+	Colour { 171, 189, 138 }
 
 #if OUTPUT_IR_TO_STRING
 #define print(...) ir.m_ir_string += alx::getFormatted(__VA_ARGS__)
 #define println(...) (ir.m_ir_string += alx::getFormatted(__VA_ARGS__) + "\n")
 #endif
 
-struct ConstantVisitor
-{
-	std::string operator()(long constant)
-	{
-		return std::to_string(constant);
-	}
-	std::string operator()(float constant)
-	{
-		return std::to_string(constant);
-	}
-	std::string operator()(double constant)
-	{
-		return std::to_string(constant);
-	}
+struct ConstantVisitor {
+	std::string operator()(long constant) { return std::to_string(constant); }
+	std::string operator()(float constant) { return std::to_string(constant); }
+	std::string operator()(double constant) { return std::to_string(constant); }
 };
-struct ValueVisitor
-{
+struct ValueVisitor {
 	bool OutputIdentifier = true;
 	bool OutputType = true;
 	std::string operator()(const Constant& constant) const
@@ -44,51 +36,28 @@ struct ValueVisitor
 			return alx::getFormatted("{;60;197;172}", "void");
 		else if (OutputIdentifier)
 			return alx::getFormatted("{;60;197;172}{;171;189;138}",
-									 OutputType ?
-										 constant.TypeToString() + " " : "",
+									 OutputType ? constant.TypeToString() + " " : "",
 									 std::visit(ConstantVisitor{}, constant.Value));
 		else
 			return alx::getFormatted("{;60;197;172}", constant.TypeToString());
 	}
 	std::string operator()(const std::shared_ptr<Variable>& variable) const
 	{
-		struct AllocatorVisitor
-		{
-			std::string operator()(const AllocaInst& alloca)
-			{
-				return IR::TypesToString(*alloca.Type);
-			}
-			std::string operator()(const LoadInst& load)
-			{
-				return IR::TypesToString(load.Type);
-			}
-			std::string operator()(const AddInst& add)
-			{
-				return std::visit(ValueVisitor{ false }, add.Rhs);
-			}
-			std::string operator()(const SubInst& sub)
-			{
-				return std::visit(ValueVisitor{ false }, sub.Rhs);
-			}
-			std::string operator()(const MulInst& sub)
-			{
-				return std::visit(ValueVisitor{ false }, sub.Rhs);
-			}
-			std::string operator()(const SDivInst& sub)
-			{
-				return std::visit(ValueVisitor{ false }, sub.Rhs);
-			}
+		struct AllocatorVisitor {
+			std::string operator()(const AllocaInst& alloca) { return IR::TypesToString(*alloca.Type); }
+			std::string operator()(const LoadInst& load) { return IR::TypesToString(load.Type); }
+			std::string operator()(const AddInst& add) { return std::visit(ValueVisitor{ false }, add.Rhs); }
+			std::string operator()(const SubInst& sub) { return std::visit(ValueVisitor{ false }, sub.Rhs); }
+			std::string operator()(const MulInst& sub) { return std::visit(ValueVisitor{ false }, sub.Rhs); }
+			std::string operator()(const SDivInst& sub) { return std::visit(ValueVisitor{ false }, sub.Rhs); }
+			std::string operator()(const ICmpInst& cmp) { return std::visit(ValueVisitor{ false }, cmp.Rhs); }
 		};
 		if (OutputIdentifier)
 			return alx::getFormatted("{;60;197;172}{;70;160;220}",
-									 OutputType ?
-										 std::visit(AllocatorVisitor{}, variable->Allocation) + " " : "",
-									 (variable->Visibility == VisibilityAttribute::Local ? "%" : "@") +
-										 variable->Name);
+									 OutputType ? std::visit(AllocatorVisitor{}, variable->Allocation) + " " : "",
+									 (variable->Visibility == VisibilityAttribute::Local ? "%" : "@") + variable->Name);
 		else
-			return alx::getFormatted("{;60;197;172}",
-									 std::visit(AllocatorVisitor{}, variable->Allocation));
-
+			return alx::getFormatted("{;60;197;172}", std::visit(AllocatorVisitor{}, variable->Allocation));
 	}
 };
 
@@ -97,26 +66,18 @@ void IR::Dump()
 #if !OUTPUT_IR_TO_STRING
 	println("Dumping IR with --dump-ir:\n");
 #endif
-	struct IrVisitor
-	{
+	struct IrVisitor {
 		IR& ir;
-		void operator()(const std::unique_ptr<Function>& func)
-		{
-			func->PrintNode(ir);
-		}
+		void operator()(const std::unique_ptr<Function>& func) { func->PrintNode(ir); }
 	};
-	for (const auto& node : m_ir)
-		std::visit(IrVisitor{ *this }, node);
+	for (const auto& node : m_ir) std::visit(IrVisitor{ *this }, node);
 }
 
 void FunctionParameter::PrintNode(IR&) const
 {
 	print(GREEN, "{} ", IR::TypesToString(Type));
-	for (const auto& attribute : Attributes)
-		print("{} ", IR::EnumToString(attribute));
-	print(BLUE, "{}{}",
-		  (Visibility == VisibilityAttribute::Local ? "%" : "@"),
-		  Name);
+	for (const auto& attribute : Attributes) print("{} ", IR::EnumToString(attribute));
+	print(BLUE, "{}{}", (Visibility == VisibilityAttribute::Local ? "%" : "@"), Name);
 }
 
 void Function::PrintNode(IR& ir) const
@@ -124,16 +85,12 @@ void Function::PrintNode(IR& ir) const
 	print(BLUE, "define ");
 	print("{}", IR::EnumToString(Linkage));
 	print(GREEN, " {}", IR::TypesToString(ReturnType));
-	print(BLUE, " {}{}",
-		  Visibility == VisibilityAttribute::Global ? "@" : "%",
-		  Name);
+	print(BLUE, " {}{}", Visibility == VisibilityAttribute::Global ? "@" : "%", Name);
 
-	if (!Arguments.empty())
-	{
+	if (!Arguments.empty()) {
 		print("(");
 		auto separator = "";
-		for (const auto& arg : Arguments)
-		{
+		for (const auto& arg : Arguments) {
 			print(separator);
 			arg.PrintNode(ir);
 			separator = ", ";
@@ -143,23 +100,15 @@ void Function::PrintNode(IR& ir) const
 
 	println(" {");
 
-	struct BodyVisitor
-	{
+	struct BodyVisitor {
 		IR& ir;
-		void operator()(const LabelType& label)
-		{
-			println(BLUE, "{}: ", label.Name);
-		}
+		void operator()(const LabelType&) {}
 		void operator()(const ReturnInst& ret)
 		{
-
 			std::string returnType = std::visit(ValueVisitor{}, ret.Value);
 			println("  ret {}", returnType);
 		}
-		void operator()(const Variable& var)
-		{
-			var.PrintNode(ir);
-		}
+		void operator()(const Variable& var) { var.PrintNode(ir); }
 		void operator()(const StoreInst& store)
 		{
 			std::string value = std::visit(ValueVisitor{}, store.Value);
@@ -169,21 +118,35 @@ void Function::PrintNode(IR& ir) const
 			print(BLUE, "{}{}", store.Ptr->Visibility == VisibilityAttribute::Local ? "%" : "@", store.Ptr->Name);
 			println(", align {}", store.Alignment.Alignment);
 		}
+		void operator()(const BranchInst& branch)
+		{
+			print("  br ");
+			if (branch.Condition.has_value()) {
+				print(GREEN, "{} ", IR::TypesToString(branch.Size));
+				print(std::visit(ValueVisitor{ .OutputType = false }, branch.Condition.value()));
+				print(", ");
+			}
+			print(GREEN, "label ");
+			print(BLUE, "%{}", branch.TrueLabel.Name);
+			if (branch.FalseLabel.has_value()) {
+				print(", ");
+				print(GREEN, "label ");
+				print(BLUE, "%{}", branch.FalseLabel.value().Name);
+			}
+			println();
+		}
 	};
 
-	for (const auto& block : Blocks)
-	{
+	for (const auto& block : Blocks) {
 		println(BLUE, "{}:", block.Label.Name);
-		for (const auto& child : block.Body)
-			std::visit(BodyVisitor{ ir }, child);
+		for (const auto& child : block.Body) std::visit(BodyVisitor{ ir }, child);
 	}
 	println("}");
 }
 
 void Variable::PrintNode(IR& ir) const
 {
-	struct AllocatorVisitor
-	{
+	struct AllocatorVisitor {
 		IR& ir;
 		void operator()(const AllocaInst& alloca)
 		{
@@ -226,29 +189,32 @@ void Variable::PrintNode(IR& ir) const
 			print(", ");
 			print(std::visit(ValueVisitor{ .OutputType = false }, sub.Rhs));
 		}
+		void operator()(const ICmpInst& cmp)
+		{
+			print(" = icmp ");
+			print(cmpPredicateToString(cmp.Predicate));
+			print(" ");
+			print(std::visit(ValueVisitor{}, cmp.Lhs));
+			print(", ");
+			print(std::visit(ValueVisitor{ .OutputType = false }, cmp.Rhs));
+		}
 	} visitor{ ir };
 	print("  ");
-	print(BLUE, "{}{}",
-		  Visibility == VisibilityAttribute::Local ? "%" : "@",
-		  Name);
+	print(BLUE, "{}{}", Visibility == VisibilityAttribute::Local ? "%" : "@", Name);
 	std::visit(visitor, Allocation);
-	if (!Attributes.empty())
-	{
+	if (!Attributes.empty()) {
 		print(",");
-		for (const auto& attribute : Attributes)
-			print(" {}", IR::EnumToString(attribute));
+		for (const auto& attribute : Attributes) print(" {}", IR::EnumToString(attribute));
 	}
 	println("");
 }
 
 std::string IR::TypesToString(const Types& types)
 {
-	struct TypeVisitor
-	{
+	struct TypeVisitor {
 		std::string operator()(SingleValueType type) const
 		{
-			switch (type)
-			{
+			switch (type) {
 			case SingleValueType::Void:
 				return "void";
 			case SingleValueType::Half:
@@ -260,39 +226,22 @@ std::string IR::TypesToString(const Types& types)
 			}
 			ASSERT_NOT_REACHABLE();
 		}
-		std::string operator()(IntType intType) const
-		{
-			return getFormatted("i{}", intType.Size * 8);
-		}
-		std::string operator()(const LabelType&) const
-		{
-			return "label";
-		}
-		std::string operator()(PtrType) const
-		{
-			return "ptr";
-		}
-		std::string operator()(const StructType&) const
-		{
-			return "struct";
-		}
-		std::string operator()(const ArrayType&) const
-		{
-			return "array";
-		}
+		std::string operator()(IntType intType) const { return getFormatted("i{}", intType.Size * 8); }
+		std::string operator()(const LabelType&) const { return "label"; }
+		std::string operator()(PtrType) const { return "ptr"; }
+		std::string operator()(const StructType&) const { return "struct"; }
+		std::string operator()(const ArrayType&) const { return "array"; }
 	};
 	return std::visit(TypeVisitor{}, types);
 }
 
 std::string IR::EnumToString(std::variant<LinkageType, ParameterAttributes> variant)
 {
-	struct Visitor
-	{
+	struct Visitor {
 		int value;
 		std::string operator()(LinkageType linkage)
 		{
-			switch (linkage)
-			{
+			switch (linkage) {
 			case LinkageType::External:
 				return "external";
 			case LinkageType::Internal:
@@ -302,12 +251,10 @@ std::string IR::EnumToString(std::variant<LinkageType, ParameterAttributes> vari
 		}
 		std::string operator()(const ParameterAttributes& paramAttributes)
 		{
-			struct ParameterVisitor
-			{
+			struct ParameterVisitor {
 				std::string operator()(ParamAttributes attributes)
 				{
-					switch (attributes)
-					{
+					switch (attributes) {
 					case ParamAttributes::ZeroExt:
 						return "zeroext";
 					case ParamAttributes::SignExt:
@@ -329,8 +276,7 @@ std::string IR::EnumToString(std::variant<LinkageType, ParameterAttributes> vari
 }
 Types IR::TokenTypeToIRType(TokenType tokenType)
 {
-	switch (tokenType)
-	{
+	switch (tokenType) {
 	case TokenType::T_CHAR_L:
 	case TokenType::T_CHAR:
 	case TokenType::T_BOOL:
@@ -364,5 +310,6 @@ Types IR::TokenTypeToIRType(TokenType tokenType)
 		ASSERT_NOT_REACHABLE();
 	}
 }
+
 
 }

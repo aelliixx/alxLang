@@ -16,9 +16,15 @@ namespace alx::ir {
 
 // Terminator instructions
 
-
 struct ReturnInst {
 	Values Value;
+};
+
+struct BranchInst {
+	IntType Size{ 1 };
+	std::optional<Values> Condition{};
+	LabelType TrueLabel;
+	std::optional<LabelType> FalseLabel{};
 };
 
 // Binary operations
@@ -139,6 +145,55 @@ struct LoadInst {
 	AlignAttribute Alignment;
 };
 
-using IdentifierInstruction = std::variant<AllocaInst, LoadInst, AddInst, SubInst, MulInst, SDivInst>;
+// Other instructions
+
+enum class CmpPredicate
+{
+	EQ,
+	NE,
+	SLT,
+	SLE,
+	SGT,
+	SGE,
+	ULT,
+	ULE,
+	UGT,
+	UGE
+};
+
+struct ICmpInst {
+	Values Lhs;
+	Values Rhs;
+	CmpPredicate Predicate;
+};
+
+using IdentifierInstruction = std::variant<AllocaInst, LoadInst, AddInst, SubInst, MulInst, SDivInst, ICmpInst>;
+
+inline std::string cmpPredicateToString(CmpPredicate predicate)
+{
+	switch (predicate) {
+	case CmpPredicate::EQ:
+		return "eq";
+	case CmpPredicate::NE:
+		return "ne";
+	case CmpPredicate::SLT:
+		return "slt";
+	case CmpPredicate::SLE:
+		return "sle";
+	case CmpPredicate::SGT:
+		return "sgt";
+	case CmpPredicate::SGE:
+		return "sge";
+	case CmpPredicate::ULT:
+		return "ult";
+	case CmpPredicate::ULE:
+		return "ule";
+	case CmpPredicate::UGT:
+		return "ugt";
+	case CmpPredicate::UGE:
+		return "uge";
+	}
+	ASSERT_NOT_REACHABLE();
+}
 
 }; // namespace alx::ir

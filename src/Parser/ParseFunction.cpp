@@ -49,10 +49,10 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 				must_consume(TokenType::T_EQ);
 				if (peek().has_value() && isNumberLiteral(peek().value().Type))
 					args.emplace_back(std::make_unique<VariableDeclaration>(
-						argType, std::make_unique<Identifier>(argName.value()), std::move(parse_number_literal())));
+						argType, std::make_unique<Identifier>(argName.value()), parse_number_literal()));
 				else if (peek().has_value() && peek().value().Type == TokenType::T_STR_L)
 					args.emplace_back(std::make_unique<VariableDeclaration>(
-						argType, std::make_unique<Identifier>(argName.value()), std::move(parse_string_literal())));
+						argType, std::make_unique<Identifier>(argName.value()), parse_string_literal()));
 				if (peek().value().Type == TokenType::T_COMMA) consume();
 				continue;
 			}

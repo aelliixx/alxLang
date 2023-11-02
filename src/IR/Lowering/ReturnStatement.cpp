@@ -10,7 +10,7 @@
 
 namespace alx::ir {
 
-void IR::generate_return_statement(ReturnStatement& astNode, Function& function, bool hasReturned)
+void IR::generate_return_statement(const ReturnStatement& astNode, Function& function, bool hasReturned)
 {
 	LogicalBlock ret{{ "return" }};
 
@@ -68,6 +68,7 @@ void IR::generate_return_statement(ReturnStatement& astNode, Function& function,
 	else
 	{
 		println(Colour::Red, "Unknown node type: {;255;255;255}", astNode.Argument()->class_name());
+		ASSERT_NOT_REACHABLE();
 	}
 
 	if (hasReturned)

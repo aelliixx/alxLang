@@ -31,7 +31,7 @@ struct FunctionParameter {
 	void PrintNode(IR& ir) const;
 };
 
-using BodyTypes = std::variant<LabelType, ReturnInst, Variable, StoreInst>;
+using BodyTypes = std::variant<LabelType, ReturnInst, Variable, StoreInst, BranchInst>;
 class LogicalBlock
 {
 	std::vector<Variable> m_identifiers_cache;
@@ -71,10 +71,24 @@ struct Function {
 	[[nodiscard]] std::shared_ptr<Variable> FindVariableByIdentifier(const std::string& name);
 	void PrintNode(IR&) const;
 
-	std::string GetNewUnnamedTemporary() { return std::to_string(UnnamedTemporaryCounter++); }
 	size_t UnnamedTemporaryCounter = 0;
+	
+	std::map<std::string, size_t> NamedTemporaries{};
 
 	void AppendInstruction(const BodyTypes& body) { Blocks.back().Body.push_back(body); }
+	
+	void AppendBlock(const LogicalBlock& block) { Blocks.push_back(block); }
+	
+	std::string GetNewUnnamedTemporary() { return std::to_string(UnnamedTemporaryCounter++); }
+	std::string GetNewNamedTemporary(const std::string& name)
+	{
+		auto it = NamedTemporaries.find(name);
+		if (it == NamedTemporaries.end()) {
+			NamedTemporaries[name] = 1;
+			return name;
+		}
+		return name + "." + std::to_string(it->second++);
+	}
 };
 
 #ifdef __clang__
@@ -110,10 +124,10 @@ public:
 private:
 	void generate_function(FunctionDeclaration&);
 	void generate_func_parameters(FunctionDeclaration&, Function&);
-	void generate_func_body(FunctionDeclaration&, Function&);
-	void generate_variable(VariableDeclaration&, Function&);
-	static void generate_return_statement(ReturnStatement&, Function&, bool);
-	[[nodiscard]] std::optional<Values> generate_binary_expression(const BinaryExpression&, Function&);
+	void generate_body(const BlockStatement& functionDeclaration, Function& function);
+	void generate_variable(const VariableDeclaration&, Function&);
+	static void generate_return_statement(const ReturnStatement&, Function&, bool);
+	std::optional<Values> generate_binary_expression(const BinaryExpression&, Function&);
 	
 	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_expression(const UnaryExpression&, Function&);
 	template<typename Func>
@@ -125,6 +139,8 @@ private:
 	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_binary_op(const BinaryExpression& binaryExpression,
 																			  Function& function,
 																			  Func instruction);
+	
+	void generate_if_statement(IfStatement&, Function&);
 };
 
 #ifdef __clang__

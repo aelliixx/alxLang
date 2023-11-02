@@ -9,10 +9,6 @@
 #include "Parser.h"
 #include "../libs/ErrorHandler.h"
 namespace alx {
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "misc-no-recursion"
-#endif
 std::unique_ptr<Expression> Parser::parse_binary_operation(std::unique_ptr<Expression> lhs, int precedence)
 {
 	while (peek().has_value()) {
@@ -65,7 +61,4 @@ std::unique_ptr<Expression> Parser::parse_binary_operation(std::unique_ptr<Expre
 }
 ASSERT_NOT_REACHABLE();
 }
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 }

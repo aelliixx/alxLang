@@ -46,10 +46,10 @@ std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& 
 }
 
 
-void IR::generate_func_body(FunctionDeclaration& functionDeclaration, Function& function)
+void IR::generate_body(const BlockStatement& block, Function& function)
 {
 	bool hasReturned = false;
-	for (const auto& node : functionDeclaration.Body().Children())
+	for (const auto& node : block.Children())
 	{
 		if (node->class_name() == "ReturnStatement")
 		{
@@ -69,28 +69,25 @@ void IR::generate_func_body(FunctionDeclaration& functionDeclaration, Function& 
 //			if (std::holds_alternative<std::shared_ptr<Variable>>(result.value()))
 //				function.Blocks.back().Body.emplace_back(*std::get<std::shared_ptr<Variable>>(result.value()));
 		}
+		else if (node->class_name() == "IfStatement") {
+			auto& ifStmt = static_cast<IfStatement&>(*node);
+			generate_if_statement(ifStmt, function);
+		}
 		else
 			println(Colour::Red, "Unknown node type: {;255;255;255}", node->class_name());
 	}
-	if (!hasReturned)
-	{
-		// Add a return statement if the function doesn't have one
-		// FIXME: Maybe this should be done in the parser, because it assumes that non-returning functions return void
-		//	      when it could be a forgotten return statement and therefore an error.
-		function.Blocks.back().Body.emplace_back(ReturnInst{});
-	}
 }
 
-void IR::generate_function(FunctionDeclaration& astNode)
+void IR::generate_function(FunctionDeclaration& functionDeclaration)
 {
 
-	auto type = astNode.ReturnType();
+	auto type = functionDeclaration.ReturnType();
 
 	// Resolve function name
-	auto identifier = astNode.Name() + "(";
+	auto identifier = functionDeclaration.Name() + "(";
 	auto sep = "";
 	std::vector<FunctionParameter> parameters;
-	for (const auto& arg : astNode.Arguments())
+	for (const auto& arg : functionDeclaration.Arguments())
 	{
 		identifier += sep + arg->TypeName();
 		sep = ", ";
@@ -125,10 +122,10 @@ void IR::generate_function(FunctionDeclaration& astNode)
 
 	LogicalBlock entry{{ "entry" }};
 	function->Blocks.push_back(entry);
-	generate_func_parameters(astNode, *function);
+	generate_func_parameters(functionDeclaration, *function);
 
 	// Generate function body
-	generate_func_body(astNode, *function);
+	generate_body(functionDeclaration.Body(), *function);
 
 	m_ir.emplace_back(std::move(function));
 }

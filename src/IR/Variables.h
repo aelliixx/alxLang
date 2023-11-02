@@ -33,6 +33,7 @@ struct Variable {
 			size_t operator()(const SubInst& inst) const { return std::visit(ValueVisitor{}, inst.Lhs); }
 			size_t operator()(const MulInst& inst) const { return std::visit(ValueVisitor{}, inst.Lhs); }
 			size_t operator()(const SDivInst& inst) const { return std::visit(ValueVisitor{}, inst.Lhs); }
+			size_t operator()(const ICmpInst& inst) const { return std::visit(ValueVisitor{}, inst.Lhs); }
 		} visitor;
 
 		return std::visit(visitor, Allocation);
