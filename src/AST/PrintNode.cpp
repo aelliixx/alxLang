@@ -44,8 +44,6 @@ void Program::PrintNode(int indent) const
 }
 
 void Identifier::PrintNode(int indent) const { 
-	print("{>}", indent);
-	printf("addr: %p\n", this);
 	println("{>}Identifier: {}", indent, m_name);
 }
 void NumberLiteral::PrintNode(int indent) const
