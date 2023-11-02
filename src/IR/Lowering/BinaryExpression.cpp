@@ -19,7 +19,8 @@ IR::generate_bin_eq(const BinaryExpression& eqExpr, // NOLINT(*-no-recursion)
 	if (lhs->class_name() == "Identifier") {
 		auto astIdentifier = static_cast<const Identifier&>(*lhs);
 		auto variable = function.FindVariableByIdentifier(astIdentifier.Name());
-		if (!variable) return {};
+		if (!variable)
+			return {};
 
 		if (rhs->class_name() == "NumberLiteral") {
 			auto value = IR::NumberLiteralToValue(static_cast<const NumberLiteral&>(*rhs), variable->Size());
@@ -48,7 +49,8 @@ IR::generate_bin_eq(const BinaryExpression& eqExpr, // NOLINT(*-no-recursion)
 		else if (rhs->class_name() == "Identifier") {
 			auto& ident = static_cast<Identifier&>(*rhs);
 			auto rhsVariable = function.FindVariableByIdentifier(ident.Name());
-			if (!rhsVariable) return {};
+			if (!rhsVariable)
+				return {};
 			LoadInst load{ .Type = *(std::get<AllocaInst>(rhsVariable->Allocation).Type),
 						   .Ptr = rhsVariable,
 						   .Alignment = { std::get<AllocaInst>(rhsVariable->Allocation).Size() } };
@@ -83,7 +85,8 @@ IR::generate_bin_eq(const BinaryExpression& eqExpr, // NOLINT(*-no-recursion)
 		else if (rhs->class_name() == "UnaryExpression") {
 			auto& unExpr = static_cast<UnaryExpression&>(*rhs);
 			auto result = generate_unary_expression(unExpr, function);
-			if (!result.has_value()) return {};
+			if (!result.has_value())
+				return {};
 			StoreInst store{ .Value = result.value(), .Ptr = variable, .Alignment = { variable->Size() } };
 			function.Blocks.back().Body.emplace_back(store);
 			return result.value();
@@ -134,7 +137,6 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 			const auto& numLit = static_cast<const NumberLiteral&>(*rhs);
 			auto value = IR::NumberLiteralToValue(numLit, variable->Size());
 			auto instructionTemp = instruction(temporary, value);
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "Identifier") {
@@ -150,23 +152,20 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 						  .Attributes = { AlignAttribute{ std::get<AllocaInst>(rhsVariable->Allocation).Size() } },
 						  .Allocation = loadRhs,
 						  .IsTemporary = true });
-			auto instructionTemp = instruction(temporary, temporaryRhs);
 			function.AppendInstruction(*temporaryRhs);
-			function.AppendInstruction(*instructionTemp);
+			auto instructionTemp = instruction(temporary, temporaryRhs);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "BinaryExpression") {
 			auto result = generate_binary_expression(static_cast<BinaryExpression&>(*rhs), function);
 			MUST(result.has_value());
 			auto instructionTemp = instruction(temporary, result.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "UnaryExpression") {
 			auto result = generate_unary_expression(static_cast<UnaryExpression&>(*rhs), function);
 			MUST(result.has_value());
 			auto instructionTemp = instruction(temporary, result.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "MemberExpression") {
@@ -193,9 +192,8 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 						  .Attributes = { AlignAttribute{ std::get<AllocaInst>(variable->Allocation).Size() } },
 						  .Allocation = loadLhs,
 						  .IsTemporary = true });
-			auto instructionTemp = instruction(temporary, temporary);
 			function.AppendInstruction(*temporary);
-			function.AppendInstruction(*instructionTemp);
+			auto instructionTemp = instruction(temporary, temporary);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "NumberLiteral") {
@@ -206,14 +204,12 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 			auto result = generate_binary_expression(static_cast<BinaryExpression&>(*rhs), function);
 			MUST(result.has_value());
 			auto instructionTemp = instruction(value, result.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "UnaryExpression") {
 			auto result = generate_unary_expression(static_cast<UnaryExpression&>(*rhs), function);
 			MUST(result.has_value());
 			auto instructionTemp = instruction(value, result.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "MemberExpression") {
@@ -229,7 +225,8 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 
 		std::shared_ptr<Variable> resulting;
 		std::variant<Values, NumberLiteral> result;
-		if (binExp.Constexpr()) result = *binExp.Evaluate();
+		if (binExp.Constexpr())
+			result = *binExp.Evaluate();
 		else {
 			auto eval = generate_binary_expression(binExp, function);
 			MUST(eval.has_value());
@@ -253,13 +250,11 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 													 size_of(std::get<NumberLiteral>(result).Type()));
 				auto instructionTemp = instruction(lhsValue, temporary);
 				function.AppendInstruction(*temporary);
-				function.AppendInstruction(*instructionTemp);
 				return instructionTemp;
 			}
 			auto lhsValue = std::get<Values>(result);
-			auto instructionTemp = instruction(lhsValue, temporary);
 			function.AppendInstruction(*temporary);
-			function.AppendInstruction(*instructionTemp);
+			auto instructionTemp = instruction(lhsValue, temporary);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "NumberLiteral") {
@@ -269,7 +264,6 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 			auto value = IR::NumberLiteralToValue(static_cast<const NumberLiteral&>(*rhs),
 												  std::get<std::shared_ptr<Variable>>(resultVariable)->Size());
 			auto instructionTemp = instruction(resultVariable, value);
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "BinaryExpression") {
@@ -282,26 +276,22 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 					auto rhsValue =
 						NumberLiteralToValue(*rhsBinExp.Evaluate(), size_of(std::get<NumberLiteral>(result).Type()));
 					auto instructionTemp = instruction(lhsValue, rhsValue);
-					function.AppendInstruction(*instructionTemp);
 					return instructionTemp;
 				}
 				auto rhsValue = generate_binary_expression(rhsBinExp, function);
 				MUST(rhsValue.has_value());
 				auto instructionTemp = instruction(lhsValue, rhsValue.value());
-				function.AppendInstruction(*instructionTemp);
 				return instructionTemp;
 			}
 			if (rhsBinExp.Constexpr()) {
 				auto rhsValue =
 					NumberLiteralToValue(*rhsBinExp.Evaluate(), size_of(std::get<NumberLiteral>(result).Type()));
 				auto instructionTemp = instruction(std::get<Values>(result), rhsValue);
-				function.AppendInstruction(*instructionTemp);
 				return instructionTemp;
 			}
 			auto rhsValue = generate_binary_expression(rhsBinExp, function);
 			MUST(rhsValue.has_value());
 			auto instructionTemp = instruction(std::get<Values>(result), rhsValue.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "UnaryExpression") {
@@ -311,11 +301,9 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 				auto lhsValue = NumberLiteralToValue(std::get<NumberLiteral>(result),
 													 size_of(std::get<NumberLiteral>(result).Type()));
 				auto instructionTemp = instruction(lhsValue, rhsValue.value());
-				function.AppendInstruction(*instructionTemp);
 				return instructionTemp;
 			}
 			auto instructionTemp = instruction(std::get<Values>(result), rhsValue.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "MemberExpression") {
@@ -343,29 +331,25 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 						  .Attributes = { AlignAttribute{ std::get<AllocaInst>(variable->Allocation).Size() } },
 						  .Allocation = loadRhs,
 						  .IsTemporary = true });
-			auto instructionTemp = instruction(result.value(), temporary);
 			function.AppendInstruction(*temporary);
-			function.AppendInstruction(*instructionTemp);
+			auto instructionTemp = instruction(result.value(), temporary);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "NumberLiteral") {
 			auto value = IR::NumberLiteralToValue(static_cast<const NumberLiteral&>(*rhs), result.value()->Size());
 			auto instructionTemp = instruction(result.value(), value);
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "BinaryExpression") {
 			auto rhsValue = generate_binary_expression(static_cast<BinaryExpression&>(*rhs), function);
 			MUST(rhsValue.has_value());
 			auto instructionTemp = instruction(result.value(), rhsValue.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "UnaryExpression") {
 			auto rhsValue = generate_unary_expression(static_cast<UnaryExpression&>(*rhs), function);
 			MUST(rhsValue.has_value());
 			auto instructionTemp = instruction(result.value(), rhsValue.value());
-			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "MemberExpression") {
@@ -399,6 +383,7 @@ std::optional<Values> IR::generate_binary_expression(const BinaryExpression& bin
 			AddInst add{ .Lhs = variable, .Rhs = value };
 			auto instructionTemp = std::make_shared<Variable>(
 				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = add, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		});
 	case TokenType::T_MINUS:
@@ -406,6 +391,7 @@ std::optional<Values> IR::generate_binary_expression(const BinaryExpression& bin
 			SubInst add{ .Lhs = variable, .Rhs = value };
 			auto instructionTemp = std::make_shared<Variable>(
 				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = add, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		});
 	case TokenType::T_STAR:
@@ -413,6 +399,7 @@ std::optional<Values> IR::generate_binary_expression(const BinaryExpression& bin
 			MulInst add{ .Lhs = variable, .Rhs = value };
 			auto instructionTemp = std::make_shared<Variable>(
 				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = add, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		});
 	case TokenType::T_FWD_SLASH:
@@ -421,23 +408,95 @@ std::optional<Values> IR::generate_binary_expression(const BinaryExpression& bin
 			SDivInst add{ .Lhs = variable, .Rhs = value };
 			auto instructionTemp = std::make_shared<Variable>(
 				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = add, .IsTemporary = true });
+			function.AppendInstruction(*instructionTemp);
 			return instructionTemp;
 		});
 	case TokenType::T_POW:
+		[[fallthrough]];
 	case TokenType::T_LT:
+		[[fallthrough]];
 	case TokenType::T_GT:
+		[[fallthrough]];
 	case TokenType::T_LTE:
+		[[fallthrough]];
 	case TokenType::T_GTE:
+		[[fallthrough]];
 	case TokenType::T_MOD:
+		[[fallthrough]];
 	case TokenType::T_COLON:
+		[[fallthrough]];
 	case TokenType::T_EQEQ:
+		[[fallthrough]];
 	case TokenType::T_NOT_EQ:
-	case TokenType::T_SUB:
-	case TokenType::T_ADD:
-	case TokenType::T_ADD_EQ:
-	case TokenType::T_SUB_EQ:
-	case TokenType::T_MULT_EQ:
-	case TokenType::T_DIV_EQ:
+		ASSERT_NOT_IMPLEMENTED_MSG(token_to_string(binaryExpression.Operator()));
+	case TokenType::T_ADD_EQ: {
+		MUST(binaryExpression.Lhs()->class_name() == "Identifier");
+		auto lhsIdent = static_cast<const Identifier&>(*binaryExpression.Lhs());
+		auto lhsVar = function.FindVariableByIdentifier(lhsIdent.Name());
+		return generate_binary_op(
+			binaryExpression, function, [&lhsVar, &function](const Values& variable, const Values& value) {
+			AddInst add{ .Lhs = variable, .Rhs = value };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = add, .IsTemporary = true });
+			StoreInst store{ .Value = instructionTemp,
+							 .Ptr = lhsVar,
+							 .Alignment = { std::get<AllocaInst>(lhsVar->Allocation).Size() } };
+			function.AppendInstruction(*instructionTemp);
+			function.AppendInstruction(store);
+			return instructionTemp;
+		});
+	}
+	case TokenType::T_SUB_EQ: {
+		MUST(binaryExpression.Lhs()->class_name() == "Identifier");
+		auto lhsIdent = static_cast<const Identifier&>(*binaryExpression.Lhs());
+		auto lhsVar = function.FindVariableByIdentifier(lhsIdent.Name());
+		return generate_binary_op(
+			binaryExpression, function, [&lhsVar, &function](const Values& variable, const Values& value) {
+			SubInst sub{ .Lhs = variable, .Rhs = value };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = sub, .IsTemporary = true });
+			StoreInst store{ .Value = instructionTemp,
+							 .Ptr = lhsVar,
+							 .Alignment = { std::get<AllocaInst>(lhsVar->Allocation).Size() } };
+			function.AppendInstruction(*instructionTemp);
+			function.AppendInstruction(store);
+			return instructionTemp;
+		});
+	}
+	case TokenType::T_MULT_EQ: {
+		MUST(binaryExpression.Lhs()->class_name() == "Identifier");
+		auto lhsIdent = static_cast<const Identifier&>(*binaryExpression.Lhs());
+		auto lhsVar = function.FindVariableByIdentifier(lhsIdent.Name());
+		return generate_binary_op(
+			binaryExpression, function, [&lhsVar, &function](const Values& variable, const Values& value) {
+			MulInst mul{ .Lhs = variable, .Rhs = value };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = mul, .IsTemporary = true });
+			StoreInst store{ .Value = instructionTemp,
+							 .Ptr = lhsVar,
+							 .Alignment = { std::get<AllocaInst>(lhsVar->Allocation).Size() } };
+			function.AppendInstruction(*instructionTemp);
+			function.AppendInstruction(store);
+			return instructionTemp;
+		});
+	}
+	case TokenType::T_DIV_EQ: {
+		MUST(binaryExpression.Lhs()->class_name() == "Identifier");
+		auto lhsIdent = static_cast<const Identifier&>(*binaryExpression.Lhs());
+		auto lhsVar = function.FindVariableByIdentifier(lhsIdent.Name());
+		return generate_binary_op(
+			binaryExpression, function, [&lhsVar, &function](const Values& variable, const Values& value) {
+			SDivInst div{ .Lhs = variable, .Rhs = value };
+			auto instructionTemp = std::make_shared<Variable>(
+				Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = div, .IsTemporary = true });
+			StoreInst store{ .Value = instructionTemp,
+							 .Ptr = lhsVar,
+							 .Alignment = { std::get<AllocaInst>(lhsVar->Allocation).Size() } };
+			function.AppendInstruction(*instructionTemp);
+			function.AppendInstruction(store);
+			return instructionTemp;
+		});
+	}
 	case TokenType::T_MOD_EQ:
 	case TokenType::T_POW_EQ:
 		ASSERT_NOT_IMPLEMENTED_MSG(token_to_string(binaryExpression.Operator()));

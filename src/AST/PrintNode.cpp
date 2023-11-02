@@ -11,8 +11,7 @@
 namespace alx {
 static std::string access_mode_to_string(AccessModeType mode)
 {
-	switch (mode)
-	{
+	switch (mode) {
 	case AccessModeType::a_global:
 		return "global";
 	case AccessModeType::a_scoped:
@@ -30,15 +29,11 @@ static std::string access_mode_to_string(AccessModeType mode)
 
 void ScopeNode::dump_nodes(const std::vector<std::unique_ptr<ASTNode>>& Children, int indent)
 {
-	for (const auto& child : Children)
-	{
+	for (const auto& child : Children) {
 		child->PrintNode(indent);
 	}
 }
-void ScopeNode::PrintNode(int indent) const
-{
-	dump_nodes(m_children, indent);
-}
+void ScopeNode::PrintNode(int indent) const { dump_nodes(m_children, indent); }
 
 void Program::PrintNode(int indent) const
 {
@@ -48,15 +43,15 @@ void Program::PrintNode(int indent) const
 	println("}");
 }
 
-void Identifier::PrintNode(int indent) const
-{
+void Identifier::PrintNode(int indent) const { 
+	print("{>}", indent);
+	printf("addr: %p\n", this);
 	println("{>}Identifier: {}", indent, m_name);
 }
 void NumberLiteral::PrintNode(int indent) const
 {
 	println("{>}NumberLiteral: ", indent);
-	switch (m_type)
-	{
+	switch (m_type) {
 	case TokenType::T_INT_L:
 		println("{>}type: {}", indent + 2, "int");
 		println("{>}value: {}", indent + 2, m_value);
@@ -85,8 +80,8 @@ void NumberLiteral::PrintNode(int indent) const
 void VariableDeclaration::PrintNode(int indent) const
 {
 	println("{>}VariableDeclaration: {", indent);
-	println("{>}type: {}", indent + 2, TypeName());
 	println("{>}identifier: {}", indent + 2, m_identifier->Name());
+	println("{>}const: {}", indent + 2, !m_identifier->Assignable());
 	println("{>}value:", indent + 2);
 	if (m_value)
 		m_value->PrintNode(indent + 4);
@@ -111,10 +106,8 @@ void FunctionDeclaration::PrintNode(int indent) const
 		println("{>}[none]", indent + 4);
 	else
 		for (const auto& param : m_parameters)
-			println("{>}type: {}, identifier: {}",
-					indent + 4,
-					token_to_string(param->TypeAsPrimitive()),
-					param->Name());
+			println(
+				"{>}type: {}, identifier: {}", indent + 4, token_to_string(param->TypeAsPrimitive()), param->Name());
 	println("{>}body:", indent + 2);
 	m_body->PrintNode(indent + 4);
 	println("{>}}", indent);
@@ -142,10 +135,7 @@ void ReturnStatement::PrintNode(int indent) const
 	m_argument->PrintNode(indent + 4);
 	println("{>}}", indent);
 }
-void Expression::PrintNode(int indent) const
-{
-
-}
+void Expression::PrintNode(int indent) const {}
 
 void IfStatement::PrintNode(int indent) const
 {
@@ -154,13 +144,11 @@ void IfStatement::PrintNode(int indent) const
 	m_condition->PrintNode(indent + 4);
 	println("{>}body:", indent + 2);
 	m_body->PrintNode(indent + 4);
-	if (HasAlternate())
-	{
+	if (HasAlternate()) {
 		println("{>}alternate:", indent + 2);
 		m_alternate.value()->PrintNode(indent + 4);
 	}
 	println("{>}}", indent);
-
 }
 
 void UnaryExpression::PrintNode(int indent) const
@@ -185,10 +173,8 @@ void StructDeclaration::PrintNode(int indent) const
 {
 	println("{>}StructDeclaration: {", indent);
 	println("{>}member variables:", indent + 2);
-	if (!m_members.empty())
-	{
-		for (const auto& var : m_members)
-		{
+	if (!m_members.empty()) {
+		for (const auto& var : m_members) {
 			auto member = static_cast<VariableDeclaration*>(var.get());
 			println("{>}type: {}, identifier: {}, access mode: {}, default initialised?: {}",
 					indent + 4,
@@ -198,11 +184,9 @@ void StructDeclaration::PrintNode(int indent) const
 					member->Value() != nullptr);
 		}
 	}
-	if (!m_methods.empty())
-	{
+	if (!m_methods.empty()) {
 		println("{>}member methods:", indent + 2);
-		for (const auto& var : m_methods)
-		{
+		for (const auto& var : m_methods) {
 			auto method = static_cast<FunctionDeclaration*>(var.get());
 			println("{>}return type: {}, identifier: {}, default initialised?: {}",
 					indent + 4,

@@ -28,8 +28,9 @@ enum class TokenType
 	// Maths ops
 	T_SUB, T_ADD, T_ADD_EQ, T_SUB_EQ, T_MULT_EQ, T_DIV_EQ, T_MOD_EQ, T_POW_EQ, T_NOT,
 	// Branching
-	T_IF, T_ELSE, T_FOR, T_WHILE
-
+	T_IF, T_ELSE, T_FOR, T_WHILE,
+	// Qualifiers
+	T_CONST, T_MUT
 };
 
 static size_t size_of(TokenType token)
@@ -125,7 +126,7 @@ static bool isLiteralAssignable(TokenType lhs, TokenType rhs)
 	case TokenType::T_BOOL:
 		return rhs == TokenType::T_TRUE || rhs == TokenType::T_FALSE;
 	default:
-		MUST(false && "Not reachable");
+		ASSERT_NOT_REACHABLE();
 	}
 }
 

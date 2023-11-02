@@ -22,9 +22,9 @@ namespace alx::ir {
 class IR;
 
 struct FunctionParameter {
-	Types Type;
-	std::vector<ParameterAttributes> Attributes;
-	VisibilityAttribute Visibility;
+	Types Type{};
+	std::vector<ParameterAttributes> Attributes{};
+	VisibilityAttribute Visibility = VisibilityAttribute::Local;
 	std::string Name;
 	void PrintNode(IR& ir) const;
 };
@@ -109,13 +109,19 @@ private:
 	void generate_func_parameters(FunctionDeclaration&, Function&);
 	void generate_func_body(FunctionDeclaration&, Function&);
 	void generate_variable(VariableDeclaration&, Function&);
-	[[nodiscard]] std::optional<Values> generate_binary_expression(const BinaryExpression&, Function&);
-	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_expression(const UnaryExpression&, Function&);
 	static void generate_return_statement(ReturnStatement&, Function&, bool);
+	[[nodiscard]] std::optional<Values> generate_binary_expression(const BinaryExpression&, Function&);
+	
+	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_expression(const UnaryExpression&, Function&);
+	template<typename Func>
+	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_op(const UnaryExpression&,
+																			 Function&, Func);
+	
 	[[nodiscard]] std::optional<Values> generate_bin_eq(const BinaryExpression&, Function&);
 	template<typename Func>
 	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_binary_op(const BinaryExpression& binaryExpression,
-																			  Function& function, Func instruction);
+																			  Function& function,
+																			  Func instruction);
 };
 
 #pragma clang diagnostic pop

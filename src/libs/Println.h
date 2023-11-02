@@ -34,6 +34,13 @@ concept Number = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is
 template<typename T>
 concept Boolean = std::is_same_v<T, bool>;
 
+template<typename T>
+concept Pointer = std::is_pointer_v<T>;
+
+// is unique_ptr.get() a pointer to a type T
+template<typename T>
+concept UniquePtr = std::is_same_v<T, typename std::remove_cvref_t<T>::element_type>;
+
 template<__alx::Stringable T>
 std::string string_cast(T from)
 {
@@ -56,6 +63,18 @@ template<__alx::Char T>
 std::string string_cast(T from)
 {
 	return std::string(1, from);
+}
+
+template<__alx::Pointer T>
+std::string string_cast(T* from)
+{
+	return std::to_string(reinterpret_cast<uintptr_t>(from));
+}
+
+template<__alx::UniquePtr T>
+std::string string_cast(T& from)
+{
+	return std::to_string(reinterpret_cast<uintptr_t>(from.get()));
 }
 
 template<typename... Param>

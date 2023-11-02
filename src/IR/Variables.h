@@ -15,7 +15,7 @@ class IR;
 struct Variable {
 	std::string Name;
 	VisibilityAttribute Visibility = VisibilityAttribute::Local;
-	std::vector<ParameterAttributes> Attributes;
+	std::vector<ParameterAttributes> Attributes{};
 	IdentifierInstruction Allocation;
 	bool IsTemporary = false;
 	void PrintNode(IR& ir) const;

@@ -12,6 +12,12 @@
 namespace alx {
 std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 {
+	auto assignable = true;
+	if (peek().has_value() && peek().value().Type == TokenType::T_CONST)
+	{
+		assignable = false;
+		must_consume(TokenType::T_CONST); // Eat 'const'
+	}
 	auto typeToken = consume();
 	std::variant<TokenType, std::unique_ptr<Identifier>> type;
 	if (typeToken.Type == TokenType::T_IDENTIFIER)
@@ -19,7 +25,7 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 	else
 		type = typeToken.Type;
 	auto identToken = consume();
-	auto identifier = std::make_unique<Identifier>(identToken.Value.value());
+	auto identifier = std::make_unique<Identifier>(identToken.Value.value(), assignable);
 	if (std::find_if(m_variables.at(m_current_scope_name).begin(),
 					 m_variables.at(m_current_scope_name).end(),
 					 [&identifier](const VariableDeclaration* var)

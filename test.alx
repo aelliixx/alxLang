@@ -1,7 +1,6 @@
 int main() {
-    int a = 10;
-    int b = a / 20;
-    b = a / 30;
+    const int a = 10;
+    a += 5;
 }
  
  

@@ -28,7 +28,7 @@ enum class ParamAttributes
 };
 
 struct AlignAttribute {
-	size_t Alignment = 8;
+	size_t Alignment = 4;
 };
 
 using ParameterAttributes = std::variant<ParamAttributes, AlignAttribute>;
