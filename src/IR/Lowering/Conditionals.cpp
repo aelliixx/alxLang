@@ -13,17 +13,36 @@ namespace alx::ir {
 void IR::generate_if_statement(IfStatement& statement, Function& function)
 {
 
-	if (statement.Condition()->class_name() == "BinaryExpression") {
-		auto cmp = generate_binary_expression(static_cast<BinaryExpression&>(*statement.Condition()), function);
-		MUST(cmp);
-
+	if (statement.Condition()->class_name() == "BinaryExpression"
+		|| statement.Condition()->class_name() == "UnaryExpression")
+	{
 		LogicalBlock ifThen{ { function.GetNewNamedTemporary("if.then") } };
 		LogicalBlock ifElse{ { function.GetNewNamedTemporary("if.else") } };
 		LogicalBlock ifEnd{ { function.GetNewNamedTemporary("if.end") } };
 
-		BranchInst branchInst{ .Condition = cmp.value(),
+		std::optional<Values> condition;
+		if (statement.Condition()->class_name() == "BinaryExpression")
+			condition = generate_binary_expression(static_cast<BinaryExpression&>(*statement.Condition()), function);
+		else if (statement.Condition()->class_name() == "UnaryExpression") {
+			condition = generate_unary_expression(static_cast<UnaryExpression&>(*statement.Condition()), function);
+			// FIXME: use fcmp for floating point
+			// FIXME: use unsigned compares for unsigned types
+			ICmpInst icmpInst{ .Lhs = condition.value(),
+							   .Rhs = Constant{ .Type = IntType{ 4 }, .Value = 0 },
+							   .Predicate = CmpPredicate::NE };
+			Variable icmpTemp{ .Name = function.GetNewUnnamedTemporary(),
+							   .Attributes = { AlignAttribute{ 4 } },
+							   .Allocation = icmpInst,
+							   .IsTemporary = true };
+			function.AppendInstruction(icmpTemp);
+		}
+
+		MUST(condition);
+
+		BranchInst branchInst{ .Condition = condition.value(),
 							   .TrueLabel = ifThen.Label,
 							   .FalseLabel = statement.HasAlternate() ? ifElse.Label : ifEnd.Label };
+
 		function.AppendInstruction(branchInst);
 
 		// If
@@ -59,9 +78,6 @@ void IR::generate_if_statement(IfStatement& statement, Function& function)
 			}
 			return;
 		}
-	}
-	else if (statement.Condition()->class_name() == "UnaryOperator") {
-		
 	}
 	else {
 		MUST(false && "Unknown condition type");
