@@ -17,8 +17,9 @@ void IR::generate_if_statement(IfStatement& statement, Function& function)
 		|| statement.Condition()->class_name() == "UnaryExpression")
 	{
 		LogicalBlock ifThen{ { function.GetNewNamedTemporary("if.then") } };
-		LogicalBlock ifElse{ { function.GetNewNamedTemporary("if.else") } };
 		LogicalBlock ifEnd{ { function.GetNewNamedTemporary("if.end") } };
+		LogicalBlock ifElse =
+			statement.HasAlternate() ? LogicalBlock{ { function.GetNewNamedTemporary("if.else") } } : ifEnd;
 
 		std::optional<Values> condition;
 		if (statement.Condition()->class_name() == "BinaryExpression")
@@ -62,6 +63,7 @@ void IR::generate_if_statement(IfStatement& statement, Function& function)
 			function.AppendInstruction(endBranch);
 		}
 		function.AppendBlock(ifEnd);
+		return;
 	}
 	else if (statement.Condition()->class_name() == "NumberLiteral") {
 		auto& condNum = static_cast<NumberLiteral&>(*statement.Condition());
@@ -79,9 +81,59 @@ void IR::generate_if_statement(IfStatement& statement, Function& function)
 			return;
 		}
 	}
-	else {
-		MUST(false && "Unknown condition type");
+	else if (statement.Condition()->class_name() == "Identifier") {
+		const auto& ident = static_cast<Identifier&>(*statement.Condition());
+		const auto& variable = function.FindVariableByIdentifier(ident.Name());
+
+		LogicalBlock ifThen{ { function.GetNewNamedTemporary("if.then") } };
+		LogicalBlock ifElse{ { function.GetNewNamedTemporary("if.else") } };
+		LogicalBlock ifEnd{ { function.GetNewNamedTemporary("if.end") } };
+
+		LoadInst load{ .Type = *(std::get<AllocaInst>(variable->Allocation).Type),
+					   .Ptr = variable,
+					   .Alignment = { std::get<AllocaInst>(variable->Allocation).Size() } };
+		auto loadTemp = std::make_shared<Variable>(
+			Variable{ .Name = function.GetNewUnnamedTemporary(),
+					  .Attributes = { AlignAttribute{ std::get<AllocaInst>(variable->Allocation).Size() } },
+					  .Allocation = load,
+					  .IsTemporary = true });
+		ICmpInst icmpInst{ .Lhs = loadTemp,
+						   .Rhs = Constant{ .Type = IntType{ 1 }, .Value = 0 },
+						   .Predicate = CmpPredicate::NE };
+		auto icmpTemp = std::make_shared<Variable>(
+			Variable{ .Name = function.GetNewUnnamedTemporary(), .Allocation = icmpInst, .IsTemporary = true });
+		function.AppendInstruction(*loadTemp);
+		function.AppendInstruction(*icmpTemp);
+		BranchInst branchInst{ .Condition = icmpTemp,
+							   .TrueLabel = ifThen.Label,
+							   .FalseLabel = statement.HasAlternate() ? ifElse.Label : ifEnd.Label };
+		function.AppendInstruction(branchInst);
+
+		// If
+		function.AppendBlock(ifThen);
+		generate_body(statement.Body(), function);
+
+		// Else
+		if (statement.HasAlternate()) {
+			function.AppendInstruction(BranchInst{ .TrueLabel = ifEnd.Label });
+			function.AppendBlock(ifElse);
+			if (statement.Alternate().value()->class_name() == "IfStatement")
+				generate_if_statement(static_cast<IfStatement&>(*statement.Alternate().value()), function);
+			else
+				generate_body(static_cast<BlockStatement&>(*statement.Alternate().value()), function);
+		}
+
+		BranchInst endBranch{ .TrueLabel = ifEnd.Label };
+		function.AppendInstruction(endBranch);
+		
+		function.AppendBlock(ifEnd);
+		return;
 	}
+	else {
+		ASSERT_NOT_IMPLEMENTED_MSG(getFormatted("Unknown condition type: {}", statement.Condition()->class_name()));
+		return;
+	}
+	ASSERT_NOT_REACHABLE();
 }
 
 
@@ -177,7 +229,7 @@ void IR::generate_while_statement(WhileStatement& statement, Function& function)
 		function.AppendBlock(whileCond);
 		LoadInst load{ .Type = *(std::get<AllocaInst>(variable->Allocation).Type),
 					   .Ptr = variable,
-					   .Alignment = { std::get<AllocaInst>(variable->Allocation).Size() }};
+					   .Alignment = { std::get<AllocaInst>(variable->Allocation).Size() } };
 		auto loadTemp = std::make_shared<Variable>(
 			Variable{ .Name = function.GetNewUnnamedTemporary(),
 					  .Attributes = { AlignAttribute{ std::get<AllocaInst>(variable->Allocation).Size() } },
