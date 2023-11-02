@@ -12,27 +12,19 @@ namespace alx::ir {
 std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& name)
 {
 	Variable variable;
-	if (std::find_if(Blocks.begin(),
-					 Blocks.end(),
-					 [&name, &variable](LogicalBlock& block)
-					 {
-					   auto identifiers = block.Identifiers();
-					   auto it =
-						   std::find_if(identifiers.begin(),
-										identifiers.end(),
-										[name, &variable](const Variable& ident)
-										{
-										  if (ident.Name == name)
-										  {
-											  variable = ident;
-											  return true;
-										  }
-										  return false;
-										});
-					   if (it != identifiers.end())
-						   return true;
-					   return false;
-					 }) == Blocks.end())
+	if (std::find_if(Blocks.begin(), Blocks.end(), [&name, &variable](LogicalBlock& block) {
+		auto identifiers = block.Identifiers();
+		auto it = std::find_if(identifiers.begin(), identifiers.end(), [name, &variable](const Variable& ident) {
+			if (ident.Name == name) {
+				variable = ident;
+				return true;
+			}
+			return false;
+		});
+		if (it != identifiers.end())
+			return true;
+		return false;
+	}) == Blocks.end())
 	{
 		println(Colour::Red, "Could not find variable {} in any of the blocks", name);
 		return nullptr;

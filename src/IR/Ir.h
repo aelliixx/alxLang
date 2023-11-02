@@ -69,6 +69,8 @@ struct Function {
 	std::vector<LogicalBlock> Blocks{};
 
 	[[nodiscard]] std::shared_ptr<Variable> FindVariableByIdentifier(const std::string& name);
+	[[nodiscard]] LogicalBlock& GetBlockByLabel(const std::string& label);
+
 	void PrintNode(IR&) const;
 
 	size_t UnnamedTemporaryCounter = 0;
