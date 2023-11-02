@@ -26,19 +26,25 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 								token.value().PosNumber,
 								"Expected identifier after type declaration");
 		}
-		else
-			m_error->FatalError(token.value().LineNumber,
-								token.value().ColumnNumber,
-								token.value().PosNumber,
-								"Expected type after 'const' keyword");
-
+		m_error->FatalError(token.value().LineNumber,
+							token.value().ColumnNumber,
+							token.value().PosNumber,
+							"Expected type after 'const' keyword");
+		return nullptr;
 	case TokenType::T_INT:
+		[[fallthrough]];
 	case TokenType::T_LONG:
+		[[fallthrough]];
 	case TokenType::T_SHORT:
+		[[fallthrough]];
 	case TokenType::T_FLOAT:
+		[[fallthrough]];
 	case TokenType::T_DOUBLE:
+		[[fallthrough]];
 	case TokenType::T_STRING:
+		[[fallthrough]];
 	case TokenType::T_CHAR:
+		[[fallthrough]];
 	case TokenType::T_BOOL:
 		if (peek(1).has_value() && peek(1).value().Type == TokenType::T_IDENTIFIER) {
 			if (peek(2).has_value() && peek(2).value().Type == TokenType::T_OPEN_PAREN)
@@ -52,6 +58,7 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 								token.value().ColumnNumber,
 								token.value().PosNumber,
 								"Expected identifier after type declaration");
+		return nullptr;
 	case TokenType::T_VOID:
 		return parse_function();
 	case TokenType::T_RET:
@@ -63,6 +70,7 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 					   token.value().ColumnNumber,
 					   token.value().PosNumber,
 					   "An 'else' statement must succeed an 'if' statement");
+		return nullptr; // TODO: verify that this is appropriate
 	case TokenType::T_FOR:
 		ASSERT_NOT_IMPLEMENTED();
 	case TokenType::T_WHILE:
@@ -72,6 +80,7 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	case TokenType::T_IDENTIFIER:
 		if (peek(1).value().Type == TokenType::T_IDENTIFIER)
 			return parse_variable();
+		[[fallthrough]];
 	default:
 		return parse_expression();
 	}

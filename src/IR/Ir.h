@@ -59,13 +59,13 @@ public:
 
 struct Function {
 	std::string Name;
-	ParameterAttributes Attributes;
+	ParameterAttributes Attributes{};
 	LinkageType Linkage = LinkageType::Internal;
 	VisibilityAttribute Visibility = VisibilityAttribute::Local;
 	Types ReturnType;
 
-	std::vector<FunctionParameter> Arguments;
-	std::vector<LogicalBlock> Blocks;
+	std::vector<FunctionParameter> Arguments{};
+	std::vector<LogicalBlock> Blocks{};
 
 	[[nodiscard]] std::shared_ptr<Variable> FindVariableByIdentifier(const std::string& name);
 	void PrintNode(IR&) const;

@@ -19,8 +19,8 @@ namespace alx {
 
 struct Context
 {
-	size_t LhsSize;
-	bool AssignmentChain;
+	size_t LhsSize{};
+	bool AssignmentChain{};
 };
 
 class BlockGenerator

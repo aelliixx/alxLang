@@ -16,12 +16,12 @@ namespace alx {
 #pragma ide diagnostic ignored "OCInconsistentNamingInspection"
 struct DebugFlags
 {
-	bool show_timing;
-	bool dump_ast;
-	bool dump_asm;
-	bool dump_unformatted_asm;
-	bool quiet_mode;
-	bool dump_ir;
+	bool show_timing{};
+	bool dump_ast{};
+	bool dump_asm{};
+	bool dump_unformatted_asm{};
+	bool quiet_mode{};
+	bool dump_ir{};
 };
 
 struct Flags

@@ -58,14 +58,23 @@ std::unique_ptr<NumberLiteral> BinaryExpression::Evaluate() const
 		  break;
 	  case TokenType::T_COLON:
 		  res = std::to_string(std::stol(lhsVal) / std::stol(rhsVal));
+		  break;
 	  case TokenType::T_EQEQ:
+		  [[fallthrough]];
 	  case TokenType::T_SUB:
+		  [[fallthrough]];
 	  case TokenType::T_ADD:
+		  [[fallthrough]];
 	  case TokenType::T_ADD_EQ:
+		  [[fallthrough]];
 	  case TokenType::T_SUB_EQ:
+		  [[fallthrough]];
 	  case TokenType::T_MULT_EQ:
+		  [[fallthrough]];
 	  case TokenType::T_DIV_EQ:
+		  [[fallthrough]];
 	  case TokenType::T_MOD_EQ:
+		  [[fallthrough]];
 	  case TokenType::T_POW_EQ:
 	  ASSERT_NOT_IMPLEMENTED();
 	  default:

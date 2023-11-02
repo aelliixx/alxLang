@@ -52,6 +52,6 @@ struct StructType
 {
 	std::string Name;
 	VisibilityAttribute Visibility = VisibilityAttribute::Local;
-	std::vector<Types> TypeList;
+	std::vector<Types> TypeList{};
 };
 }
