@@ -14,6 +14,7 @@
 #include <variant>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include "Types.h"
 #include "../AST/Ast.h"
 #include "Variables.h"
@@ -75,7 +76,7 @@ struct Function {
 
 	size_t UnnamedTemporaryCounter = 0;
 	
-	std::map<std::string, size_t> NamedTemporaries{};
+	std::unordered_map<std::string, size_t> NamedTemporaries{};
 
 	void AppendInstruction(const BodyTypes& body) { Blocks.back().Body.push_back(body); }
 	
