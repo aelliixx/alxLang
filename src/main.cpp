@@ -40,6 +40,11 @@ int main(int argc, const char** argv)
 		.default_value(false)
 		.implicit_value(true)
 		.help("Disables all output ignoring any other flags.");
+	
+	program.add_argument("-S", "--no-assemble")
+		.default_value(false)
+		.implicit_value(true)
+		.help("Do not assemble the generated assembly.");
 
 	program.add_argument("--asm-no-format")
 		.default_value(false)
@@ -83,5 +88,7 @@ int main(int argc, const char** argv)
 
 	alx::Compiler compiler{ sourceBuffer, programName, alx::resolveFlags(program), alx::resolveDebugFlags(program) };
 	compiler.Compile();
+	if (!program.get<bool>("-S"))
+		compiler.Assemble();
 	// nasm -f elf64 comp.asm -o comp.o && ld comp.o -o comp
 }

@@ -9,16 +9,19 @@
 #include "Compiler.h"
 
 #include <chrono>
+#include <fstream>
 
 namespace alx {
 
 Compiler::Compiler(const std::string& code, const std::string& filename, Flags flags, DebugFlags debugFlags)
   : m_flags(flags),
 	m_code(code),
+	m_filename(filename),
 	m_debug_flags(debugFlags)
 {
 	m_error_handler = std::make_shared<ErrorHandler>(code, filename);
-	if (code.empty()) exit(1);
+	if (code.empty())
+		exit(1);
 }
 void Compiler::Compile()
 {
@@ -99,7 +102,8 @@ void Compiler::Compile()
 		m_intermediate_representation->Dump();
 #endif
 	}
-	if (m_debug_flags.quiet_mode) return;
+	if (m_debug_flags.quiet_mode)
+		return;
 
 	m_error_handler->EmitErrorCount();
 
@@ -113,13 +117,25 @@ void Compiler::Compile()
 	}
 	if (m_debug_flags.dump_asm || m_debug_flags.dump_unformatted_asm) {
 		alx::println();
-		if (m_debug_flags.dump_asm) alx::println(ProgramGenerator::FormatAsm(m_generator->Asm()));
+		if (m_debug_flags.dump_asm)
+			alx::println(ProgramGenerator::FormatAsm(m_generator->Asm()));
 		else if (m_debug_flags.dump_unformatted_asm)
 			alx::println(m_generator->Asm());
 	}
 }
+
+void Compiler::Assemble() {
+	std::ofstream out(getFormatted("/tmp/temp_alx.s"));
+	out << m_generator->Asm();
+	out.close();
+	system("nasm -f elf64 /tmp/temp_alx.s -o /tmp/temp_alx.o");
+	system("ld /tmp/temp_alx.o -o ./temp_alx");
+}
+
 std::string Compiler::GetAsm() { return m_generator->Asm(); }
+
 const Program& Compiler::GetAst() { return m_parser->GetAst(); }
+
 std::string Compiler::GetFormattedAsm() { return ProgramGenerator::FormatAsm(GetAsm()); }
 
 #if OUTPUT_IR_TO_STRING

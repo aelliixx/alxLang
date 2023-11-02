@@ -23,6 +23,7 @@ class Compiler
 	std::shared_ptr<ErrorHandler> m_error_handler;
 	const Flags m_flags;
 	const std::string m_code;
+	const std::string& m_filename;
 	const DebugFlags m_debug_flags;
 public:
 	Compiler(const std::string& code,
@@ -31,6 +32,7 @@ public:
 			 DebugFlags debugFlags);
 
 	void Compile();
+	void Assemble();
 	
 	std::string GetAsm();
 	const Program& GetAst();
