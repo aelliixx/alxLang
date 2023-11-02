@@ -128,7 +128,7 @@ private:
 	void generate_func_parameters(FunctionDeclaration&, Function&);
 	void generate_body(const BlockStatement& functionDeclaration, Function& function);
 	void generate_variable(const VariableDeclaration&, Function&);
-	static void generate_return_statement(const ReturnStatement&, Function&, bool);
+	void generate_return_statement(const ReturnStatement&, Function&, bool);
 	std::optional<Values> generate_binary_expression(const BinaryExpression&, Function&);
 	
 	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_expression(const UnaryExpression&, Function&);

@@ -65,18 +65,39 @@ void IR::generate_return_statement(const ReturnStatement& astNode, Function& fun
 
 		}
 	}
+	else if (astNode.Argument()->class_name() == "Identifier") {
+		auto& ident = static_cast<Identifier&>(*astNode.Argument());
+		auto rhsVariable = function.FindVariableByIdentifier(ident.Name());
+		MUST(rhsVariable);
+		LoadInst load{ .Type = *(std::get<AllocaInst>(rhsVariable->Allocation).Type),
+					   .Ptr = rhsVariable,
+					   .Alignment = { std::get<AllocaInst>(rhsVariable->Allocation).Size() } };
+		auto temporary = std::make_shared<Variable>(
+			Variable{ .Name = function.GetNewUnnamedTemporary(),
+					  .Attributes = { AlignAttribute{ std::get<AllocaInst>(rhsVariable->Allocation).Size() } },
+					  .Allocation = load,
+					  .IsTemporary = true });
+		ret.Body.emplace_back(*temporary);
+		ret.Body.emplace_back(ReturnInst{ temporary });
+	}
+	else if (astNode.Argument()->class_name() == "UnaryExpression")
+	{
+		auto result = generate_unary_expression(static_cast<UnaryExpression&>(*astNode.Argument()), function);
+		MUST(result.has_value());
+		ret.Body.emplace_back(ReturnInst{ result.value() });
+	}
 	else
 	{
-		println(Colour::Red, "Unknown node type: {;255;255;255}", astNode.Argument()->class_name());
-		ASSERT_NOT_REACHABLE();
+		ASSERT_NOT_IMPLEMENTED_MSG(getFormatted("Unknown return type: {}", astNode.Argument()->class_name()));
 	}
 
 	if (hasReturned)
 		function.Blocks.emplace_back(std::move(ret));
 	else
-		function.Blocks[0].Body.insert(std::end(function.Blocks[0].Body),
+		function.Blocks.back().Body.insert(std::end(function.Blocks.back().Body),
 									   std::begin(ret.Body),
 									   std::end(ret.Body));
+	hasReturned = true;
 }
 
 }
