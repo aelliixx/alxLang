@@ -14,12 +14,15 @@ namespace alx {
 std::unique_ptr<ASTNode> Parser::parse_statement()
 {
 	auto token = peek();
+	auto nextToken = peek(1);
+	auto nextNextToken = peek(2);
+	
 	if (!token.has_value())
 		return nullptr;
 	switch (token.value().Type) {
 	case TokenType::T_CONST:
-		if (peek(1).has_value() && isNumberType(peek(1).value().Type)) {
-			if (peek(2).has_value() && peek(2).value().Type == TokenType::T_IDENTIFIER)
+		if (nextToken.has_value() && isNumberType(nextToken.value().Type)) {
+			if (nextNextToken.has_value() && nextNextToken.value().Type == TokenType::T_IDENTIFIER)
 				return parse_variable();
 			m_error->FatalError(token.value().LineNumber,
 								token.value().ColumnNumber,
@@ -46,11 +49,11 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	case TokenType::T_CHAR:
 		[[fallthrough]];
 	case TokenType::T_BOOL:
-		if (peek(1).has_value() && peek(1).value().Type == TokenType::T_IDENTIFIER) {
-			if (peek(2).has_value() && peek(2).value().Type == TokenType::T_OPEN_PAREN)
+		if (nextToken.has_value() && nextToken.value().Type == TokenType::T_IDENTIFIER) {
+			if (nextNextToken.has_value() && nextNextToken.value().Type == TokenType::T_OPEN_PAREN)
 				return parse_function();
-			else if ((peek(2).has_value() && peek(2).value().Type == TokenType::T_EQ)
-					 || peek(2).value().Type == TokenType::T_SEMI)
+			else if ((nextNextToken.has_value() && nextNextToken.value().Type == TokenType::T_EQ)
+					 || nextNextToken.value().Type == TokenType::T_SEMI)
 				return parse_variable();
 		}
 		else
@@ -78,7 +81,7 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	case TokenType::T_STRUCT:
 		return parse_struct_declaration();
 	case TokenType::T_IDENTIFIER:
-		if (peek(1).value().Type == TokenType::T_IDENTIFIER)
+		if (nextToken.value().Type == TokenType::T_IDENTIFIER)
 			return parse_variable();
 		[[fallthrough]];
 	default:
