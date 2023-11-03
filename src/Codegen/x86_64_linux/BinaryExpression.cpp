@@ -21,14 +21,12 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 	auto lhs = expr->Lhs();
 	auto rhs = expr->Rhs();
 	auto op = expr->Operator();
-	if (op == TokenType::T_EQ)
-	{
+	if (op == TokenType::T_EQ) {
 		generate_bin_eq(node, context);
 		return;
 	}
 
-	if (lhs->class_name() == "Identifier")
-	{
+	if (lhs->class_name() == "Identifier") {
 		auto lhsId = static_cast<Identifier*>(lhs);
 
 		auto lhsSize = m_stack[lhsId->Name()].second;
@@ -47,8 +45,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 			else
 				m_asm << mov(Reg::rdx, lhsSize, offset(rhsPtr, lhsSize));
 
-			switch (op)
-			{
+			switch (op) {
 			case TokenType::T_PLUS:
 				m_asm << "add " << reg(Reg::rax, lhsSize) << ", " << src << "\n";
 				return;
@@ -66,8 +63,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 		else if (rhs->class_name() == "NumberLiteral") // a + 5
 		{
 			auto rhs_num = static_cast<NumberLiteral*>(rhs);
-			switch (op)
-			{
+			switch (op) {
 			case TokenType::T_PLUS:
 				m_asm << mov(Reg::rax, lhsSize, offset(lhsPtr, lhsSize));
 				m_asm << "add ";
@@ -99,19 +95,28 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 				m_asm << "cmp " << reg(Reg::rax, lhsSize) << ", " << rhs_num->AsInt() - 1 << "\n";
 				return;
 			default:
-			ASSERT_NOT_IMPLEMENTED();
+				ASSERT_NOT_IMPLEMENTED();
 			}
 			m_asm << reg(Reg::rax, lhsSize) << ", " << rhs_num->Value() << "\n";
 			return;
 		}
-		else if (rhs->class_name() == "BinaryExpression")
-		{
-			ASSERT_NOT_IMPLEMENTED();
-
+		else if (rhs->class_name() == "BinaryExpression") {
+			auto rhsBin = static_cast<BinaryExpression*>(rhs);
+			generate_binary_expression(rhsBin);
+			switch (op) {
+			case TokenType::T_SUB_EQ:
+				m_asm << "sub " << offset(lhsPtr, lhsSize) << ", " << reg(Reg::rax, lhsSize) << "\n";
+				break;
+			case TokenType::T_ADD_EQ:
+				m_asm << "add " << offset(lhsPtr, lhsSize) << ", " << reg(Reg::rax, lhsSize) << "\n";
+				break;
+			default:
+				ASSERT_NOT_IMPLEMENTED();
+			}
+			return;
 		}
 	}
-	if (lhs->class_name() == "NumberLiteral")
-	{
+	if (lhs->class_name() == "NumberLiteral") {
 		auto lhsNum = static_cast<NumberLiteral*>(lhs);
 		auto lhsSize = size_of(lhsNum->Type());
 
@@ -122,8 +127,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 			auto rhsPtr = m_stack[rhsId->Name()].first;
 			m_asm << mov(Reg::rax, rhsSize, lhsNum->Value());
 
-			switch (op)
-			{
+			switch (op) {
 			case TokenType::T_PLUS:
 				m_asm << "add " << reg(Reg::rax, rhsSize) << ", " << offset(rhsPtr, rhsSize) << "\n";
 				return;
@@ -134,7 +138,7 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 				m_asm << "imul " << reg(Reg::rax, rhsSize) << ", " << offset(rhsPtr, rhsSize) << "\n";
 				return;
 			default:
-			ASSERT_NOT_IMPLEMENTED();
+				ASSERT_NOT_IMPLEMENTED();
 			}
 		}
 		if (rhs->class_name() == "NumberLiteral") // 5 + 2
@@ -143,11 +147,10 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 			m_asm << mov(Reg::rax, lhsSize, expr->Evaluate()->Value());
 			return;
 		}
-		if (rhs->class_name() == "BinaryExpression") // 5 + 2 * 10 
+		if (rhs->class_name() == "BinaryExpression") // 5 + 2 * 10
 		{
 			generate_binary_expression(rhs);
-			switch (op)
-			{
+			switch (op) {
 			case TokenType::T_PLUS:
 				m_asm << "add " << reg(Reg::rax, lhsSize) << ", " << lhsNum->Value() << "\n";
 				return;
@@ -158,22 +161,19 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 				m_asm << "imul " << reg(Reg::rax, lhsSize) << ", " << lhsNum->Value() << "\n";
 				return;
 			default:
-			ASSERT_NOT_IMPLEMENTED();
+				ASSERT_NOT_IMPLEMENTED();
 			}
 		}
 	}
-	if (lhs->class_name() == "BinaryExpression")
-	{
+	if (lhs->class_name() == "BinaryExpression") {
 		generate_binary_expression(lhs, context);
 		MUST(context.has_value() && "lhs context is missing");
 		auto lhsSize = context.value().LhsSize;
-		if (rhs->class_name() == "Identifier")
-		{
+		if (rhs->class_name() == "Identifier") {
 			auto rhsId = static_cast<Identifier*>(rhs);
 			assert_ident_initialised(rhsId);
 			auto rhsPtr = m_stack[rhsId->Name()].first;
-			switch (op)
-			{
+			switch (op) {
 			case TokenType::T_PLUS:
 				m_asm << "add " << reg(Reg::rax, lhsSize) << ", " << offset(rhsPtr, lhsSize) << "\n";
 				return;
@@ -184,14 +184,12 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 				m_asm << "imul " << reg(Reg::rax, lhsSize) << ", " << offset(rhsPtr, lhsSize) << "\n";
 				return;
 			default:
-			ASSERT_NOT_IMPLEMENTED();
+				ASSERT_NOT_IMPLEMENTED();
 			}
 		}
-		if (rhs->class_name() == "NumberLiteral")
-		{
+		if (rhs->class_name() == "NumberLiteral") {
 			auto rhsNum = static_cast<NumberLiteral*>(rhs);
-			switch (op)
-			{
+			switch (op) {
 			case TokenType::T_PLUS:
 				m_asm << "add " << reg(Reg::rax, lhsSize) << ", " << rhsNum->Value()
 					  << "\n"; // FIXME: Figure out the reg size
@@ -205,11 +203,10 @@ void BlockGenerator::generate_binary_expression(const ASTNode* node, std::option
 					  << "\n"; // FIXME: Figure out the reg size
 				return;
 			default:
-			ASSERT_NOT_IMPLEMENTED();
+				ASSERT_NOT_IMPLEMENTED();
 			}
 		}
-		if (rhs->class_name() == "BinaryExpression")
-		{
+		if (rhs->class_name() == "BinaryExpression") {
 			generate_binary_expression(rhs, context);
 			return;
 		}
@@ -241,34 +238,29 @@ void BlockGenerator::generate_bin_eq(const ASTNode* node, std::optional<Context>
 	auto lhs = expr->Lhs();
 	auto rhs = expr->Rhs();
 	auto op = TokenType::T_EQ;
-	if (lhs->class_name() == "Identifier")
-	{
+	if (lhs->class_name() == "Identifier") {
 		auto lhsId = static_cast<Identifier&>(*lhs);
 		auto lhsPtr = m_stack[lhsId.Name()].first;
 		auto lhsSize = m_stack[lhsId.Name()].second;
 
-//		add_to_stack(lhsId.Name(), lhsSize, TokenType::T_VOID);
+		//		add_to_stack(lhsId.Name(), lhsSize, TokenType::T_VOID);
 
-		if (rhs->class_name() == "NumberLiteral")
-		{
+		if (rhs->class_name() == "NumberLiteral") {
 			auto rhsNum = static_cast<NumberLiteral*>(rhs);
 			m_asm << "mov " << bytes_to_data_size(lhsSize) << " [rbp-" << lhsPtr << "], " << rhsNum->Value() << "\n";
 			if (context.has_value() && context.value().AssignmentChain)
 				m_asm << mov(Reg::rax, lhsSize, offset(lhsPtr, lhsSize));
-//			generate_assign_num_l(lhs_size, rhs_num);
+			//			generate_assign_num_l(lhs_size, rhs_num);
 			return;
 		}
-		if (rhs->class_name() == "Identifier")
-		{
+		if (rhs->class_name() == "Identifier") {
 			auto rhsId = static_cast<Identifier&>(*rhs);
 			generate_assignment_ident(rhsId, m_stack[lhsId.Name()].second, false);
 			return;
 		}
-		if (rhs->class_name() == "BinaryExpression")
-		{
+		if (rhs->class_name() == "BinaryExpression") {
 			auto rhsBin = static_cast<BinaryExpression*>(rhs);
-			if (rhsBin->Constexpr())
-			{
+			if (rhsBin->Constexpr()) {
 				m_asm << mov(offset(m_bp_offset, lhsSize), lhsSize, rhsBin->Evaluate()->Value());
 				return;
 			}
@@ -277,30 +269,25 @@ void BlockGenerator::generate_bin_eq(const ASTNode* node, std::optional<Context>
 			m_asm << mov(offset(m_bp_offset, lhsSize), lhsSize, reg(Reg::rax, lhsSize));
 			return;
 		}
-
 	}
-	if (lhs->class_name() == "BinaryExpression")
-	{
+	if (lhs->class_name() == "BinaryExpression") {
 		// TODO: Refactor this out
 		auto lhsBinExp = static_cast<BinaryExpression*>(lhs);
 		if (lhsBinExp->Rhs()->class_name() == "NumberLiteral")
 			throw_not_assignable(lhsBinExp->Rhs(), rhs, op);
 		size_t lhsSize = 4; // FIXME
 
-		if (rhs->class_name() == "NumberLiteral")
-		{
+		if (rhs->class_name() == "NumberLiteral") {
 			auto rhsNum = static_cast<NumberLiteral*>(rhs);
 			generate_assign_num_l(lhsSize, rhsNum);
 			return;
 		}
-		else if (rhs->class_name() == "Identifier")
-		{
+		else if (rhs->class_name() == "Identifier") {
 			auto rhsId = static_cast<Identifier&>(*rhs);
 			generate_assignment_ident(rhsId, 2, false); // FIXME: fix the sign
 			return;
 		}
-		else if (rhs->class_name() == "BinaryExpression")
-		{
+		else if (rhs->class_name() == "BinaryExpression") {
 			Context newContext = { .LhsSize = lhsSize };
 			generate_binary_expression(lhs, newContext);
 			return;
