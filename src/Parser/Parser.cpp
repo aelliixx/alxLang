@@ -94,12 +94,9 @@ std::unique_ptr<Expression> Parser::parse_term()
 			&& (peek(1).value().Type == TokenType::T_DOT || peek(1).value().Type == TokenType::T_ARROW
 				|| peek(1).value().Type == TokenType::T_COLON_COLON))
 			return parse_member_expression();
-		
+
 		auto identifier = must_consume(TokenType::T_IDENTIFIER);
-		if (std::find_if(m_variables[m_current_scope_name].begin(),
-						 m_variables[m_current_scope_name].end(),
-						 [identifier](VariableDeclaration* var) { return var->Name() == identifier.Value.value(); })
-			== m_variables[m_current_scope_name].end())
+		if (!find_variable_by_name(get_fully_qualified_name(identifier.Value.value(), m_current_scope_name)))
 			m_error->Error(identifier.LineNumber,
 						   identifier.ColumnNumber,
 						   identifier.PosNumber,
@@ -168,12 +165,26 @@ Token Parser::must_consume(TokenType token)
 				   token_to_string(peek(-1).value().Type));
 	exit(EXIT_FAILURE);
 }
+
 void Parser::consume_semicolon(const std::unique_ptr<ASTNode>& statement)
 {
 	if (statement->class_name() != "IfStatement" && statement->class_name() != "WhileStatement"
 		&& statement->class_name() != "StructDeclaration")
 		must_consume(TokenType::T_SEMI);
 }
-void Parser::add_variable(VariableDeclaration* var) { m_variables.at(m_current_scope_name).push_back(var); }
+
+void Parser::add_variable(VariableDeclaration* var) { m_variables[var->FullyQualifiedName()] = var; }
+
+std::string Parser::get_fully_qualified_name(const std::string& name, const std::string& scope)
+{
+	if (scope.empty())
+		return name;
+	return scope + "::" + name;
+}
+
+bool Parser::find_variable_by_name(const std::string& qualifiedName)
+{
+	return m_variables.find(qualifiedName) != m_variables.end();
+}
 
 } // namespace alx

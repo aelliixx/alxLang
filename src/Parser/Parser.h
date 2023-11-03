@@ -9,6 +9,7 @@
 #pragma once
 #include <map>
 #include <list>
+#include <unordered_map>
 #include "../AST/Ast.h"
 #include "../libs/Println.h"
 #include "../Tokeniser/Tokeniser.h"
@@ -23,7 +24,7 @@ class Parser
 	size_t m_index{};
 	std::string m_current_scope_name;
 	std::variant<TokenType, std::unique_ptr<Identifier>> m_current_return_type;
-	std::map<std::string, std::vector<VariableDeclaration*>> m_variables;
+	std::unordered_map<std::string, VariableDeclaration*> m_variables;
 
 	int get_binary_op_precedence(const Token& token);
 
@@ -57,5 +58,8 @@ private:
 	std::unique_ptr<MemberExpression> parse_member_expression();
 	void consume_semicolon(const std::unique_ptr<ASTNode>& statement);
 	void add_variable(VariableDeclaration*);
+	
+	bool find_variable_by_name(const std::string& qualifiedName);
+	static std::string get_fully_qualified_name(const std::string& name, const std::string& scope);
 };
 }

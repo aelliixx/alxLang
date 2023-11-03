@@ -21,7 +21,6 @@ std::unique_ptr<StructDeclaration> Parser::parse_struct_declaration()
 	std::vector<std::unique_ptr<ASTNode>> members;
 	std::vector<std::unique_ptr<ASTNode>> methods;
 	m_current_scope_name = name.Value.value();
-	m_variables[m_current_scope_name] = {};
 	while (peek().has_value() && peek().value().Type != TokenType::T_CURLY_CLOSE)
 	{
 		auto statement = parse_statement();

@@ -20,8 +20,8 @@
 namespace alx {
 enum class AccessModeType
 {
-	a_global = 0,        // Global functions, global classes and structs, global enums
-	a_scoped = 1,        // Local variables
+	a_global = 0, // Global functions, global classes and structs, global enums
+	a_scoped = 1, // Local variables
 	a_public = 2,
 	a_protected = 3,
 	a_private = 4
@@ -50,18 +50,16 @@ protected:
 	std::vector<std::unique_ptr<ASTNode>> m_children;
 	[[maybe_unused]] static void dump_nodes(const std::vector<std::unique_ptr<ASTNode>>&, int indent);
 	ScopeNode() = default;
+
 public:
-	template<typename T, typename ...Args>
-	T& Append(Args&& ...args)
+	template<typename T, typename... Args>
+	T& Append(Args&&... args)
 	{
 		auto child = std::make_unique<T>(std::forward<Args>(args)...);
 		m_children.push_back(std::move(child));
 		return *static_cast<T*>(m_children.back().get());
 	}
-	void Append(std::unique_ptr<ASTNode> node)
-	{
-		m_children.push_back(std::move(node));
-	}
+	void Append(std::unique_ptr<ASTNode> node) { m_children.push_back(std::move(node)); }
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	[[nodiscard]] const std::vector<std::unique_ptr<ASTNode>>& Children() const { return m_children; }
@@ -113,13 +111,10 @@ class NumberLiteral : public Expression
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	NumberLiteral(TokenType type, std::string value)
-		: m_type(type),
-		  m_value(std::move(value))
+	NumberLiteral(TokenType type, std::string value) : m_type(type), m_value(std::move(value))
 	{
 		std::string::size_type n;
-		while ((n = m_value.find(',')) != std::string::npos)
-			m_value.replace(n, 1, "");
+		while ((n = m_value.find(',')) != std::string::npos) m_value.replace(n, 1, "");
 	}
 
 	[[nodiscard]] TokenType Type() const { return m_type; }
@@ -128,10 +123,7 @@ public:
 	[[nodiscard]] float AsFloat() const { return std::stof(m_value); }
 	[[nodiscard]] double AsDouble() const { return std::stod(m_value); }
 	[[nodiscard]] long AsBoolNum() const { return !!std::stoi(m_value); }
-	[[nodiscard]] std::string AsBool() const
-	{
-		return AsInt() ? "true" : "false";
-	}
+	[[nodiscard]] std::string AsBool() const { return AsInt() ? "true" : "false"; }
 };
 
 class StringLiteral : public Expression
@@ -143,12 +135,10 @@ class StringLiteral : public Expression
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	explicit StringLiteral(std::string value)
-		: m_value(std::move(value)) {}
+	explicit StringLiteral(std::string value) : m_value(std::move(value)) {}
 
 	[[nodiscard]] std::string Value() const { return m_value; }
 	[[nodiscard]] uint Length() const { return m_value.length(); }
-
 };
 
 class BinaryExpression : public Expression
@@ -159,6 +149,7 @@ class BinaryExpression : public Expression
 	bool m_constexpr{};
 	std::optional<std::variant<NumberLiteral, StringLiteral>> m_value; // Only valid when constexpr
 	bool m_operands_match{};
+
 public:
 	BinaryExpression(std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs, TokenType binaryOp);
 
@@ -192,55 +183,60 @@ class VariableDeclaration : public ASTNode
 	std::variant<TokenType, std::unique_ptr<Identifier>> m_type;
 	std::unique_ptr<Identifier> m_identifier;
 	std::unique_ptr<Expression> m_value;
+	std::string m_fully_qualified_name;
+
 	AccessModeType m_access_mode = AccessModeType::a_scoped;
+
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
 	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
 						std::unique_ptr<Identifier> identifier,
-						std::unique_ptr<Expression> value)
-		: m_type(std::move(type)),
-		  m_identifier(std::move(identifier)),
-		  m_value(std::move(value))
-	{
-	}
+						std::unique_ptr<Expression> value,
+						std::string fullyQualifiedName)
+	  : m_type(std::move(type)),
+		m_identifier(std::move(identifier)),
+		m_value(std::move(value)),
+		m_fully_qualified_name(std::move(fullyQualifiedName))
+	{}
 
 	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
 						std::unique_ptr<Identifier> identifier,
 						std::unique_ptr<Expression> value,
-						AccessModeType accessMode)
-		: m_type(std::move(type)),
-		  m_identifier(std::move(identifier)),
-		  m_value(std::move(value)),
-		  m_access_mode(accessMode)
-	{
-	}
-
-	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
-						std::unique_ptr<Identifier> identifier)
-		: m_type(std::move(type)),
-		  m_identifier(std::move(identifier))
-	{
-	}
+						AccessModeType accessMode,
+						std::string fullyQualifiedName)
+	  : m_type(std::move(type)),
+		m_identifier(std::move(identifier)),
+		m_value(std::move(value)),
+		m_fully_qualified_name(std::move(fullyQualifiedName)),
+		m_access_mode(accessMode)
+	{}
 
 	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
 						std::unique_ptr<Identifier> identifier,
-						AccessModeType accessMode)
-		: m_type(std::move(type)),
-		  m_identifier(std::move(identifier)),
-		  m_access_mode(accessMode)
-	{
-	}
+						std::string fullyQualifiedName)
+	  : m_type(std::move(type)),
+		m_identifier(std::move(identifier)),
+		m_fully_qualified_name(std::move(fullyQualifiedName))
+	{}
 
-	void AssignValue(std::unique_ptr<Expression> expression)
-	{
-		m_value = std::move(expression);
-	}
+	VariableDeclaration(std::variant<TokenType, std::unique_ptr<Identifier>> type,
+						std::unique_ptr<Identifier> identifier,
+						AccessModeType accessMode,
+						std::string fullyQualifiedName)
+	  : m_type(std::move(type)),
+		m_identifier(std::move(identifier)),
+		m_fully_qualified_name(std::move(fullyQualifiedName)),
+		m_access_mode(accessMode)
+	{}
+
+	void AssignValue(std::unique_ptr<Expression> expression) { m_value = std::move(expression); }
 
 	[[nodiscard]] AccessModeType AccessMode() const { return m_access_mode; }
 	[[nodiscard]] const Identifier& Ident() const { return *m_identifier; }
 	[[nodiscard]] Expression* Value() const { return m_value.get(); }
 	[[nodiscard]] const std::string& Name() const { return m_identifier->Name(); }
+	[[nodiscard]] const std::string& FullyQualifiedName() const { return m_fully_qualified_name; }
 	[[nodiscard]] auto& Type() const { return m_type; }
 	[[nodiscard]] size_t TypeIndex() const { return m_type.index(); }
 	[[nodiscard]] TokenType TypeAsPrimitive() const { return std::get<TokenType>(m_type); }
@@ -264,19 +260,13 @@ class IfStatement : public ScopeNode
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	IfStatement(std::unique_ptr<Expression> expression,
-				std::unique_ptr<BlockStatement> body)
-		: m_condition(std::move(expression)),
-		  m_body(std::move(body)) {}
+	IfStatement(std::unique_ptr<Expression> expression, std::unique_ptr<BlockStatement> body)
+	  : m_condition(std::move(expression)),
+		m_body(std::move(body))
+	{}
 
-	void SetCondition(const Expression& expression)
-	{
-		m_condition = std::make_unique<Expression>(expression);
-	}
-	void SetAlternate(std::unique_ptr<ScopeNode> alternate)
-	{
-		m_alternate = std::move(alternate);
-	}
+	void SetCondition(const Expression& expression) { m_condition = std::make_unique<Expression>(expression); }
+	void SetAlternate(std::unique_ptr<ScopeNode> alternate) { m_alternate = std::move(alternate); }
 
 	[[nodiscard]] Expression* Condition() const { return m_condition.get(); }
 	[[nodiscard]] const std::optional<std::unique_ptr<ScopeNode>>& Alternate() const { return m_alternate; }
@@ -290,18 +280,16 @@ class WhileStatement : public ScopeNode
 	[[nodiscard]] std::string class_name() const override { return "WhileStatement"; }
 	std::unique_ptr<Expression> m_condition;
 	std::unique_ptr<BlockStatement> m_body;
+
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
-	WhileStatement(std::unique_ptr<Expression> expression,
-				   std::unique_ptr<BlockStatement> body)
-		: m_condition(std::move(expression)),
-		  m_body(std::move(body)) {}
+	WhileStatement(std::unique_ptr<Expression> expression, std::unique_ptr<BlockStatement> body)
+	  : m_condition(std::move(expression)),
+		m_body(std::move(body))
+	{}
 
-	void SetCondition(const Expression& expression)
-	{
-		m_condition = std::make_unique<Expression>(expression);
-	}
+	void SetCondition(const Expression& expression) { m_condition = std::make_unique<Expression>(expression); }
 
 	[[nodiscard]] Expression* Condition() const { return m_condition.get(); }
 	[[nodiscard]] const BlockStatement& Body() const { return *m_body; }
@@ -324,21 +312,23 @@ public:
 						std::unique_ptr<Identifier> name,
 						std::unique_ptr<BlockStatement> body,
 						std::vector<std::unique_ptr<VariableDeclaration>> args)
-		: m_return_type(returnType),
-		  m_identifier(std::move(name)),
-		  m_parameters(std::move(args)),
-		  m_body(std::move(body)) {}
+	  : m_return_type(returnType),
+		m_identifier(std::move(name)),
+		m_parameters(std::move(args)),
+		m_body(std::move(body))
+	{}
 
 	FunctionDeclaration(TokenType returnType,
 						std::unique_ptr<Identifier> name,
 						std::unique_ptr<BlockStatement> body,
 						std::vector<std::unique_ptr<VariableDeclaration>> args,
 						AccessModeType accessMode)
-		: m_return_type(returnType),
-		  m_identifier(std::move(name)),
-		  m_parameters(std::move(args)),
-		  m_body(std::move(body)),
-		  m_access_mode(accessMode) {}
+	  : m_return_type(returnType),
+		m_identifier(std::move(name)),
+		m_parameters(std::move(args)),
+		m_body(std::move(body)),
+		m_access_mode(accessMode)
+	{}
 
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	[[nodiscard]] TokenType ReturnType() const { return m_return_type; }
@@ -373,7 +363,6 @@ public:
 class ClassDeclaration : public StructDeclaration
 {
 	[[nodiscard]] std::string class_name() const override { return "ClassDeclaration"; }
-
 };
 
 class MemberExpression : public Expression
@@ -383,6 +372,7 @@ class MemberExpression : public Expression
 	std::unique_ptr<Identifier> m_member;
 	std::variant<TokenType, std::unique_ptr<Identifier>> m_type;
 	TokenType m_accessor;
+
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 
@@ -390,10 +380,11 @@ public:
 					 std::unique_ptr<Identifier> object,
 					 std::unique_ptr<Identifier> member,
 					 std::variant<TokenType, std::unique_ptr<Identifier>> type)
-		: m_object(std::move(object)),
-		  m_member(std::move(member)),
-		  m_type(std::move(type)),
-		  m_accessor(accessor) {}
+	  : m_object(std::move(object)),
+		m_member(std::move(member)),
+		m_type(std::move(type)),
+		m_accessor(accessor)
+	{}
 
 	[[nodiscard]] const Identifier& Object() const { return *m_object; }
 	[[nodiscard]] const Identifier& Member() const { return *m_member; }
@@ -402,13 +393,13 @@ public:
 	[[nodiscard]] Identifier* TypeAsIdentifier() const { return std::get<1>(m_type).get(); }
 	[[nodiscard]] size_t TypeIndex() const { return m_type.index(); }
 	[[nodiscard]] TokenType Accessor() const { return m_accessor; }
-
 };
 
 class ReturnStatement : public ASTNode
 {
 	[[nodiscard]] std::string class_name() const override { return "ReturnStatement"; }
 	std::unique_ptr<Expression> m_argument;
+
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
 	explicit ReturnStatement(std::unique_ptr<Expression> argument) : m_argument(std::move(argument)) {}

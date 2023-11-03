@@ -21,7 +21,6 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 		|| returnType == TokenType::T_BOOL)
 	{
 		auto name = consume().Value;
-		m_variables[name.value()] = {};
 		m_current_scope_name = name.value();
 		auto paren = consume();
 		if (paren.Type != TokenType::T_OPEN_PAREN)
@@ -43,16 +42,16 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 							   "Unexpected token '{}' in variable declaration", token_to_string(argType));
 
 			auto argName = argNameToken.Value;
-
+			auto fullyQualifiedName = Parser::get_fully_qualified_name(argName.value(), m_current_scope_name);
 			if (peek().has_value() && peek().value().Type == TokenType::T_EQ)// Default arguments
 			{
 				must_consume(TokenType::T_EQ);
 				if (peek().has_value() && isNumberLiteral(peek().value().Type))
 					args.emplace_back(std::make_unique<VariableDeclaration>(
-						argType, std::make_unique<Identifier>(argName.value()), parse_number_literal()));
+						argType, std::make_unique<Identifier>(argName.value()), parse_number_literal(), fullyQualifiedName));
 				else if (peek().has_value() && peek().value().Type == TokenType::T_STR_L)
 					args.emplace_back(std::make_unique<VariableDeclaration>(
-						argType, std::make_unique<Identifier>(argName.value()), parse_string_literal()));
+						argType, std::make_unique<Identifier>(argName.value()), parse_string_literal(), fullyQualifiedName));
 				if (peek().value().Type == TokenType::T_COMMA) consume();
 				continue;
 			}
@@ -64,7 +63,7 @@ std::unique_ptr<FunctionDeclaration> Parser::parse_function()
 							   "Missing default argument on {}", argName.value());
 
 			args.emplace_back(
-				std::make_unique<VariableDeclaration>(argType, std::make_unique<Identifier>(argName.value())));
+				std::make_unique<VariableDeclaration>(argType, std::make_unique<Identifier>(argName.value()), fullyQualifiedName));
 			if (peek().value().Type == TokenType::T_COMMA) consume();
 		}
 		must_consume(TokenType::T_CLOSE_PAREN);// Eat ')'

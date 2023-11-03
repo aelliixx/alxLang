@@ -17,14 +17,10 @@ std::unique_ptr<MemberExpression> Parser::parse_member_expression()
 	auto accessor = consume().Type; // This is always either a '.', '->' or '::' as checked by Parser::parse_term()
 	auto property = must_consume(TokenType::T_IDENTIFIER);
 	auto memPtr = std::make_unique<Identifier>(property.Value.value());
-	auto scopeVars = m_variables.at(m_current_scope_name);
 
 	// Find the identifier in the AST
-	auto object = std::find_if(scopeVars.begin(), scopeVars.end(), [&identPtr](VariableDeclaration* var)
-	{
-	  return identPtr->Name() == var->Name();
-	});
-	if (object == scopeVars.end())
+	auto object = m_variables.find(Parser::get_fully_qualified_name(identifier.Value.value(), m_current_scope_name));
+	if (object == m_variables.end())
 		m_error->Error(identifier.LineNumber,
 					   identifier.ColumnNumber,
 					   identifier.PosNumber,
@@ -40,7 +36,7 @@ std::unique_ptr<MemberExpression> Parser::parse_member_expression()
 		  if (child->class_name() == "StructDeclaration")
 		  {
 			  const auto& it = static_cast<StructDeclaration&>(*child);
-			  return it.Name() == (*object)->TypeName();
+			  return it.Name() == (*object).second->TypeName();
 		  }
 		  return false;
 		});
@@ -73,7 +69,7 @@ std::unique_ptr<MemberExpression> Parser::parse_member_expression()
 		  if (child->class_name() == "ClassDeclaration")
 		  {
 			  const auto& it = static_cast<ClassDeclaration&>(*child);
-			  return it.Name() == (*object)->Name();
+			  return it.Name() == (*object).second->Name();
 		  }
 		  return false;
 		});
