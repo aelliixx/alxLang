@@ -62,9 +62,9 @@ template<typename... Param>
 class VariadicArgParser
 {
 
-	std::string _text;
-	std::string _format;
-	std::vector<std::string> _args;
+	std::string _text{};
+	std::string _format{};
+	std::vector<std::string> _args{};
 
 	template<typename T, typename... Rest>
 	void set_args(T& first, Rest&... rest)
@@ -119,7 +119,7 @@ class VariadicArgParser
 		const size_t argCount = _args.size();
 
 		bool paramSequence = false;
-		uint seqStartIndex;
+		uint seqStartIndex{};
 
 		for (uint i = 0; i < length; ++i) {
 			if (parsed[i] == '{') {

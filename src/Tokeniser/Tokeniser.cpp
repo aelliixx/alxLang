@@ -9,6 +9,7 @@
 #include <regex>
 #include <utility>
 #include "Tokeniser.h"
+#include "../libs/ctre.hpp"
 
 namespace alx {
 Tokeniser::Tokeniser(std::string source, const std::shared_ptr<ErrorHandler>& errorHandler)
@@ -67,7 +68,8 @@ std::vector<Token> Tokeniser::Tokenise()
 
 				if (m_keywords.contains(buffer)) {
 					std::string value = buffer;
-					if (buffer == "true") value = "1";
+					if (buffer == "true")
+						value = "1";
 					else if (buffer == "false")
 						value = "0";
 					m_tokens.emplace_back(
@@ -269,32 +271,43 @@ bool Tokeniser::is_space(char character) { return character == ' '; }
 
 bool Tokeniser::is_alpha(char character)
 {
-	m_temp_char = (char)character;
-	return std::regex_match(m_temp_char, m_alpha);
+	return ((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || character == '_');
 }
 
 bool Tokeniser::is_alpha_numeric(char character)
 {
-	m_temp_char = (char)character;
-	return std::regex_match(m_temp_char, m_alpha_numeric);
+	return ((character >= '0' && character <= '9') || (character >= 'a' && character <= 'z')
+			|| (character >= 'A' && character <= 'Z') || character == '_');
 }
 
-bool Tokeniser::is_double(const std::string& number) { return std::regex_match(number, m_double); }
+bool Tokeniser::is_double(const std::string& number)
+{
+	return ctre::match<R"(^-?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?\b$)">(number);
+}
 
 bool Tokeniser::is_digit(char character)
 {
-	m_temp_char = (char)character;
-	return std::regex_match(m_temp_char, m_digit);
+	return (character >= '0' && character <= '9');
 }
-bool Tokeniser::is_integer(const std::string& number) { return std::regex_match(number, m_integer); }
-bool Tokeniser::is_float(const std::string& number) { return std::regex_match(number, m_float); }
+bool Tokeniser::is_integer(const std::string& number)
+{
+	// Benchmarks show that converting this to string_view saves us a few % of performance (???)
+	std::string_view num = number;
+	return ctre::match<R"(^-?(\d*|\d{1,3}(,\d{3})*)\b$)">(num);
+}
+bool Tokeniser::is_float(const std::string& number)
+{
+	return ctre::match<R"(^-?(\d*|\d{1,3}(,\d{3})*)(\.\d+)?[f]\b$)">(number);
+	//	return std::regex_match(number, m_float);
+}
 bool Tokeniser::is_number(const std::string& number)
 {
 	return is_integer(number) || is_double(number) || is_float(number);
 }
 std::optional<char> Tokeniser::peek(int ahead) const
 {
-	if (m_index + ahead < m_source.length()) return m_source.at(m_index + ahead);
+	if (m_index + ahead < m_source.length())
+		return m_source.at(m_index + ahead);
 	return {};
 }
 char Tokeniser::consume()

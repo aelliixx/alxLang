@@ -128,8 +128,8 @@ void Compiler::Assemble() {
 	std::ofstream out(getFormatted("/tmp/temp_alx.s"));
 	out << m_generator->Asm();
 	out.close();
-	system("nasm -f elf64 /tmp/temp_alx.s -o /tmp/temp_alx.o");
-	system("ld /tmp/temp_alx.o -o ./temp_alx");
+	[[maybe_unused]] auto nasmStatus = system("nasm -f elf64 /tmp/temp_alx.s -o /tmp/temp_alx.o");
+	[[maybe_unused]] auto ldStatus = system("ld /tmp/temp_alx.o -o ./temp_alx");
 }
 
 std::string Compiler::GetAsm() { return m_generator->Asm(); }

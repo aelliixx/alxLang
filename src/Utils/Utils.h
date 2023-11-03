@@ -34,12 +34,34 @@ namespace alx {
 #define ASSERT_NOT_REACHABLE() throw std::runtime_error("Not reachable")
 #endif
 
-#define SHOULD(expr) if (!(expr)) alx::println(alx::Colour::Orange, "{}:{}: {}", \
-        std::source_location::current().file_name(), std::source_location::current().line(), "Assertion failed: " #expr)
+#define SHOULD(expr)                                                                                                   \
+	if (!(expr))                                                                                                       \
+	alx::println(alx::Colour::Orange,                                                                                  \
+				 "{}:{}: {}",                                                                                          \
+				 std::source_location::current().file_name(),                                                          \
+				 std::source_location::current().line(),                                                               \
+				 "Assertion failed: " #expr)
 
 #if CRASH_ON_ASSERTION_FAILURE
 #define MUST(expr) assert(expr && "Assertion failed: " #expr)
 #else
-#define MUST(expr) if (!(expr)) throw std::runtime_error("Assertion failed: " #expr)
+#define MUST(expr)                                                                                                     \
+	if (!(expr))                                                                                                       \
+	throw std::runtime_error("Assertion failed: " #expr)
 #endif
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__NVCOMPILER)
+#define ALX_GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
+#else
+#define ALX_GCC_VERSION 0
+#endif
+
+#ifndef ALWAYS_INLINE
+#if ALX_GCC_VERSION
+#define ALWAYS_INLINE inline __attribute__((always_inline))
+#else
+#define ALWAYS_INLINE inline
+#endif
+#endif
+
 }
