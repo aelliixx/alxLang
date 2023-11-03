@@ -120,6 +120,7 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 	auto rhs = binaryExpression.Rhs();
 	if (lhs->class_name() == "Identifier") {
 		auto astIdentifier = static_cast<const Identifier&>(*lhs);
+		
 		auto variable = function.FindVariableByIdentifier(astIdentifier.Name());
 		MUST(variable);
 
@@ -131,11 +132,11 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 					  .Attributes = { AlignAttribute{ std::get<AllocaInst>(variable->Allocation).Size() } },
 					  .Allocation = loadLhs,
 					  .IsTemporary = true });
-		function.AppendInstruction(*temporary);
 
 		if (rhs->class_name() == "NumberLiteral") {
 			const auto& numLit = static_cast<const NumberLiteral&>(*rhs);
 			auto value = IR::NumberLiteralToValue(numLit, variable->Size());
+			function.AppendInstruction(*temporary);
 			auto instructionTemp = instruction(temporary, value);
 			return instructionTemp;
 		}
@@ -152,6 +153,7 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 						  .Attributes = { AlignAttribute{ std::get<AllocaInst>(rhsVariable->Allocation).Size() } },
 						  .Allocation = loadRhs,
 						  .IsTemporary = true });
+			function.AppendInstruction(*temporary);
 			function.AppendInstruction(*temporaryRhs);
 			auto instructionTemp = instruction(temporary, temporaryRhs);
 			return instructionTemp;
@@ -159,12 +161,14 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 		else if (rhs->class_name() == "BinaryExpression") {
 			auto result = generate_binary_expression(static_cast<BinaryExpression&>(*rhs), function);
 			MUST(result.has_value());
+			function.AppendInstruction(*temporary);
 			auto instructionTemp = instruction(temporary, result.value());
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "UnaryExpression") {
 			auto result = generate_unary_expression(static_cast<UnaryExpression&>(*rhs), function);
 			MUST(result.has_value());
+			function.AppendInstruction(*temporary);
 			auto instructionTemp = instruction(temporary, result.value());
 			return instructionTemp;
 		}
@@ -193,7 +197,7 @@ std::optional<std::shared_ptr<Variable>> IR::generate_binary_op(const BinaryExpr
 						  .Allocation = loadLhs,
 						  .IsTemporary = true });
 			function.AppendInstruction(*temporary);
-			auto instructionTemp = instruction(temporary, temporary);
+			auto instructionTemp = instruction(value, temporary);
 			return instructionTemp;
 		}
 		else if (rhs->class_name() == "NumberLiteral") {
