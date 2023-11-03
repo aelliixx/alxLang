@@ -12,6 +12,7 @@
 #include <vector>
 #include <sstream>
 #include <list>
+#include <unordered_map>
 #include "../../AST/Ast.h"
 #include "../../Utils/Flags.h"
 
@@ -44,15 +45,15 @@ class BlockGenerator
 	bool m_explicit_return = false;
 	bool m_in_global_scope = false;
 	const std::vector<std::unique_ptr<ASTNode>>& m_program_ast;
-	std::map<std::string, std::pair<size_t, size_t>> m_stack;
-	std::map<std::string, TokenType> m_stack_types;
+	std::unordered_map<std::string, std::pair<size_t, size_t>> m_stack;
+	std::unordered_map<std::string, TokenType> m_stack_types;
 	TokenType m_return_type;
 
 	Flags m_flags{};
 public:
 	BlockGenerator(BlockGenerator&& other) = delete;
 	BlockGenerator(const ScopeNode& block,
-				   const std::map<std::string, std::pair<size_t, size_t>>& stack,
+				   const std::unordered_map<std::string, std::pair<size_t, size_t>>& stack,
 				   size_t bpOffset,
 				   size_t labelIndex,
 				   std::list<std::pair<ASTNode*, std::string>>& labels,
