@@ -7,6 +7,8 @@
 //
 
 #include "Ir.h"
+
+#include <utility>
 #include "../libs/Println.h"
 #include "Instructions.h"
 
@@ -53,10 +55,6 @@ Values IR::NumberLiteralToValue(const NumberLiteral& literal, size_t size)
 		ASSERT_NOT_REACHABLE();
 	}
 }
-
-
-
-
 
 
 }

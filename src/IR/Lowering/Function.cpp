@@ -11,31 +11,27 @@
 namespace alx::ir {
 std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& name)
 {
-	Variable variable;
+	std::shared_ptr<Variable> variable;
 	if (std::find_if(Blocks.begin(), Blocks.end(), [&name, &variable](LogicalBlock& block) {
-		auto identifiers = block.Identifiers();
-		auto it = std::find_if(identifiers.begin(), identifiers.end(), [name, &variable](const Variable& ident) {
-			if (ident.Name == name) {
-				variable = ident;
-				return true;
-			}
-			return false;
-		});
-		if (it != identifiers.end())
+		const auto& identifiers = block.Identifiers();
+		auto it = identifiers.find(name);
+		if (it != identifiers.end()) {
+			variable = (it)->second;
 			return true;
+		}
 		return false;
 	}) == Blocks.end())
 	{
 		println(Colour::Red, "Could not find variable {} in any of the blocks", name);
 		return nullptr;
 	}
-	return std::make_unique<Variable>(variable);
+	return variable;
 }
 
-[[maybe_unused]] LogicalBlock& Function::GetBlockByLabel(const std::string& label) { 
-	auto it = std::find_if(Blocks.begin(), Blocks.end(), [&label](const LogicalBlock& block) {
-		return block.Label.Name == label;
-	});
+[[maybe_unused]] LogicalBlock& Function::GetBlockByLabel(const std::string& label)
+{
+	auto it = std::find_if(
+		Blocks.begin(), Blocks.end(), [&label](const LogicalBlock& block) { return block.Label.Name == label; });
 	if (it == Blocks.end()) {
 		println(Colour::Red, "Could not find block with label {}", label);
 	}

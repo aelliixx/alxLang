@@ -24,6 +24,11 @@ class Parser
 	size_t m_index{};
 	std::string m_current_scope_name;
 	std::variant<TokenType, std::unique_ptr<Identifier>> m_current_return_type;
+	
+	// FIXME: It is not unreasonable that a project may contain tens of thousands of variables.
+	//     	  Therefore we might want to split this hashmap by scope e.g. 
+	//     	  std::unordered_map<std::string, std::unordered_map<std::string, VariableDeclaration*>> m_variables;
+	//                                ^ scope name                        	^ variable name
 	std::unordered_map<std::string, VariableDeclaration*> m_variables;
 
 	int get_binary_op_precedence(const Token& token);

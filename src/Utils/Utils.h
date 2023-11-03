@@ -64,4 +64,32 @@ namespace alx {
 #endif
 #endif
 
+#ifndef BENCHMARK_HASHMAP
+#define BENCHMARK_HASHMAP(map)                                                                                         \
+	do {                                                                                                               \
+		size_t collisions{};                                                                                           \
+		double avgCollidedBucketSize{};                                                                                \
+		size_t largestBucket = 0;                                                                                      \
+		for (size_t i = 0; i < map.bucket_count(); ++i) {                                                              \
+			if (map.bucket_size(i) > 1) {                                                                              \
+				++collisions;                                                                                          \
+				avgCollidedBucketSize += map.bucket_size(i);                                                           \
+			}                                                                                                          \
+			largestBucket = std::max(largestBucket, map.bucket_size(i));                                               \
+		}                                                                                                              \
+		avgCollidedBucketSize /= collisions;                                                                           \
+		println("----------------------------");                                                                       \
+		println("Analysing hashmap: {;60;110;199}", #map);                                                              \
+		println("There are {} buckets", map.bucket_count());                                                           \
+		println("There are {} items in the hashmap", map.size());                                                      \
+		if (collisions) {                                                                                              \
+			println(Colour::Red, "Found {} collisions", collisions);                                                   \
+			println("Average collided bucket size: {}, largest bucket: {}", avgCollidedBucketSize, largestBucket);     \
+		}                                                                                                              \
+		else                                                                                                           \
+			println(Colour::Green, "Found no collisions!");                                                            \
+		println("----------------------------");                                                                       \
+	} while (false)
+#endif
+
 }

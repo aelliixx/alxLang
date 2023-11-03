@@ -5,10 +5,6 @@
 //
 // Created by aelliixx on 2023-10-08.
 //
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCInconsistentNamingInspection"
-#endif
 #pragma once
 #include <string>
 #include <variant>
@@ -35,27 +31,24 @@ struct FunctionParameter {
 using BodyTypes = std::variant<LabelType, ReturnInst, Variable, StoreInst, BranchInst>;
 class LogicalBlock
 {
-	std::vector<Variable> m_identifiers_cache;
+	std::unordered_map<std::string, std::shared_ptr<Variable>> m_identifiers;
 
 public:
 	LabelType Label;
 	std::vector<BodyTypes> Body;
 
-	[[nodiscard]] std::vector<Variable>& Identifiers()
+	[[nodiscard]] const std::unordered_map<std::string, std::shared_ptr<Variable>>& Identifiers() const
 	{
-		if (!m_identifiers_cache.empty()) {
-			return m_identifiers_cache;
-		}
-		m_identifiers_cache.clear();
-		for (const auto& types : Body) {
-			if (std::holds_alternative<Variable>(types)) {
-				m_identifiers_cache.push_back(std::get<Variable>(types));
-			}
-		}
-		return m_identifiers_cache;
+		return m_identifiers;
+	}
+
+	void AddIdentifier(const std::string& name, const std::shared_ptr<Variable>& variable)
+	{
+		m_identifiers[name] = variable;
 	}
 
 	LogicalBlock() = default;
+
 	explicit LogicalBlock(LabelType label) : Label(std::move(label)) {}
 };
 
@@ -75,13 +68,19 @@ struct Function {
 	void PrintNode(IR&) const;
 
 	size_t UnnamedTemporaryCounter = 0;
-	
+
 	std::unordered_map<std::string, size_t> NamedTemporaries{};
 
-	void AppendInstruction(const BodyTypes& body) { Blocks.back().Body.push_back(body); }
-	
+	void AppendInstruction(const BodyTypes& body)
+	{
+		Blocks.back().Body.push_back(body);
+		if (std::holds_alternative<Variable>(body))
+			Blocks.back().AddIdentifier(std::get<Variable>(body).Name,
+										std::make_shared<Variable>(std::get<Variable>(const_cast<BodyTypes&>(body))));
+	}
+
 	void AppendBlock(const LogicalBlock& block) { Blocks.push_back(block); }
-	
+
 	std::string GetNewUnnamedTemporary() { return std::to_string(UnnamedTemporaryCounter++); }
 	std::string GetNewNamedTemporary(const std::string& name)
 	{
@@ -94,10 +93,6 @@ struct Function {
 	}
 };
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCInconsistentNamingInspection"
-#endif
 class IR
 {
 	using IRNodes = std::variant<std::unique_ptr<Function>>;
@@ -131,27 +126,20 @@ private:
 	void generate_variable(const VariableDeclaration&, Function&);
 	void generate_return_statement(const ReturnStatement&, Function&, bool);
 	std::optional<Values> generate_binary_expression(const BinaryExpression&, Function&);
-	
+
 	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_expression(const UnaryExpression&, Function&);
 	template<typename Func>
-	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_op(const UnaryExpression&,
-																			 Function&, Func);
-	
+	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_op(const UnaryExpression&, Function&, Func);
+
 	[[nodiscard]] std::optional<Values> generate_bin_eq(const BinaryExpression&, Function&);
 	template<typename Func>
 	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_binary_op(const BinaryExpression& binaryExpression,
 																			  Function& function,
 																			  Func instruction);
-	
+
 	void generate_if_statement(IfStatement&, Function&);
 	void generate_while_statement(WhileStatement&, Function&);
 };
 
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 
 } // namespace alx::ir
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif

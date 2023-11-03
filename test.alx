@@ -1,9 +1,4 @@
-struct S {
-    int a;
-    int b;
-}
-
 int main() {
-    S s;
-    int a = s.a;
+    int a;
+    int b = a;
 }

@@ -21,7 +21,10 @@ void IR::generate_variable(const VariableDeclaration& variable, Function& functi
 			Variable{ .Name = name,
 					  .Attributes = { AlignAttribute{ size_of(primitive) } },
 					  .Allocation = AllocaInst{ .Type = std::make_unique<Types>(IR::TokenTypeToIRType(primitive)) } });
-		function.Blocks.back().Body.emplace_back(*identifier);
+		// TODO: make sure this doesn't need to be appended after generating the binary expression value
+		//       https://github.com/aelliixx/alxLang/commit/a7d957e601fe3348b0178a096b1da80b33a1a27a
+		function.AppendInstruction(*identifier);
+		
 
 		if (variable.Value()) {
 			if (variable.Value()->class_name() == "NumberLiteral") {
