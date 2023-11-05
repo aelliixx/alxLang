@@ -51,7 +51,8 @@ std::unique_ptr<Program> Parser::Parse()
 		exit(1);
 	}
 	catch (std::runtime_error& err) {
-		println(Colour::LightRed, "Something went wrong when building AST. Current AST:");
+		println(Colour::LightRed, "Something went wrong when building AST: {}", err.what());
+		println(Colour::LightRed, "Current AST:");
 		m_program->PrintNode(0);
 		m_error->EmitErrorCount();
 		exit(1);

@@ -20,6 +20,8 @@ std::unique_ptr<ASTNode> Parser::parse_statement()
 	if (!token.has_value())
 		return nullptr;
 	switch (token.value().Type) {
+	case TokenType::T_DEPRECATED: // FIXME: If we have a deprecated const, parse_variable() will fail
+		[[fallthrough]];
 	case TokenType::T_CONST:
 		if (nextToken.has_value() && isNumberType(nextToken.value().Type)) {
 			if (nextNextToken.has_value() && nextNextToken.value().Type == TokenType::T_IDENTIFIER)

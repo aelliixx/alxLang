@@ -44,6 +44,7 @@ Tokeniser::Tokeniser(std::string source, const std::shared_ptr<ErrorHandler>& er
 	// Qualifiers
 	m_keywords["const"] = TokenType::T_CONST;
 	m_keywords["mut"] = TokenType::T_MUT;
+	m_keywords["deprecated"] = TokenType::T_DEPRECATED;
 }
 
 std::vector<Token> Tokeniser::Tokenise()

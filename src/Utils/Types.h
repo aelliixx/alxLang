@@ -30,7 +30,8 @@ enum class TokenType
 	// Branching
 	T_IF, T_ELSE, T_FOR, T_WHILE,
 	// Qualifiers
-	T_CONST, T_MUT
+	T_CONST, T_MUT,
+	T_DEPRECATED,
 };
 
 inline size_t size_of(TokenType token)

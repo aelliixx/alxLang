@@ -13,9 +13,15 @@ namespace alx {
 std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 {
 	auto assignable = true;
+	auto deprecated = false;
 	if (peek().has_value() && peek().value().Type == TokenType::T_CONST) {
 		assignable = false;
 		must_consume(TokenType::T_CONST); // Eat 'const'
+	}
+
+	if (peek().has_value() && peek().value().Type == TokenType::T_DEPRECATED) {
+		deprecated = true;
+		must_consume(TokenType::T_DEPRECATED); // Eat 'const'
 	}
 	auto typeToken = consume();
 	std::variant<TokenType, std::unique_ptr<Identifier>> type;
@@ -25,6 +31,14 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 		type = typeToken.Type;
 	auto identToken = consume();
 	auto identifier = std::make_unique<Identifier>(identToken.Value.value(), assignable);
+	if (deprecated) {
+		identifier->SetDeprecated();
+		m_error->Warning(identToken.LineNumber,
+						 identToken.ColumnNumber,
+						 identToken.PosNumber,
+						 "Initialisation of deprecated variable '{}'",
+						 identifier->Name());
+	}
 	auto fullyQualifiedIdentifier = Parser::get_fully_qualified_name(identifier->Name(), m_current_scope_name);
 	if (find_variable_by_name(fullyQualifiedIdentifier)) {
 		m_error->Error(identToken.LineNumber,
@@ -67,11 +81,17 @@ std::unique_ptr<VariableDeclaration> Parser::parse_variable()
 			auto& ident = static_cast<Identifier&>(*expression);
 			//			auto identIt = std::find_if(m_variables.at(m_current_scope_name).begin(),
 			//										m_variables.at(m_current_scope_name).end(),
-			//										[ident](VariableDeclaration* var) { return var->Name() == ident.Name();
+			//										[ident](VariableDeclaration* var) { return var->Name() ==
+			// ident.Name();
 			//});
-			
-			auto identIt = m_variables.find(Parser::get_fully_qualified_name(ident.Name(), m_current_scope_name));
 
+			auto identIt = m_variables.find(Parser::get_fully_qualified_name(ident.Name(), m_current_scope_name));
+			if (identIt != m_variables.end() && identIt->second->Ident().Deprecated())
+				m_error->Warning(expressionToken.LineNumber,
+								 expressionToken.ColumnNumber,
+								 expressionToken.PosNumber,
+								 "Use of deprecated identifier '{}'",
+								 ident.Name());
 			if ((*identIt).second->TypeIndex() == 0) {
 				expressionType = (*identIt).second->TypeAsPrimitive();
 				expressionSize = size_of(expressionType);

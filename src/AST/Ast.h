@@ -89,6 +89,7 @@ class Identifier : public Expression
 	[[nodiscard]] std::string class_name() const override { return "Identifier"; }
 	std::string m_name;
 	bool m_assignable{ true };
+	bool m_deprecated{ false };
 
 public:
 	[[maybe_unused]] void PrintNode(int indent) const override;
@@ -96,8 +97,11 @@ public:
 	explicit Identifier(std::string name) : m_name(std::move(name)) {}
 	Identifier(std::string name, bool assignable) : m_name(std::move(name)), m_assignable(assignable) {}
 
+	void SetDeprecated(bool deprecated = true) { m_deprecated = deprecated; }
+
 	[[nodiscard]] const std::string& Name() const { return m_name; }
 	[[nodiscard]] bool Assignable() const { return m_assignable; }
+	[[nodiscard]] bool Deprecated() const { return m_deprecated; }
 };
 
 class NumberLiteral : public Expression

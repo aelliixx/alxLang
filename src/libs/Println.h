@@ -389,6 +389,8 @@ inline std::string token_to_string(TokenType token)
 		return "const";
 	case TokenType::T_MUT:
 		return "mut";
+	case TokenType::T_DEPRECATED:
+		return "deprecated";
 	}
 	ASSERT_NOT_REACHABLE();
 }
