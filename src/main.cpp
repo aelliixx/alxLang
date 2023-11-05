@@ -35,7 +35,7 @@ int main(int argc, const char** argv)
 		.default_value(false)
 		.implicit_value(true)
 		.help("Output intermediate representation to the console.");
-
+	
 	program.add_argument("-q", "--quiet")
 		.default_value(false)
 		.implicit_value(true)
@@ -57,6 +57,11 @@ int main(int argc, const char** argv)
 		.default_value(true)
 		.implicit_value(true)
 		.help("Enable colours in diagnostic output.");
+	
+	program.add_argument("-Werror")
+		.default_value(false)
+		.implicit_value(true)
+		.help("Treat all warnings as errors.");
 
 	program.add_argument("filename");
 

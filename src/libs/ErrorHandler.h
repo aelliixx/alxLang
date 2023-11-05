@@ -51,9 +51,11 @@ private:
 	size_t m_note_count{};
 	std::string m_code;
 	std::string m_file_name;
+	bool m_werror{};
 
 public:
-	ErrorHandler(std::string code, std::string fileName) : m_code(std::move(code)), m_file_name(std::move(fileName)) {}
+	ErrorHandler(std::string code, std::string fileName,
+				 bool werror) : m_code(std::move(code)), m_file_name(std::move(fileName)), m_werror(werror) {}
 
 	[[nodiscard]] size_t ErrorCount() const { return m_error_count; }
 
@@ -72,6 +74,10 @@ public:
 	template<typename... Param>
 	void Warning(size_t lineNum, size_t colNum, size_t posNum, const std::string& format, const Param&... arguments)
 	{
+		if (m_werror) {
+			Error(lineNum, colNum, posNum, format, arguments...);
+			return;
+		}
 		++m_warning_count;
 		const auto text = getFormatted(format, arguments...);
 		give_context(lineNum, colNum, posNum);

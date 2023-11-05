@@ -19,7 +19,7 @@ Compiler::Compiler(const std::string& code, const std::string& filename, Flags f
 	m_filename(filename),
 	m_debug_flags(debugFlags)
 {
-	m_error_handler = std::make_shared<ErrorHandler>(code, filename);
+	m_error_handler = std::make_shared<ErrorHandler>(code, filename, m_flags.werror);
 	if (code.empty())
 		exit(1);
 }
