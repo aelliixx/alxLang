@@ -96,6 +96,17 @@ void Compiler::Compile()
 		const Seconds totalDuration = SysClock::now() - start;
 		if (m_debug_flags.show_timing)
 			alx::println(alx::Colour::LightGreen, "Generated assembly in {}ms", duration.count() * 1000);
+
+		if (!m_debug_flags.no_assemble) {
+			try {
+				Assemble();
+			}
+			catch (const std::runtime_error& err) {
+				println(err.what());
+			}
+		}
+
+
 		alx::println(alx::Colour::LightGreen, "Total compilation time {}ms", totalDuration.count() * 1000);
 
 #if OUTPUT_IR_TO_STRING
@@ -124,12 +135,17 @@ void Compiler::Compile()
 	}
 }
 
-void Compiler::Assemble() {
+void Compiler::Assemble()
+{
 	std::ofstream out(getFormatted("/tmp/temp_alx.s"));
 	out << m_generator->Asm();
 	out.close();
 	[[maybe_unused]] auto nasmStatus = system("nasm -f elf64 /tmp/temp_alx.s -o /tmp/temp_alx.o");
 	[[maybe_unused]] auto ldStatus = system("ld /tmp/temp_alx.o -o ./temp_alx");
+	if (nasmStatus)
+		throw std::runtime_error("nasm exited with status code: " + std::to_string(nasmStatus));
+	if (ldStatus)
+		throw std::runtime_error("ld exited with status code: " + std::to_string(ldStatus));
 }
 
 std::string Compiler::GetAsm() { return m_generator->Asm(); }
