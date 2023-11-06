@@ -1,0 +1,189 @@
+\documentclass[border=1in]{standalone}
+\usepackage[a4paper]{geometry}
+\usepackage{multicol}
+% \usepackage[style=ieee]{biblatex}
+% \usepackage[acronym, automake]{glossaries-extra}
+% \setabbreviationstyle[acronym]{long-short}
+% \makeglossaries
+
+\newcommand{\cpp}{\lstset{language=C++}}
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{blindtext}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=none,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+\title{\textbf{alxLang whitepaper}}
+\date{\today}
+
+\begin{document}
+\begin{minipage}{21cm}
+\lstset{language=[Sharp]C}
+\author{Donatas Mockus}
+\maketitle
+
+\section{Tokens}
+\subsection{Operators}
+\subsubsection{Binary}
+\begin{lstlisting}
+  // Binary
+  // +, -, *, /, ^, %, :, <<, >>, ==, !=
+  // Assignment
+  // =, +=, -=, *=, /=, ^=, %=, :=, <<=, >>=, ===
+\end{lstlisting}
+\subsubsection{Unary}
+\begin{lstlisting}
+  // !, ++, --
+\end{lstlisting}
+
+\subsection{Keywords}
+\begin{lstlisting}
+  // Number types
+  bool, char, int, uint, long, ulong, float, double
+  // Branching
+  if, else, while, for, do, break, continue
+  // Objects
+  class, struct, interface, public, private, protected, final,
+  virtual, override, partial
+  // Other
+  return
+\end{lstlisting}
+
+\section{Safety}
+
+\subsection{What is safety?}
+The safety of a language can be defined as follows:
+\begin{list}{-}{}
+  \item Memory safety
+  \item Type safety
+  \item Resource safety
+  \item Bounds checking
+\end{list}
+\footnotemark{Not an exhaustive list}
+
+The following subsections will explore how the language attempts to ensure these principles.
+
+\subsection{Memory safety}
+No raw pointers
+
+All pointers are shared pointers by default
+
+
+\subsection{Type safety}
+\subsection{Resource safety}
+RAII
+\subsection{Bounds checking}
+
+\section{OOP}
+
+Both classes and structs may have private, protected, and public member variables.
+
+
+\subsection{Structs}
+
+Structs must:
+\begin{list}{-}{}
+  \item Be trivially copyable
+  \item Have contiguous memory
+  \item Not contain virtual methods
+\end{list}
+
+\subsection{Classes}
+
+
+\section{Example Code}
+
+
+\subsection*{Hello, world}
+\begin{lstlisting}
+using stdio;
+/* I'm a block comment */
+int main(string argv[]) // I'm a line comment
+{
+  const world = "world";
+  println($"Hello {}", world);
+}
+\end{lstlisting}
+
+\subsection*{Classes, interfaces, and inheritance}
+\begin{lstlisting}
+import stdio;
+
+namespace Animals 
+{
+interface IAnimal {
+  string Name { get; private set; }
+  int Age { get; private set; }
+}
+
+class Cat : IAnimal {
+public:
+  string Name { get; private set; }
+  int Age { get; private set; }
+
+  Cat(string name, int age) : Name(name), Age(age) // Constructor
+  {
+    println("Created {} which is {} old!", Name, Age);
+  }
+
+
+private:
+  ~Cat() // Private destructors allow GC to manage lifetime of the object.
+  {
+    println("{Name} has been destructed");
+  }
+}
+
+class NorweigianForset final : Cat {
+public:
+  void Meow() { println("Meow); }
+}
+
+}
+using namespace Animals;
+int main() 
+{
+  Animals.IAnimal tuxie = new Animal.Cat("Tuxie", 6);
+  NorweigianForset pepper = new("Pepper", 4);
+  pepper.Meow();
+}
+
+\end{lstlisting}
+
+\subsection*{Cool keywords}
+\begin{lstlisting}
+  deprecated class StringView { ... }
+
+  int main()
+  {
+    StringView str = new(); // Will throw a deprecation warning.
+  }
+\end{lstlisting}
+
+\begin{lstlisting}
+  // A.alx
+  partial class PartialClass { ... }
+  // B.alx
+  partial class PartialClass { ... }
+\end{lstlisting}
+% \printbibliography
+\end{minipage}
+\end{document}

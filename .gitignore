@@ -9,3 +9,5 @@ cmake-build-debug-coverage
 .idea
 /docs/*
 !/docs/*.pdf
+!/docs/*.tex
+!/docs/*.md

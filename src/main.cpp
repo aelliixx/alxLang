@@ -35,12 +35,12 @@ int main(int argc, const char** argv)
 		.default_value(false)
 		.implicit_value(true)
 		.help("Output intermediate representation to the console.");
-	
+
 	program.add_argument("-q", "--quiet")
 		.default_value(false)
 		.implicit_value(true)
 		.help("Disables all output ignoring any other flags.");
-	
+
 	program.add_argument("-S", "--no-assemble")
 		.default_value(false)
 		.implicit_value(true)
@@ -57,11 +57,8 @@ int main(int argc, const char** argv)
 		.default_value(true)
 		.implicit_value(true)
 		.help("Enable colours in diagnostic output.");
-	
-	program.add_argument("-Werror")
-		.default_value(false)
-		.implicit_value(true)
-		.help("Treat all warnings as errors.");
+
+	program.add_argument("-Werror").default_value(false).implicit_value(true).help("Treat all warnings as errors.");
 
 	program.add_argument("filename");
 
@@ -73,17 +70,17 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 	auto programName = program.get<std::string>("filename");
-	if (!program.get<bool>("-q"))
-		alx::println("Parsing {}", programName);
 	std::string sourceBuffer;
 	{
 		auto ss = std::ostringstream{};
 		std::ifstream input(programName);
 		if (!input.is_open()) {
 			if (!program.get<bool>("-q"))
-				alx::error("File {} not found!", programName);
+				alx::println(alx::Colour::LightRed, "File '{}' not found!", programName);
 			return EXIT_FAILURE;
 		}
+		if (!program.get<bool>("-q"))
+			alx::println("Parsing {}", programName);
 		ss << input.rdbuf();
 		sourceBuffer = ss.str();
 		input.close();
@@ -93,5 +90,4 @@ int main(int argc, const char** argv)
 
 	alx::Compiler compiler{ sourceBuffer, programName, alx::resolveFlags(program), alx::resolveDebugFlags(program) };
 	compiler.Compile();
-	// nasm -f elf64 comp.asm -o comp.o && ld comp.o -o comp
 }
