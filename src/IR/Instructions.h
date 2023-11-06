@@ -90,6 +90,7 @@ struct URemInst {
 
 // Memory access and addressing instructions
 
+// We use alloca instruction in the code generator to increment the stack pointer
 struct AllocaInst {
 	std::shared_ptr<Types> Type;
 	// Sizeof type in bytes

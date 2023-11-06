@@ -61,6 +61,9 @@ struct Function {
 
 	std::vector<FunctionParameter> Arguments{};
 	std::vector<LogicalBlock> Blocks{};
+	LogicalBlock ReturnBlock{};
+	bool Returns = false;
+	bool MultipleReturns = false;
 
 	[[nodiscard]] std::shared_ptr<Variable> FindVariableByIdentifier(const std::string& name);
 	[[nodiscard]] LogicalBlock& GetBlockByLabel(const std::string& label);
@@ -70,6 +73,8 @@ struct Function {
 	size_t UnnamedTemporaryCounter = 0;
 
 	std::unordered_map<std::string, size_t> NamedTemporaries{};
+	
+	void ResolveReturnSentinels();
 
 	void AppendInstruction(const BodyTypes& body)
 	{
@@ -124,7 +129,7 @@ private:
 	void generate_func_parameters(FunctionDeclaration&, Function&);
 	void generate_body(const BlockStatement& functionDeclaration, Function& function);
 	void generate_variable(const VariableDeclaration&, Function&);
-	void generate_return_statement(const ReturnStatement&, Function&, bool);
+	void generate_return_statement(const ReturnStatement&, Function&);
 	std::optional<Values> generate_binary_expression(const BinaryExpression&, Function&);
 
 	[[nodiscard]] std::optional<std::shared_ptr<Variable>> generate_unary_expression(const UnaryExpression&, Function&);

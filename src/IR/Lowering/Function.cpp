@@ -45,11 +45,9 @@ std::shared_ptr<Variable> Function::FindVariableByIdentifier(const std::string& 
 
 void IR::generate_body(const BlockStatement& block, Function& function)
 {
-	bool hasReturned = false;
 	for (const auto& node : block.Children()) {
 		if (node->class_name() == "ReturnStatement") {
-			generate_return_statement(static_cast<ReturnStatement&>(*node), function, hasReturned);
-			hasReturned = true;
+			generate_return_statement(static_cast<ReturnStatement&>(*node), function);
 		}
 		else if (node->class_name() == "VariableDeclaration") {
 			auto& varDecl = static_cast<VariableDeclaration&>(*node);
@@ -58,8 +56,8 @@ void IR::generate_body(const BlockStatement& block, Function& function)
 		else if (node->class_name() == "BinaryExpression") {
 			auto& binExpr = static_cast<BinaryExpression&>(*node);
 			MUST(generate_binary_expression(binExpr, function).has_value());
-			//			if (std::holds_alternative<std::shared_ptr<Variable>>(result.value()))
-			//				function.Blocks.back().Body.emplace_back(*std::get<std::shared_ptr<Variable>>(result.value()));
+			// if (std::holds_alternative<std::shared_ptr<Variable>>(result.value()))
+			// function.Blocks.back().Body.emplace_back(*std::get<std::shared_ptr<Variable>>(result.value()));
 		}
 		else if (node->class_name() == "IfStatement") {
 			auto& ifStmt = static_cast<IfStatement&>(*node);
@@ -76,6 +74,7 @@ void IR::generate_body(const BlockStatement& block, Function& function)
 		else
 			ASSERT_NOT_IMPLEMENTED_MSG(getFormatted("Unknown node type: {}", node->class_name()));
 	}
+	function.ResolveReturnSentinels();
 }
 
 void IR::generate_function(FunctionDeclaration& functionDeclaration)

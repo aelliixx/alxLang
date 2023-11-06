@@ -1,4 +1,6 @@
+void foo() {}
+
 int main() {
-    int a;
-    int b = a;
+    int a = 0;
+    return a;
 }
