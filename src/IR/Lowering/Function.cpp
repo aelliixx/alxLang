@@ -91,7 +91,7 @@ void IR::generate_function(FunctionDeclaration& functionDeclaration)
 		sep = ", ";
 
 		const auto& argType = arg->Type();
-		const bool isIdent = argType.index() == 1;
+		const bool isIdent = std::holds_alternative<std::unique_ptr<Identifier>>(argType);
 		FunctionParameter param{
 			.Visibility = VisibilityAttribute::Local,
 			.Name = arg->Name(),
