@@ -268,7 +268,7 @@ std::vector<Token> Tokeniser::Tokenise()
 	return m_tokens;
 }
 
-bool Tokeniser::is_space(char character) { return character == ' '; }
+bool Tokeniser::is_space(char character) { return character == ' ' || character == '\t'; }
 
 bool Tokeniser::is_alpha(char character)
 {
