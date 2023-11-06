@@ -48,8 +48,11 @@
 - [ ] udiv
 - [ ] urem
 - [ ] Phi nodes
+- [x] Consolidated return statements
 
 ### TODO: Lowering
+- [ ] Instruction selection
+- [ ] Register allocation
 - [ ] Phi node elimination
 
 ### TODO: Codegen
