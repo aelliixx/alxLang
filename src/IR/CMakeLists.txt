@@ -14,4 +14,7 @@ add_library(IR Ir.cpp
         Lowering/ReturnStatement.cpp
         Lowering/UnaryExpression.cpp
         Lowering/Conditionals.cpp
+        Lowering/InstructionSelection/InstructionSelector.cpp
+        Lowering/InstructionSelection/InstructionSelector.h
+        Lowering/InstructionSelection/Targets/X86.h
 )

@@ -73,7 +73,7 @@ struct Function {
 	size_t UnnamedTemporaryCounter = 0;
 
 	std::unordered_map<std::string, size_t> NamedTemporaries{};
-	
+
 	void ResolveReturnSentinels();
 
 	void AppendInstruction(const BodyTypes& body)
@@ -98,9 +98,9 @@ struct Function {
 	}
 };
 
+using IRNodes = std::variant<std::unique_ptr<Function>>;
 class IR
 {
-	using IRNodes = std::variant<std::unique_ptr<Function>>;
 	const std::vector<std::unique_ptr<ASTNode>>& m_ast{};
 	std::vector<IRNodes> m_ir;
 	std::string m_ir_string;
@@ -146,5 +146,17 @@ private:
 	void generate_while_statement(WhileStatement&, Function&);
 };
 
+using Instruction = std::variant<AllocaInst,
+								 LoadInst,
+								 AddInst,
+								 SubInst,
+								 MulInst,
+								 SDivInst,
+								 ICmpInst,
+								 LabelType,
+								 ReturnInst,
+								 Variable,
+								 StoreInst,
+								 BranchInst>;
 
 } // namespace alx::ir
