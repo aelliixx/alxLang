@@ -113,14 +113,13 @@ std::string ProgramGenerator::generate_func_label(const FunctionDeclaration& fun
 {
 	const auto& args = func.Arguments();
 	std::stringstream label;
-	label << func.Name() << "(";
-	const char* delim = "";
+	label << func.Name();
+	const char* delim = "__";
 	for (const auto& arg : args)
 	{
 		label << delim << arg->TypeName();
-		delim = ", ";
+		delim = "_";
 	}
-	label << ")";
 	auto label_str = label.str();
 	if (std::find(m_labels.begin(), m_labels.end(), label.str()) == m_labels.end())
 	{
