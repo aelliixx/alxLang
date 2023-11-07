@@ -22,6 +22,7 @@ struct DebugFlags {
 	bool dump_ir_all{};
 	bool dump_ir_initial{};
 	bool dump_ir_isel{};
+	std::string output_file{};
 };
 
 struct Flags {
@@ -47,7 +48,8 @@ inline DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 			 .no_assemble = argParser.get<bool>("-S"),
 			 .dump_ir_all = findFlagString("all"),
 			 .dump_ir_initial = findFlagString("initial") || findFlagString("all"),
-			 .dump_ir_isel = findFlagString("isel") || findFlagString("all") };
+			 .dump_ir_isel = findFlagString("isel") || findFlagString("all"),
+			 .output_file = argParser.get<std::string>("-o") };
 }
 
 inline Flags resolveFlags(const argparse::ArgumentParser& argParser)

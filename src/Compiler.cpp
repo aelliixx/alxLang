@@ -140,8 +140,13 @@ void Compiler::Assemble()
 	std::ofstream out(getFormatted("/tmp/temp_alx.s"));
 	out << m_generator->Asm();
 	out.close();
-	[[maybe_unused]] auto nasmStatus = system("nasm -f elf64 /tmp/temp_alx.s -o /tmp/temp_alx.o");
-	[[maybe_unused]] auto ldStatus = system("ld /tmp/temp_alx.o -o ./temp_alx");
+	auto nasmStatus = system("nasm -f elf64 /tmp/temp_alx.s -o /tmp/temp_alx.o");
+	int ldStatus;
+	if (m_debug_flags.output_file.empty())
+		ldStatus = system("ld /tmp/temp_alx.o -o a.out");
+	else
+		ldStatus = system(getFormatted("ld /tmp/temp_alx.o -o {}", m_debug_flags.output_file).c_str());
+	ldStatus = system("ld /tmp/temp_alx.o -o ./temp_alx");
 	if (nasmStatus)
 		throw std::runtime_error("nasm exited with status code: " + std::to_string(nasmStatus));
 	if (ldStatus)
