@@ -9,6 +9,7 @@
 #pragma once
 
 #include "../libs/argparse.hpp"
+#include "File.h"
 
 namespace alx {
 
@@ -22,7 +23,7 @@ struct DebugFlags {
 	bool dump_ir_all{};
 	bool dump_ir_initial{};
 	bool dump_ir_isel{};
-	std::string output_file{};
+	FilePath output_file{};
 };
 
 struct Flags {
@@ -40,6 +41,8 @@ inline DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 		}) != irPipeline.end();
 	};
 
+	FilePath outputFilePath(argParser.get<std::string>("-o"));
+
 	return { .show_timing = argParser.get<bool>("-t") && !argParser.get<bool>("-q"),
 			 .dump_ast = argParser.get<bool>("-d") && !argParser.get<bool>("-q"),
 			 .dump_asm = argParser.get<bool>("-a") && !argParser.get<bool>("-q"),
@@ -49,7 +52,7 @@ inline DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 			 .dump_ir_all = findFlagString("all"),
 			 .dump_ir_initial = findFlagString("initial") || findFlagString("all"),
 			 .dump_ir_isel = findFlagString("isel") || findFlagString("all"),
-			 .output_file = argParser.get<std::string>("-o") };
+			 .output_file = outputFilePath };
 }
 
 inline Flags resolveFlags(const argparse::ArgumentParser& argParser)

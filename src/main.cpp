@@ -10,7 +10,7 @@
 
 int main(int argc, const char** argv)
 {
-	argparse::ArgumentParser program("alxLang compiler", "0.0.3");
+	argparse::ArgumentParser program("alxLang compiler", "0.0.4");
 	program.add_description("A lexer, parser, and direct-to-asm compiler "
 							"for alxLang - yet another general purpose programming language.");
 
@@ -48,7 +48,7 @@ int main(int argc, const char** argv)
 		.help("Do not assemble the generated assembly.");
 	
 	program.add_argument("-o")
-		.default_value<std::string>("")
+		.default_value<std::string>("a.out")
 		.help("Output file name.");
 
 	program.add_argument("--asm-no-format")

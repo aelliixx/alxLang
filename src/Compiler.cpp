@@ -105,6 +105,14 @@ void Compiler::Compile()
 				println(err.what());
 			}
 		}
+		else {
+			const FilePath& outputFilePath = m_debug_flags.output_file;
+			{
+				std::ofstream out(getFormatted("{}", outputFilePath.GetFullPath()));
+				out << ProgramGenerator::FormatAsm(m_generator->Asm());
+				out.close(); // FIXME: is this necessary?
+			}
+		}
 
 
 		alx::println(alx::Colour::LightGreen, "Total compilation time {}ms", totalDuration.count() * 1000);
@@ -137,16 +145,19 @@ void Compiler::Compile()
 
 void Compiler::Assemble()
 {
-	std::ofstream out(getFormatted("/tmp/temp_alx.s"));
-	out << m_generator->Asm();
-	out.close();
-	auto nasmStatus = system("nasm -f elf64 /tmp/temp_alx.s -o /tmp/temp_alx.o");
-	int ldStatus;
-	if (m_debug_flags.output_file.empty())
-		ldStatus = system("ld /tmp/temp_alx.o -o a.out");
-	else
-		ldStatus = system(getFormatted("ld /tmp/temp_alx.o -o {}", m_debug_flags.output_file).c_str());
-	ldStatus = system("ld /tmp/temp_alx.o -o ./temp_alx");
+	const FilePath& outputFilePath = m_debug_flags.output_file;
+	{
+		std::ofstream out(getFormatted("/tmp/{}.s", outputFilePath.GetNameWithoutExtension()));
+		out << m_generator->Asm();
+		out.close(); // FIXME: is this necessary?
+	}
+	auto nasmStatus = system(getFormatted("nasm -f elf64 /tmp/{}.s -o /tmp/{}.o",
+									 outputFilePath.GetNameWithoutExtension(),
+									 outputFilePath.GetNameWithoutExtension())
+							.c_str());
+	auto ldStatus = system(
+		getFormatted("ld /tmp/{}.o -o {}", outputFilePath.GetNameWithoutExtension(), outputFilePath.GetFullPath())
+			.c_str());
 	if (nasmStatus)
 		throw std::runtime_error("nasm exited with status code: " + std::to_string(nasmStatus));
 	if (ldStatus)
