@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 project(alxlang)
 set(CMAKE_CXX_STANDARD 23)
 add_compile_options(-Werror -Wextra -Wall -Wpedantic)
+add_compile_options(-Wno-unknown-pragmas)
 
 option(ALX_BUILD_TESTS "Build tests" ON)
 
