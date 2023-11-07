@@ -84,7 +84,7 @@ void Compiler::Compile()
 					alx::println(alx::Colour::LightRed, "Current AST:");
 					ast->PrintNode(0);
 				}
-				if (m_debug_flags.dump_ir) {
+				if (m_debug_flags.dump_ir_initial) {
 					alx::println(alx::Colour::LightRed, "\nIR:");
 					m_intermediate_representation->Dump();
 				}
@@ -122,7 +122,7 @@ void Compiler::Compile()
 		alx::println();
 		ast->PrintNode(0);
 	}
-	if (m_debug_flags.dump_ir) {
+	if (m_debug_flags.dump_ir_initial) {
 		alx::println();
 		m_intermediate_representation->Dump();
 	}

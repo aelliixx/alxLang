@@ -64,7 +64,7 @@ struct ValueVisitor {
 void IR::Dump()
 {
 #if !OUTPUT_IR_TO_STRING
-	println("Dumping IR with --dump-ir:\n");
+	println("Opt-pipeline IR initial:");
 #endif
 	struct IrVisitor {
 		IR& ir;

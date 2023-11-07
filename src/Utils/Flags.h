@@ -18,8 +18,10 @@ struct DebugFlags {
 	bool dump_asm{};
 	bool dump_unformatted_asm{};
 	bool quiet_mode{};
-	bool dump_ir{};
 	bool no_assemble{};
+	bool dump_ir_all{};
+	bool dump_ir_initial{};
+	bool dump_ir_isel{};
 };
 
 struct Flags {
@@ -30,13 +32,22 @@ struct Flags {
 
 inline DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 {
+	auto irPipeline = argParser.get<std::vector<std::string>>("--dump-ir");
+	auto findFlagString = [&irPipeline](const std::string& flag) {
+		return std::find_if(irPipeline.begin(), irPipeline.end(), [&flag](const std::string& str) {
+			return str == flag;
+		}) != irPipeline.end();
+	};
+
 	return { .show_timing = argParser.get<bool>("-t") && !argParser.get<bool>("-q"),
 			 .dump_ast = argParser.get<bool>("-d") && !argParser.get<bool>("-q"),
 			 .dump_asm = argParser.get<bool>("-a") && !argParser.get<bool>("-q"),
 			 .dump_unformatted_asm = argParser.get<bool>("--asm-no-format") && !argParser.get<bool>("-q"),
 			 .quiet_mode = argParser.get<bool>("-q"),
-			 .dump_ir = argParser.get<bool>("--dump-ir"),
-			 .no_assemble = argParser.get<bool>("-S") };
+			 .no_assemble = argParser.get<bool>("-S"),
+			 .dump_ir_all = findFlagString("all"),
+			 .dump_ir_initial = findFlagString("initial") || findFlagString("all"),
+			 .dump_ir_isel = findFlagString("isel") || findFlagString("all") };
 }
 
 inline Flags resolveFlags(const argparse::ArgumentParser& argParser)

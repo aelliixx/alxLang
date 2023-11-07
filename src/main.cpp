@@ -32,8 +32,9 @@ int main(int argc, const char** argv)
 		.help("Output assembly to the console.");
 
 	program.add_argument("--dump-ir")
-		.default_value(false)
-		.implicit_value(true)
+		.default_value<std::vector<std::string>>({""})
+		.nargs(argparse::nargs_pattern::any)
+		.append()
 		.help("Output intermediate representation to the console.");
 
 	program.add_argument("-q", "--quiet")
@@ -67,7 +68,7 @@ int main(int argc, const char** argv)
 	}
 	catch (std::runtime_error& err) {
 		alx::println(alx::Colour::LightRed, "{}", err.what());
-		return 1;
+		return EXIT_FAILURE;
 	}
 	auto programName = program.get<std::string>("filename");
 	std::string sourceBuffer;

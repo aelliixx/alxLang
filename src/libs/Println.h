@@ -58,6 +58,20 @@ std::string string_cast(T from)
 	return std::string(1, from);
 }
 
+template<typename T>
+std::string string_cast(std::vector<T> from)
+{
+	std::string out = "{";
+	auto delim = "";
+	for (const auto& item : from)
+	{
+		out += delim + string_cast(item);
+		delim = ", ";	
+	}
+	out += "}";
+	return out;
+}
+
 template<typename... Param>
 class VariadicArgParser
 {
@@ -162,7 +176,8 @@ class VariadicArgParser
 					// FIXME: Fix bodyArgs being incremented by an argument string which itself contains '{}'
 					//        e.g. println("{}", "foo {}"), crashes the program
 					parsed.replace(seqStartIndex, i - seqStartIndex + 1, _args.at(bodyArgs));
-					if (_args.at(bodyArgs).empty()) --i;
+					if (_args.at(bodyArgs).empty())
+						--i;
 					--i;
 				}
 
