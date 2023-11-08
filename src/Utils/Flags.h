@@ -34,11 +34,20 @@ struct Flags {
 
 inline DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)
 {
-	auto irPipeline = argParser.get<std::vector<std::string>>("--dump-ir");
-	auto findFlagString = [&irPipeline](const std::string& flag) {
-		return std::find_if(irPipeline.begin(), irPipeline.end(), [&flag](const std::string& str) {
+	auto irPipeline = argParser.get<std::string>("--dump-ir");
+	std::vector<std::string> irPipelineFlags;
+	if (!irPipeline.empty()) {
+		// Split the string by commas
+		std::stringstream ss(irPipeline);
+		std::string flag;
+		while (std::getline(ss, flag, ',')) {
+			irPipelineFlags.push_back(flag);
+		}
+	}
+	auto findFlagString = [&irPipelineFlags](const std::string& flag) {
+		return std::find_if(irPipelineFlags.begin(), irPipelineFlags.end(), [&flag](const std::string& str) {
 			return str == flag;
-		}) != irPipeline.end();
+		}) != irPipelineFlags.end();
 	};
 
 	FilePath outputFilePath(argParser.get<std::string>("-o"));

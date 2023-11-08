@@ -32,9 +32,8 @@ int main(int argc, const char** argv)
 		.help("Output assembly to the console.");
 
 	program.add_argument("--dump-ir")
-		.default_value<std::vector<std::string>>({""})
-		.nargs(argparse::nargs_pattern::any)
-		.append()
+		.default_value<std::string>("")
+		.nargs(1)
 		.help("Output intermediate representation to the console.");
 
 	program.add_argument("-q", "--quiet")
@@ -46,10 +45,8 @@ int main(int argc, const char** argv)
 		.default_value(false)
 		.implicit_value(true)
 		.help("Do not assemble the generated assembly.");
-	
-	program.add_argument("-o")
-		.default_value<std::string>("a.out")
-		.help("Output file name.");
+
+	program.add_argument("-o").default_value<std::string>("a.out").help("Output file name.");
 
 	program.add_argument("--asm-no-format")
 		.default_value(false)
