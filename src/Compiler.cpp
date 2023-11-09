@@ -149,17 +149,17 @@ void Compiler::Assemble()
 	{
 		std::ofstream out(getFormatted("/tmp/{}.s", outputFilePath.GetNameWithoutExtension()));
 		out << m_generator->Asm();
-		out.close(); // FIXME: is this necessary?
+		out.close(); // FIXME: ensure the file was written to and closed successfully
 	}
 	auto nasmStatus = system(getFormatted("nasm -f elf64 /tmp/{}.s -o /tmp/{}.o",
 									 outputFilePath.GetNameWithoutExtension(),
 									 outputFilePath.GetNameWithoutExtension())
 							.c_str());
+	if (nasmStatus)
+		throw std::runtime_error("nasm exited with status code: " + std::to_string(nasmStatus));
 	auto ldStatus = system(
 		getFormatted("ld /tmp/{}.o -o {}", outputFilePath.GetNameWithoutExtension(), outputFilePath.GetFullPath())
 			.c_str());
-	if (nasmStatus)
-		throw std::runtime_error("nasm exited with status code: " + std::to_string(nasmStatus));
 	if (ldStatus)
 		throw std::runtime_error("ld exited with status code: " + std::to_string(ldStatus));
 }
