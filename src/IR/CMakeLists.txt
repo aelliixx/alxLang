@@ -16,5 +16,6 @@ add_library(IR Ir.cpp
         Lowering/Conditionals.cpp
         Lowering/InstructionSelection/InstructionSelector.cpp
         Lowering/InstructionSelection/InstructionSelector.h
-        Lowering/InstructionSelection/Targets/X86.h
+        Lowering/InstructionSelection/X86/X86Info.h
+        Lowering/InstructionSelection/X86/X86Instructions.h
 )
