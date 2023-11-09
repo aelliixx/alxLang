@@ -106,7 +106,7 @@ void Compiler::Compile()
 			}
 		}
 		else {
-			const FilePath& outputFilePath = m_debug_flags.output_file;
+			const FilePath& outputFilePath = m_flags.output_file;
 			{
 				std::ofstream out(getFormatted("{}", outputFilePath.GetFullPath()));
 				out << ProgramGenerator::FormatAsm(m_generator->Asm());
@@ -145,7 +145,7 @@ void Compiler::Compile()
 
 void Compiler::Assemble()
 {
-	const FilePath& outputFilePath = m_debug_flags.output_file;
+	const FilePath& outputFilePath = m_flags.output_file;
 	{
 		std::ofstream out(getFormatted("/tmp/{}.s", outputFilePath.GetNameWithoutExtension()));
 		out << m_generator->Asm();
