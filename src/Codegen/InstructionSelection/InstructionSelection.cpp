@@ -7,7 +7,7 @@
 //
 
 #include "InstructionSelector.h"
-#include "Targets/X86.h"
+#include "X86/X86Info.h"
 
 namespace alx::ir {
 
