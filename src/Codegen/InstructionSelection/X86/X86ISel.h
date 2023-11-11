@@ -2,15 +2,18 @@
 // Created by aelliixx on 2023-11-11.
 //
 
-#ifndef X86ISEL_H
-#define X86ISEL_H
+#pragma once
 
+#include "../InstructionSelection.h"
 
+namespace alx::ir::x86 {
+class X86ISel final : public InstructionSelection
+{
+public:
+	X86ISel(const std::vector<IRNodes>& ir, const Target& target) : InstructionSelection(ir, target) {}
 
-class X86ISel {
-
+	void DoInstructionSelection();
+	void PrintInstructions() const override;
 };
 
-
-
-#endif //X86ISEL_H
+} // namespace alx::ir::x86

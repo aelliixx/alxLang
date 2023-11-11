@@ -13,10 +13,10 @@
 
 namespace alx {
 
-class CompilerError : public std::runtime_error
+class CompilerError final : public std::runtime_error
 {
 public:
-	CompilerError(const std::string& msg) : std::runtime_error(msg) {}
+	explicit CompilerError(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 enum class ErrorCode

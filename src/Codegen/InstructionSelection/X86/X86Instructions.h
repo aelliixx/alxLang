@@ -6,10 +6,14 @@
 // Created by aelliixx on 2023-11-09.
 //
 
-#pragma once 
+#pragma once
 
-namespace alx::ir {
+#include "../MachineInstruction.h"
 
+namespace alx::ir::x86 {
 
+struct MOV32mi final : MachineInstruction {
+	std::string Name() override { return "MOV32mi"; }
+};
 
 }

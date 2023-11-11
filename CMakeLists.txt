@@ -6,10 +6,10 @@ add_compile_options(-Wno-unknown-pragmas)
 
 option(ALX_BUILD_TESTS "Build tests" ON)
 
-if(ALX_BUILD_TESTS)
+if (ALX_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
-endif()
+endif ()
 
 add_subdirectory(src)
 

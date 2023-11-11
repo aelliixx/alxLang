@@ -27,9 +27,9 @@ struct DebugFlags {
 
 struct Flags {
 	FilePath output_file{};
-	bool mno_red_zone;
-	bool fdiagnostics_colour;
-	bool werror;
+	bool mno_red_zone{};
+	bool fdiagnostics_colour{};
+	bool werror{};
 };
 
 inline DebugFlags resolveDebugFlags(const argparse::ArgumentParser& argParser)

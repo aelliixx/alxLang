@@ -8,29 +8,27 @@
 
 #pragma once
 
+#include "Target.h"
 #include "../../IR/Ir.h"
 namespace alx::ir {
 
 struct InstructionInfo {
+	virtual ~InstructionInfo() = default;
 	virtual void GetInstruction(std::variant<BodyTypes, IdentifierInstruction>) = 0;
 };
 
 
-class InstructionSelector
+class InstructionSelection
 {
-public:
-	enum class Target
-	{
-		X86_64
-	};
+	const std::vector<IRNodes>& m_ir;
+	Target m_target{};
 
-private:
-	std::vector<IRNodes>& m_ir;
-	Target m_target = Target::X86_64;
+protected:
+	virtual void PrintInstructions() const;
+	InstructionSelection(const std::vector<IRNodes>& ir, const Target& target) : m_ir(ir), m_target(target) {}
 
 public:
-	InstructionSelector(std::vector<IRNodes>& ir, Target target) : m_ir(ir), m_target(target) {}
-	void SelectInstructions();
+	virtual ~InstructionSelection() = default;
 };
 
 

@@ -10,3 +10,4 @@ add_subdirectory(Tokeniser)
 add_subdirectory(Utils)
 
 add_library(Compiler Compiler.cpp)
+target_link_libraries(Compiler InstSel)

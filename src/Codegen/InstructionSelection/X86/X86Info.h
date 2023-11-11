@@ -10,11 +10,9 @@
 #pragma ide diagnostic ignored "OCInconsistentNamingInspection"
 #pragma once
 
-#include <utility>
 
-#include "../../../Ir.h"
-#include "../InstructionSelector.h"
-#include <string_view>
+#include "../../../IR/Ir.h"
+#include "../InstructionSelection.h"
 
 
 namespace alx::ir {

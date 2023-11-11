@@ -10,14 +10,15 @@
 
 #include <chrono>
 #include <fstream>
+#include <utility>
 
 namespace alx {
 
-Compiler::Compiler(const std::string& code, const std::string& filename, Flags flags, DebugFlags debugFlags)
-  : m_flags(flags),
+Compiler::Compiler(const std::string& code, const std::string& filename, Flags flags, const DebugFlags debug_flags)
+  : m_flags(std::move(flags)),
 	m_code(code),
 	m_filename(filename),
-	m_debug_flags(debugFlags)
+	m_debug_flags(debug_flags)
 {
 	m_error_handler = std::make_shared<ErrorHandler>(code, filename, m_flags.werror);
 	if (code.empty())
@@ -34,7 +35,7 @@ void Compiler::Compile()
 
 	if (m_debug_flags.show_timing) {
 		const Seconds duration = SysClock::now() - start;
-		alx::println(alx::Colour::LightGreen, "Tokenised in {}ms", duration.count() * 1000);
+		println(Colour::LightGreen, "Tokenised in {}ms", duration.count() * 1000);
 	}
 
 	const auto parseStart = SysClock::now();
@@ -43,7 +44,7 @@ void Compiler::Compile()
 
 	if (m_debug_flags.show_timing) {
 		const Seconds duration = SysClock::now() - parseStart;
-		alx::println(alx::Colour::LightGreen, "Built AST in {}ms", duration.count() * 1000);
+		println(Colour::LightGreen, "Built AST in {}ms", duration.count() * 1000);
 	}
 
 	const auto irStart = SysClock::now();
@@ -53,18 +54,38 @@ void Compiler::Compile()
 	}
 	catch (std::runtime_error& err) {
 		if (!m_debug_flags.quiet_mode) {
-			alx::println(alx::Colour::LightRed, "Something went wrong when generating IR: {;255;255;255}", err.what());
+			println(Colour::LightRed, "Something went wrong when generating IR: {;255;255;255}", err.what());
 			if (m_debug_flags.dump_ast) {
-				alx::println(alx::Colour::LightRed, "Current AST:");
+				println(Colour::LightRed, "Current AST:");
 				ast->PrintNode(0);
 			}
 		}
 	}
-
 	if (m_debug_flags.show_timing) {
 		const Seconds duration = SysClock::now() - irStart;
-		alx::println(alx::Colour::LightGreen, "Generated IR in {}ms", duration.count() * 1000);
+		println(Colour::LightGreen, "Generated IR in {}ms", duration.count() * 1000);
 	}
+
+	Target target{ Target::ArchType::X86_64, Target::OSType::Linux, Target::ObjectFormatType::ELF };
+	const auto mirStart = SysClock::now();
+	m_instruction_selector = std::make_unique<alx::ir::x86::X86ISel>(m_intermediate_representation->GetIR(), target);
+	try {
+		m_instruction_selector->DoInstructionSelection();
+	}
+	catch (std::runtime_error& err) {
+		if (!m_debug_flags.quiet_mode) {
+			println(Colour::LightRed, "Something went wrong when generating MIR: {;255;255;255}", err.what());
+			if (m_debug_flags.dump_ast) {
+				println(Colour::LightRed, "Current IR:");
+				m_intermediate_representation->Dump();
+			}
+		}
+	}
+	if (m_debug_flags.show_timing) {
+		const Seconds duration = SysClock::now() - mirStart;
+		println(Colour::LightGreen, "Generated MIR in {}ms", duration.count() * 1000);
+	}
+
 
 	if (m_error_handler->ErrorCount() == 0) {
 		const auto generateStart = SysClock::now();
@@ -78,14 +99,13 @@ void Compiler::Compile()
 			return;
 #endif
 			if (!m_debug_flags.quiet_mode) {
-				alx::println(
-					alx::Colour::LightRed, "Something went wrong when generating assembly: {;255;255;255}", err.what());
+				println(Colour::LightRed, "Something went wrong when generating assembly: {;255;255;255}", err.what());
 				if (m_debug_flags.dump_ast) {
-					alx::println(alx::Colour::LightRed, "Current AST:");
+					println(Colour::LightRed, "Current AST:");
 					ast->PrintNode(0);
 				}
 				if (m_debug_flags.dump_ir_initial) {
-					alx::println(alx::Colour::LightRed, "\nIR:");
+					println(Colour::LightRed, "\nIR:");
 					m_intermediate_representation->Dump();
 				}
 				m_error_handler->EmitErrorCount();
@@ -95,7 +115,7 @@ void Compiler::Compile()
 		const Seconds duration = SysClock::now() - generateStart;
 		const Seconds totalDuration = SysClock::now() - start;
 		if (m_debug_flags.show_timing)
-			alx::println(alx::Colour::LightGreen, "Generated assembly in {}ms", duration.count() * 1000);
+			println(Colour::LightGreen, "Generated assembly in {}ms", duration.count() * 1000);
 
 		if (!m_debug_flags.no_assemble) {
 			try {
@@ -115,7 +135,7 @@ void Compiler::Compile()
 		}
 
 
-		alx::println(alx::Colour::LightGreen, "Total compilation time {}ms", totalDuration.count() * 1000);
+		println(Colour::LightGreen, "Total compilation time {}ms", totalDuration.count() * 1000);
 
 #if OUTPUT_IR_TO_STRING
 		m_intermediate_representation->Dump();
@@ -127,19 +147,23 @@ void Compiler::Compile()
 	m_error_handler->EmitErrorCount();
 
 	if (m_debug_flags.dump_ast) {
-		alx::println();
+		println();
 		ast->PrintNode(0);
 	}
 	if (m_debug_flags.dump_ir_initial) {
-		alx::println();
+		println();
 		m_intermediate_representation->Dump();
 	}
+	if (m_debug_flags.dump_ir_isel) {
+		println();
+		m_instruction_selector->PrintInstructions();
+	}
 	if (m_debug_flags.dump_asm || m_debug_flags.dump_unformatted_asm) {
-		alx::println();
+		println();
 		if (m_debug_flags.dump_asm)
-			alx::println(ProgramGenerator::FormatAsm(m_generator->Asm()));
+			println(ProgramGenerator::FormatAsm(m_generator->Asm()));
 		else if (m_debug_flags.dump_unformatted_asm)
-			alx::println(m_generator->Asm());
+			println(m_generator->Asm());
 	}
 }
 
@@ -152,9 +176,9 @@ void Compiler::Assemble()
 		out.close(); // FIXME: ensure the file was written to and closed successfully
 	}
 	auto nasmStatus = system(getFormatted("nasm -f elf64 /tmp/{}.s -o /tmp/{}.o",
-									 outputFilePath.GetNameWithoutExtension(),
-									 outputFilePath.GetNameWithoutExtension())
-							.c_str());
+										  outputFilePath.GetNameWithoutExtension(),
+										  outputFilePath.GetNameWithoutExtension())
+								 .c_str());
 	if (nasmStatus)
 		throw std::runtime_error("nasm exited with status code: " + std::to_string(nasmStatus));
 	auto ldStatus = system(
