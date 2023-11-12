@@ -12,8 +12,16 @@
 
 namespace alx::ir::x86 {
 
-struct MOV32mi final : MachineInstruction {
-	std::string Name() override { return "MOV32mi"; }
+struct MOV final : public TwoOperandMI {
+	MOV(MachineInstruction* op1, MachineInstruction* op2) : TwoOperandMI(op1, op2) {}
+	std::string Name() override { return "MOV"; }
 };
+
+struct ADD final : public TwoOperandMI {
+	ADD(MachineInstruction* op1, MachineInstruction* op2) : TwoOperandMI(op1, op2) {}
+	std::string Name() override { return "ADD"; }
+};
+
+using X86MI = std::variant<MOV>;
 
 }

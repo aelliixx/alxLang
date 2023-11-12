@@ -20,12 +20,15 @@ struct InstructionInfo {
 
 class InstructionSelection
 {
-	const std::vector<IRNodes>& m_ir;
 	Target m_target{};
 
 protected:
+	const std::vector<IRNodes>& m_ir;
+
+	InstructionSelection(const std::vector<IRNodes>& ir, const Target& target) : m_target(target), m_ir(ir) {}
+
+	virtual void Select();
 	virtual void PrintInstructions() const;
-	InstructionSelection(const std::vector<IRNodes>& ir, const Target& target) : m_ir(ir), m_target(target) {}
 
 public:
 	virtual ~InstructionSelection() = default;

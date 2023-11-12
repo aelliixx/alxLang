@@ -68,7 +68,7 @@ void Compiler::Compile()
 
 	Target target{ Target::ArchType::X86_64, Target::OSType::Linux, Target::ObjectFormatType::ELF };
 	const auto mirStart = SysClock::now();
-	m_instruction_selector = std::make_unique<alx::ir::x86::X86ISel>(m_intermediate_representation->GetIR(), target);
+	m_instruction_selector = std::make_unique<ir::x86::X86ISel>(m_intermediate_representation->GetIR(), target);
 	try {
 		m_instruction_selector->DoInstructionSelection();
 	}

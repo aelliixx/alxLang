@@ -8,4 +8,9 @@
 
 #include "InstructionSelection.h"
 
-namespace alx::ir {}
+namespace alx::ir {
+
+void InstructionSelection::Select() {}
+
+
+}
