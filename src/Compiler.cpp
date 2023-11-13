@@ -66,27 +66,6 @@ void Compiler::Compile()
 		println(Colour::LightGreen, "Generated IR in {}ms", duration.count() * 1000);
 	}
 
-	Target target{ Target::ArchType::X86_64, Target::OSType::Linux, Target::ObjectFormatType::ELF };
-	const auto mirStart = SysClock::now();
-	m_instruction_selector = std::make_unique<ir::x86::X86ISel>(m_intermediate_representation->GetIR(), target);
-	try {
-		m_instruction_selector->DoInstructionSelection();
-	}
-	catch (std::runtime_error& err) {
-		if (!m_debug_flags.quiet_mode) {
-			println(Colour::LightRed, "Something went wrong when generating MIR: {;255;255;255}", err.what());
-			if (m_debug_flags.dump_ast) {
-				println(Colour::LightRed, "Current IR:");
-				m_intermediate_representation->Dump();
-			}
-		}
-	}
-	if (m_debug_flags.show_timing) {
-		const Seconds duration = SysClock::now() - mirStart;
-		println(Colour::LightGreen, "Generated MIR in {}ms", duration.count() * 1000);
-	}
-
-
 	if (m_error_handler->ErrorCount() == 0) {
 		const auto generateStart = SysClock::now();
 		try {
