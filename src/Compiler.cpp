@@ -133,15 +133,11 @@ void Compiler::Compile()
 		println();
 		m_intermediate_representation->Dump();
 	}
-	if (m_debug_flags.dump_ir_isel) {
-		println();
-		m_instruction_selector->PrintInstructions();
-	}
 	if (m_debug_flags.dump_asm || m_debug_flags.dump_unformatted_asm) {
 		println();
 		if (m_debug_flags.dump_asm)
 			println(ProgramGenerator::FormatAsm(m_generator->Asm()));
-		else if (m_debug_flags.dump_unformatted_asm)
+		else
 			println(m_generator->Asm());
 	}
 }
