@@ -10,6 +10,7 @@
 #include <string>
 #include <assert.h>
 #include <source_location>
+#include <memory>
 
 
 #define OUTPUT_IR_TO_STRING 0 // For facilitating IR tests by redirecting output to a string
@@ -79,7 +80,7 @@ namespace alx {
 		}                                                                                                              \
 		avgCollidedBucketSize /= collisions;                                                                           \
 		println("----------------------------");                                                                       \
-		println("Analysing hashmap: {;60;110;199}", #map);                                                              \
+		println("Analysing hashmap: {;60;110;199}", #map);                                                             \
 		println("There are {} buckets", map.bucket_count());                                                           \
 		println("There are {} items in the hashmap", map.size());                                                      \
 		if (collisions) {                                                                                              \
@@ -91,5 +92,8 @@ namespace alx {
 		println("----------------------------");                                                                       \
 	} while (false)
 #endif
+
+template<typename T>
+using refptr = std::shared_ptr<T>;
 
 }

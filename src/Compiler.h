@@ -11,6 +11,7 @@
 #include "Parser/Parser.h"
 #include "Codegen/x86_64_linux/ProgramGenerator.h"
 #include "IR/Ir.h"
+#include "IR/ISel/Targets/x86-64/X86_64_ISel.h"
 
 namespace alx {
 
@@ -21,6 +22,7 @@ class Compiler
 	std::unique_ptr<ir::IR> m_intermediate_representation;
 	std::unique_ptr<ProgramGenerator> m_generator;
 	std::shared_ptr<ErrorHandler> m_error_handler;
+	std::shared_ptr<ir::x86_64::X86_64_ISel> m_isel;
 	const Flags m_flags;
 	const std::string m_code;
 	const std::string& m_filename;

@@ -15,3 +15,12 @@ add_library(IR Ir.cpp
         Lowering/UnaryExpression.cpp
         Lowering/Conditionals.cpp
 )
+
+add_library(ISel
+        ISel/ISel.cpp
+        ISel/ISel.h
+        ISel/Targets/x86-64/Instructions.h
+        ISel/Targets/x86-64/X86_64_ISel.cpp
+        ISel/Targets/x86-64/X86_64_ISel.h
+        ISel/PrintMIR.cpp
+)

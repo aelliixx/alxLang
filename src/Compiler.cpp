@@ -66,6 +66,25 @@ void Compiler::Compile()
 		println(Colour::LightGreen, "Generated IR in {}ms", duration.count() * 1000);
 	}
 
+	const auto mirStart = SysClock::now();
+	m_isel = std::make_shared<ir::x86_64::X86_64_ISel>(m_intermediate_representation->GetIR());
+	try {
+		m_isel->SelectInstructions();
+	}
+	catch (std::runtime_error& err) {
+		if (!m_debug_flags.quiet_mode) {
+			println(Colour::LightRed, "Something went wrong during instruction selection: {;255;255;255}", err.what());
+			if (m_debug_flags.dump_ir_initial) {
+				println(Colour::LightRed, "Current IR:");
+				m_intermediate_representation->Dump();
+			}
+		}
+	}
+	if (m_debug_flags.show_timing) {
+		const Seconds duration = SysClock::now() - mirStart;
+		println(Colour::LightGreen, "Generated MIR in {}ms", duration.count() * 1000);
+	}
+
 	if (m_error_handler->ErrorCount() == 0) {
 		const auto generateStart = SysClock::now();
 		try {
@@ -132,6 +151,10 @@ void Compiler::Compile()
 	if (m_debug_flags.dump_ir_initial) {
 		println();
 		m_intermediate_representation->Dump();
+	}
+	if (m_debug_flags.dump_ir_isel) {
+		println();
+		m_isel->Dump();
 	}
 	if (m_debug_flags.dump_asm || m_debug_flags.dump_unformatted_asm) {
 		println();
